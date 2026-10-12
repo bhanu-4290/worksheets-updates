@@ -58,7 +58,7 @@ export const NotificationsPage: React.FC = () => {
 
         <button
           onClick={handleMarkAllRead}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold hover:bg-slate-50 transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold hover:bg-slate-50 transition-colors"
         >
           <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Mark All as Read
         </button>
@@ -69,13 +69,13 @@ export const NotificationsPage: React.FC = () => {
           <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : notifications.length === 0 ? (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center text-slate-400 text-xs">
-          <Bell className="w-12 h-12 mx-auto mb-2 text-slate-300" />
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-10 text-center text-slate-400 text-xs">
+          <Bell className="w-10 h-10 mx-auto mb-2 text-slate-300 dark:text-slate-600" />
           <p className="font-semibold text-slate-700 dark:text-slate-300">No Notifications</p>
           <p className="mt-1">You are all caught up.</p>
         </div>
       ) : (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden shadow-sm">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden shadow-xs">
           {notifications.map((n) => (
             <div
               key={n.id}

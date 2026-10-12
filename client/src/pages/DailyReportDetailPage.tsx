@@ -92,7 +92,7 @@ export const DailyReportDetailPage: React.FC = () => {
 
   if (error || !report) {
     return (
-      <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-2xl p-6 text-center text-xs text-rose-800 dark:text-rose-300">
+      <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl p-6 text-center text-xs text-rose-800 dark:text-rose-300">
         <AlertCircle className="w-8 h-8 mx-auto mb-2" />
         <p className="font-semibold">{error || "Report not found"}</p>
         <Link to="/reports" className="inline-block mt-3 text-indigo-600 underline">
@@ -120,7 +120,7 @@ export const DailyReportDetailPage: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-colors"
+            className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
@@ -143,13 +143,13 @@ export const DailyReportDetailPage: React.FC = () => {
           <div className="flex items-center gap-2.5">
             <button
               onClick={() => setShowRevisionModal(true)}
-              className="px-4 py-2 rounded-xl border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 font-semibold text-xs hover:bg-rose-100 transition-colors"
+              className="px-4 py-2 rounded-lg border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 font-semibold text-xs hover:bg-rose-100 transition-colors"
             >
               Request Revision
             </button>
             <button
               onClick={() => setShowApproveModal(true)}
-              className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-md transition-colors flex items-center gap-1.5"
+              className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-sm transition-colors flex items-center gap-1.5"
             >
               <CheckCircle2 className="w-4 h-4" /> Acknowledge & Approve
             </button>
@@ -159,7 +159,7 @@ export const DailyReportDetailPage: React.FC = () => {
         {isOwnReport && report.status === "REVISION_REQUESTED" && (
           <Link
             to={`/reports/new?date=${report.reportingDate}`}
-            className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-md transition-colors"
+            className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-sm transition-colors"
           >
             Revise & Resubmit Report
           </Link>
@@ -169,7 +169,7 @@ export const DailyReportDetailPage: React.FC = () => {
       {/* Review Feedback Banner */}
       {report.reviews && report.reviews.length > 0 && (
         <div
-          className={`p-5 rounded-2xl border text-xs ${
+          className={`p-4 rounded-xl border text-xs ${
             report.status === "APPROVED"
               ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/60 text-emerald-900 dark:text-emerald-200"
               : "bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/60 text-rose-900 dark:text-rose-200"
@@ -217,7 +217,7 @@ export const DailyReportDetailPage: React.FC = () => {
         {report.entries.map((entry, idx) => (
           <div
             key={entry.id || idx}
-            className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4"
+            className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4"
           >
             <div className="flex items-start justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-3">
               <div>
@@ -294,7 +294,7 @@ export const DailyReportDetailPage: React.FC = () => {
 
       {/* Revision History Snapshots */}
       {report.revisionHistory && report.revisionHistory.length > 0 && (
-        <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+        <div className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
           <div className="flex items-center gap-2">
             <History className="w-4 h-4 text-slate-500" />
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">

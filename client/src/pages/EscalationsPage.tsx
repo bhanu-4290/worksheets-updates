@@ -130,19 +130,19 @@ export const EscalationsPage: React.FC = () => {
 
         <button
           onClick={() => setShowCreateModal(true)}
-          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs shadow-md transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs shadow-sm transition-colors"
         >
           <Plus className="w-4 h-4" /> Escalate New Blocker
         </button>
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-3">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium"
+            className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium"
           >
             <option value="">All Statuses</option>
             <option value="OPEN">Open</option>
@@ -154,7 +154,7 @@ export const EscalationsPage: React.FC = () => {
           <select
             value={urgencyFilter}
             onChange={(e) => setUrgencyFilter(e.target.value)}
-            className="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium"
+            className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium"
           >
             <option value="">All Urgencies</option>
             <option value="CRITICAL">Critical</option>
@@ -173,8 +173,8 @@ export const EscalationsPage: React.FC = () => {
           <div className="w-8 h-8 border-3 border-rose-600 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : escalations.length === 0 ? (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center text-slate-400 text-xs">
-          <CheckCircle2 className="w-12 h-12 mx-auto mb-2 text-emerald-500" />
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-10 text-center text-slate-400 text-xs">
+          <CheckCircle2 className="w-10 h-10 mx-auto mb-2 text-emerald-500" />
           <p className="font-semibold text-slate-700 dark:text-slate-300">
             No Active Escalations
           </p>
@@ -185,7 +185,7 @@ export const EscalationsPage: React.FC = () => {
           {escalations.map((esc) => (
             <div
               key={esc.id}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4 hover:shadow-md transition-shadow"
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4 hover:shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-1">

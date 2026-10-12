@@ -98,7 +98,7 @@ export const SettingsPage: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Company Policy Form */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
             <h2 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
               <Settings className="w-4 h-4 text-indigo-500" />
               Reporting Deadlines & Working Days
@@ -112,7 +112,7 @@ export const SettingsPage: React.FC = () => {
                   required
                   value={settings.companyName}
                   onChange={(e) => setSettings({ ...settings, companyName: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
                 />
               </div>
 
@@ -126,7 +126,7 @@ export const SettingsPage: React.FC = () => {
                   value={settings.workDays}
                   onChange={(e) => setSettings({ ...settings, workDays: e.target.value })}
                   placeholder="Monday,Tuesday,Wednesday,Thursday,Friday"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
                 />
                 <span className="text-[10px] text-slate-400 mt-1 block">
                   Excludes weekends from expected daily report submission compliance.
@@ -146,7 +146,7 @@ export const SettingsPage: React.FC = () => {
                     onChange={(e) =>
                       setSettings({ ...settings, submissionDeadlineTime: e.target.value })
                     }
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
                   />
                 </div>
 
@@ -161,7 +161,7 @@ export const SettingsPage: React.FC = () => {
                     onChange={(e) =>
                       setSettings({ ...settings, gracePeriodHours: parseInt(e.target.value, 10) })
                     }
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -169,7 +169,7 @@ export const SettingsPage: React.FC = () => {
               <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-md transition-colors"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-sm transition-colors"
                 >
                   <Save className="w-4 h-4" /> Save Configuration
                 </button>
@@ -178,7 +178,7 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           {/* Holiday Calendar Management */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-emerald-500" />

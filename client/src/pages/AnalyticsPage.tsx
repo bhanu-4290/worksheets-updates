@@ -107,14 +107,14 @@ export const AnalyticsPage: React.FC = () => {
 
         <button
           onClick={handleExportCsv}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-md transition-colors self-start sm:self-auto"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-sm transition-colors self-start sm:self-auto"
         >
           <FileSpreadsheet className="w-4 h-4" /> Export Scoped CSV
         </button>
       </div>
 
       {/* Date Filter Bar */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-wrap items-center justify-between gap-4 text-xs">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs flex flex-wrap items-center justify-between gap-4 text-xs">
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-slate-500">From:</span>
@@ -122,7 +122,7 @@ export const AnalyticsPage: React.FC = () => {
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+              className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -131,7 +131,7 @@ export const AnalyticsPage: React.FC = () => {
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+              className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
             />
           </div>
         </div>
@@ -155,7 +155,7 @@ export const AnalyticsPage: React.FC = () => {
           {/* Visual Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Bar Chart: Expected vs Actual */}
-            <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+            <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs">
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
                 Submissions Comparison (Actual vs Expected Days)
               </h3>
@@ -183,7 +183,7 @@ export const AnalyticsPage: React.FC = () => {
             </div>
 
             {/* Compliance Breakdown Card */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs flex flex-col justify-between">
               <div>
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-2">
                   Compliance Summary
@@ -222,7 +222,7 @@ export const AnalyticsPage: React.FC = () => {
           </div>
 
           {/* Detailed Compliance Table */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs">
             <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                 Detailed Employee Compliance Audit

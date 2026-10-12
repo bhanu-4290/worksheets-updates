@@ -63,15 +63,15 @@ export const LoginPage: React.FC = () => {
         </div>
 
         {/* Card */}
-        <div className="bg-slate-900/80 backdrop-blur-2xl border border-slate-800/90 rounded-3xl shadow-2xl p-7 sm:p-9">
+        <div className="bg-slate-900/80 backdrop-blur-2xl border border-slate-800 rounded-2xl shadow-xl p-6 sm:p-8">
           {error && (
-            <div className="mb-6 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-medium flex items-start gap-3 animate-in fade-in duration-150">
+            <div className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-medium flex items-start gap-3 animate-in fade-in duration-150">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
               <span>{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4.5">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
                 Username or Email Address
@@ -82,7 +82,7 @@ export const LoginPage: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="e.g. rahul or rahul@worktrack.company"
-                className="w-full px-4 py-3 rounded-xl border border-slate-700/80 bg-slate-800/60 text-white text-xs font-medium placeholder-slate-500 focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                className="w-full px-4 py-2.5 rounded-lg border border-slate-700 bg-slate-800/60 text-white text-xs font-medium placeholder-slate-500 focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
               />
             </div>
 
@@ -104,14 +104,14 @@ export const LoginPage: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
-                className="w-full px-4 py-3 rounded-xl border border-slate-700/80 bg-slate-800/60 text-white text-xs font-medium placeholder-slate-500 focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                className="w-full px-4 py-2.5 rounded-lg border border-slate-700 bg-slate-800/60 text-white text-xs font-medium placeholder-slate-500 focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-3 py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/25 transition-all flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60"
+              className="w-full mt-2 py-2.5 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 active:scale-[0.99] disabled:opacity-60"
             >
               {loading ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -124,8 +124,8 @@ export const LoginPage: React.FC = () => {
           </form>
 
           {/* Quick Team Personas */}
-          <div className="mt-7 pt-6 border-t border-slate-800">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 mb-3.5">
+          <div className="mt-6 pt-5 border-t border-slate-800">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 mb-3">
               <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
               <span>One-Click Team Login (Password: Matrix@4290)</span>
             </div>
@@ -137,7 +137,7 @@ export const LoginPage: React.FC = () => {
               >
                 <div className="font-bold flex items-center justify-between">
                   <span>Rahul</span>
-                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 font-mono">ADMIN</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-mono">ADMIN</span>
                 </div>
                 <div className="text-[10px] text-purple-400/80 truncate mt-0.5">
                   Super Admin
@@ -151,7 +151,7 @@ export const LoginPage: React.FC = () => {
               >
                 <div className="font-bold flex items-center justify-between">
                   <span>Phani</span>
-                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-300 font-mono">MANAGER</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono">MANAGER</span>
                 </div>
                 <div className="text-[10px] text-blue-400/80 truncate mt-0.5">
                   Department Manager
@@ -165,7 +165,7 @@ export const LoginPage: React.FC = () => {
               >
                 <div className="font-bold flex items-center justify-between">
                   <span>Tharun</span>
-                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono">LEAD</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">LEAD</span>
                 </div>
                 <div className="text-[10px] text-emerald-400/80 truncate mt-0.5">
                   Team Leader
@@ -179,7 +179,7 @@ export const LoginPage: React.FC = () => {
               >
                 <div className="font-bold flex items-center justify-between">
                   <span>Bhanu</span>
-                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-mono">EXEC</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono">EXEC</span>
                 </div>
                 <div className="text-[10px] text-indigo-400/80 truncate mt-0.5">
                   Executive
@@ -196,7 +196,7 @@ export const LoginPage: React.FC = () => {
                 <span className="font-bold text-xs">Naveen</span>
                 <span className="text-[10px] text-slate-400 ml-2">Executive</span>
               </div>
-              <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-700 text-slate-300 font-mono">EXEC</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-700 text-slate-300 font-mono">EXEC</span>
             </button>
           </div>
         </div>

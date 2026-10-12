@@ -143,7 +143,7 @@ export const ChatPage: React.FC = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-8.5rem)] flex flex-col bg-white dark:bg-slate-900 rounded-2xl shadow-xs border border-slate-200 dark:border-slate-800 overflow-hidden">
+    <div className="h-[calc(100vh-8.5rem)] flex flex-col bg-white dark:bg-slate-900 rounded-xl shadow-xs border border-slate-200 dark:border-slate-800 overflow-hidden">
       {/* Top Header */}
       <div className="px-6 py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
         <div className="flex items-center gap-2.5">
@@ -234,7 +234,7 @@ export const ChatPage: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-1.5 mb-1">
                         <span
-                          className={`text-[9px] px-1.5 py-0.2 rounded-sm font-semibold tracking-wide uppercase ${getRoleBadgeColor(
+                          className={`text-[9px] px-1.5 py-0.5 rounded-sm font-semibold tracking-wide uppercase ${getRoleBadgeColor(
                             contact.role
                           )}`}
                         >
@@ -376,12 +376,12 @@ export const ChatPage: React.FC = () => {
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     placeholder={`Message ${selectedContact.fullName}... (Press Enter to send)`}
-                    className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                    className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
                   />
                   <button
                     type="submit"
                     disabled={!inputText.trim() || sending}
-                    className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs"
+                    className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs"
                   >
                     <Send className="w-3.5 h-3.5" />
                     <span>Send</span>

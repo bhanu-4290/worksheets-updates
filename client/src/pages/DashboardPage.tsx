@@ -69,9 +69,9 @@ export const DashboardPage: React.FC = () => {
     if (announcements.length === 0) return null;
     const top = announcements[0];
     return (
-      <div className="relative overflow-hidden bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent dark:from-amber-950/40 dark:via-amber-900/20 dark:to-transparent border border-amber-200/80 dark:border-amber-800/60 rounded-2xl p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 shadow-xs backdrop-blur-md">
-        <div className="flex items-start gap-3.5">
-          <div className="p-2.5 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-600 text-white shadow-md shadow-amber-500/25 shrink-0 mt-0.5">
+      <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+        <div className="flex items-start gap-3">
+          <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
             <Megaphone className="w-4 h-4" />
           </div>
           <div>
@@ -79,25 +79,25 @@ export const DashboardPage: React.FC = () => {
               <span className="text-xs font-bold text-slate-900 dark:text-white">
                 {top.title}
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/20 uppercase tracking-wider">
+              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-200/60 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300">
                 {top.priority}
               </span>
               {top.isPinned && (
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20 uppercase tracking-wider">
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">
                   PINNED
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 line-clamp-1 leading-relaxed">
+            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 line-clamp-1">
               {top.content}
             </p>
           </div>
         </div>
         <Link
           to="/announcements"
-          className="text-xs font-bold text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 hover:underline shrink-0 flex items-center gap-1.5 transition-colors"
+          className="text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline shrink-0 flex items-center gap-1"
         >
-          View all notices ({announcements.length}) <ArrowRight className="w-3.5 h-3.5" />
+          View notices ({announcements.length}) <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>
     );
@@ -110,29 +110,26 @@ export const DashboardPage: React.FC = () => {
     return (
       <div className="space-y-6">
         <AnnouncementsBanner />
-        {/* Welcome Banner */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-700 via-indigo-600 to-purple-700 p-7 sm:p-9 text-white shadow-xl shadow-indigo-600/15">
-          <div className="absolute -right-16 -top-16 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute right-1/3 -bottom-16 w-56 h-56 bg-purple-500/20 rounded-full blur-2xl pointer-events-none" />
 
-          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        {/* Welcome Banner */}
+        <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-xl p-6 text-white shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-[11px] font-bold uppercase tracking-wider text-indigo-100 backdrop-blur-sm border border-white/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-indigo-200">
                 Executive Workspace
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-2.5">
-                Welcome back, {user.fullName}
+              </span>
+              <h1 className="text-2xl font-bold tracking-tight mt-1">
+                Welcome, {user.fullName}
               </h1>
-              <p className="text-sm text-indigo-100/90 mt-1 font-medium">
+              <p className="text-sm text-indigo-100 mt-1">
                 {user.jobTitle} • {user.department?.name || "Department"}
               </p>
             </div>
             <Link
               to="/reports/new"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white text-indigo-700 font-bold text-xs shadow-lg shadow-black/10 hover:bg-indigo-50 hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white text-indigo-700 font-semibold text-xs shadow-xs hover:bg-indigo-50 transition-colors shrink-0"
             >
-              <Send className="w-4 h-4 text-indigo-600" />
+              <Send className="w-4 h-4" />
               {data.todayReportStatus === "NOT_STARTED"
                 ? "Submit Today's Daily Report"
                 : "Edit Today's Daily Report"}
@@ -141,26 +138,26 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Today Report Status Alert */}
-        <div className="bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover-card-lift flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="p-3.5 rounded-2xl bg-gradient-to-tr from-indigo-500/15 to-purple-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-              <Calendar className="w-6 h-6" />
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="p-2.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400">
+              <Calendar className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
                 Today's Daily Report Status
               </div>
-              <div className="flex items-center gap-3 mt-1">
-                <span className="text-lg font-bold text-slate-900 dark:text-white">
+              <div className="flex items-center gap-2.5 mt-1">
+                <span className="text-base font-bold text-slate-900 dark:text-white">
                   {new Date().toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric", year: "numeric" })}
                 </span>
-                <Badge variant={data.todayReportStatus} label={data.todayReportStatus.replace("_", " ")} />
+                <Badge variant={data.todayReportStatus} label={data.todayReportStatus.replace("_", " ")} size="sm" />
               </div>
             </div>
           </div>
           <Link
             to={data.todayReport ? `/reports/${data.todayReport.id}` : "/reports/new"}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
           >
             <Eye className="w-4 h-4" /> View Report Details
           </Link>
@@ -197,40 +194,40 @@ export const DashboardPage: React.FC = () => {
         {/* Two Columns: Recent Reports & Current Tasks */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Recent Reports */}
-          <div className="bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-slate-800/80">
-              <h2 className="text-base font-bold text-slate-900 dark:text-white">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs">
+            <div className="flex items-center justify-between mb-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">
                 Recent Daily Reports
               </h2>
-              <Link to="/reports" className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
+              <Link to="/reports" className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
                 View All
               </Link>
             </div>
             {data.recentReports?.length === 0 ? (
-              <p className="text-xs text-slate-400 py-8 text-center">No reports filed yet.</p>
+              <p className="text-xs text-slate-400 py-6 text-center">No reports filed yet.</p>
             ) : (
-              <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
                 {data.recentReports.map((r: any) => (
-                  <div key={r.id} className="py-3.5 flex items-center justify-between gap-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 px-2 rounded-xl transition-colors">
+                  <div key={r.id} className="py-3 flex items-center justify-between gap-4">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                           {r.reportingDate}
                         </span>
                         <Badge variant={r.status} size="sm" />
                       </div>
-                      <div className="text-[11px] text-slate-400 mt-1 font-medium">
+                      <div className="text-[11px] text-slate-400 mt-0.5">
                         {r.entriesCount} activities • {r.hoursSpent ? `${r.hoursSpent} hrs` : "Hours Unreported"}
                       </div>
                       {r.latestReview?.comments && (
-                        <div className="text-[11px] text-indigo-600 dark:text-indigo-400 mt-1 font-medium italic">
+                        <div className="text-[11px] text-indigo-600 dark:text-indigo-400 mt-1 italic">
                           Feedback: "{r.latestReview.comments}"
                         </div>
                       )}
                     </div>
                     <Link
                       to={`/reports/${r.id}`}
-                      className="p-2 rounded-xl text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     >
                       <ArrowRight className="w-4 h-4" />
                     </Link>
@@ -241,24 +238,24 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           {/* Current Tasks */}
-          <div className="bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-slate-800/80">
-              <h2 className="text-base font-bold text-slate-900 dark:text-white">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs">
+            <div className="flex items-center justify-between mb-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">
                 Assigned Tasks
               </h2>
-              <Link to="/tasks" className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
+              <Link to="/tasks" className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
                 Open Task Board
               </Link>
             </div>
             {tasks.length === 0 ? (
-              <p className="text-xs text-slate-400 py-8 text-center">No tasks assigned.</p>
+              <p className="text-xs text-slate-400 py-6 text-center">No tasks assigned.</p>
             ) : (
-              <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
                 {tasks.slice(0, 5).map((t: any) => (
-                  <div key={t.id} className="py-3 flex items-center justify-between gap-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 px-2 rounded-xl transition-colors">
+                  <div key={t.id} className="py-3 flex items-center justify-between gap-4">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                        <span className="text-xs font-mono font-semibold text-indigo-600 dark:text-indigo-400">
                           {t.taskCode}
                         </span>
                         <Badge variant={t.priority} size="sm" />
@@ -270,7 +267,7 @@ export const DashboardPage: React.FC = () => {
                     </div>
                     <Link
                       to={`/tasks/${t.id}`}
-                      className="p-2 rounded-xl text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     >
                       <ArrowRight className="w-4 h-4" />
                     </Link>
@@ -291,26 +288,24 @@ export const DashboardPage: React.FC = () => {
     return (
       <div className="space-y-6">
         <AnnouncementsBanner />
-        
+
         {/* Welcome Banner */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-700 via-indigo-600 to-indigo-800 p-7 sm:p-9 text-white shadow-xl shadow-indigo-600/15">
-          <div className="absolute -right-16 -top-16 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-xl p-6 text-white shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-[11px] font-bold uppercase tracking-wider text-blue-100 backdrop-blur-sm border border-white/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-indigo-200">
                 Team Lead Workspace
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-2.5">
+              </span>
+              <h1 className="text-2xl font-bold tracking-tight mt-1">
                 Team Oversight & Execution
               </h1>
-              <p className="text-sm text-indigo-100/90 mt-1 font-medium">
+              <p className="text-sm text-indigo-100 mt-1">
                 Subordinates supervision, daily report approvals, and team task tracking
               </p>
             </div>
             <Link
               to="/reviews"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white text-indigo-700 font-bold text-xs shadow-lg shadow-black/10 hover:bg-indigo-50 hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white text-indigo-700 font-semibold text-xs shadow-xs hover:bg-indigo-50 transition-colors shrink-0"
             >
               Review Submissions ({data.pendingReviews})
             </Link>
@@ -376,56 +371,47 @@ export const DashboardPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Link
             to="/reviews"
-            className="p-6 rounded-3xl bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 shadow-sm hover-card-lift flex items-center justify-between group"
+            className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-indigo-500 transition-colors flex items-center justify-between"
           >
             <div>
-              <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-3">
-                <FileText className="w-5 h-5" />
-              </div>
-              <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
+              <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
                 Report Review Queue
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Acknowledge or request revisions
               </p>
             </div>
-            <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all" />
+            <ArrowRight className="w-5 h-5 text-indigo-500" />
           </Link>
 
           <Link
             to="/escalations"
-            className="p-6 rounded-3xl bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 shadow-sm hover-card-lift flex items-center justify-between group"
+            className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-indigo-500 transition-colors flex items-center justify-between"
           >
             <div>
-              <div className="w-10 h-10 rounded-2xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center mb-3">
-                <AlertTriangle className="w-5 h-5" />
-              </div>
-              <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-rose-600 transition-colors">
+              <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
                 Escalate Blocker to Manager
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Forward critical issues to Dept Manager
               </p>
             </div>
-            <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-rose-500 group-hover:translate-x-1 transition-all" />
+            <ArrowRight className="w-5 h-5 text-indigo-500" />
           </Link>
 
           <Link
             to="/team"
-            className="p-6 rounded-3xl bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 shadow-sm hover-card-lift flex items-center justify-between group"
+            className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-indigo-500 transition-colors flex items-center justify-between"
           >
             <div>
-              <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3">
-                <Users className="w-5 h-5" />
-              </div>
-              <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-emerald-600 transition-colors">
+              <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
                 Team Member Overview
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Inspect workload and attendance
               </p>
             </div>
-            <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
+            <ArrowRight className="w-5 h-5 text-indigo-500" />
           </Link>
         </div>
       </div>
@@ -439,26 +425,24 @@ export const DashboardPage: React.FC = () => {
     return (
       <div className="space-y-6">
         <AnnouncementsBanner />
-        
+
         {/* Welcome Banner */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-900 to-indigo-800 p-7 sm:p-9 text-white shadow-xl shadow-indigo-900/20">
-          <div className="absolute -right-16 -top-16 w-64 h-64 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
-          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div className="bg-gradient-to-r from-slate-900 to-indigo-950 border border-slate-800 rounded-xl p-6 text-white shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-[11px] font-bold uppercase tracking-wider text-indigo-200 backdrop-blur-sm border border-white/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-indigo-300">
                 Department Management
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-2.5">
+              </span>
+              <h1 className="text-2xl font-bold tracking-tight mt-1">
                 {user.department?.name || "Department"} Executive Console
               </h1>
-              <p className="text-sm text-indigo-100/90 mt-1 font-medium">
+              <p className="text-sm text-indigo-200/80 mt-1">
                 Monitor reporting compliance, track projects, and resolve escalated blockers
               </p>
             </div>
             <Link
               to="/escalations"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-lg shadow-rose-900/30 hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs shadow-xs transition-colors shrink-0"
             >
               <AlertTriangle className="w-4 h-4" />
               Critical Blockers ({data.criticalBlockers})
@@ -476,14 +460,14 @@ export const DashboardPage: React.FC = () => {
             color="blue"
           />
           <StatCard
-            title="Today's Reporting Compliance"
+            title="Today's Compliance"
             value={`${data.compliancePercentage}%`}
             subtitle={`${data.todaySubmissions} of ${data.departmentEmployeeCount} submitted`}
             icon={TrendingUp}
             color={data.compliancePercentage >= 80 ? "emerald" : "amber"}
           />
           <StatCard
-            title="Pending Team Lead Reviews"
+            title="Pending Reviews"
             value={data.pendingReviews}
             subtitle="Under team lead evaluation"
             icon={Clock}
@@ -508,7 +492,7 @@ export const DashboardPage: React.FC = () => {
             color="indigo"
           />
           <StatCard
-            title="Overdue Tasks in Department"
+            title="Overdue Tasks"
             value={data.deptOverdueTasks}
             subtitle="Needs managerial reassignment"
             icon={AlertTriangle}
@@ -520,56 +504,47 @@ export const DashboardPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Link
             to="/escalations"
-            className="p-6 rounded-3xl bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 shadow-sm hover-card-lift flex items-center justify-between group"
+            className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-indigo-500 transition-colors flex items-center justify-between"
           >
             <div>
-              <div className="w-10 h-10 rounded-2xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center mb-3">
-                <AlertTriangle className="w-5 h-5" />
-              </div>
-              <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-rose-600 transition-colors">
+              <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
                 Handle Escalations
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Assign owners & record resolution notes
               </p>
             </div>
-            <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-rose-500 group-hover:translate-x-1 transition-all" />
+            <ArrowRight className="w-5 h-5 text-indigo-500" />
           </Link>
 
           <Link
             to="/analytics"
-            className="p-6 rounded-3xl bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 shadow-sm hover-card-lift flex items-center justify-between group"
+            className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-indigo-500 transition-colors flex items-center justify-between"
           >
             <div>
-              <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-3">
-                <TrendingUp className="w-5 h-5" />
-              </div>
-              <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
+              <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
                 Department Analytics & Exports
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Filter and export department CSV logs
               </p>
             </div>
-            <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all" />
+            <ArrowRight className="w-5 h-5 text-indigo-500" />
           </Link>
 
           <Link
             to="/team"
-            className="p-6 rounded-3xl bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 shadow-sm hover-card-lift flex items-center justify-between group"
+            className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-indigo-500 transition-colors flex items-center justify-between"
           >
             <div>
-              <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3">
-                <Users className="w-5 h-5" />
-              </div>
-              <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-emerald-600 transition-colors">
+              <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
                 Teams & Team Leads
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Monitor team leads and team allocations
               </p>
             </div>
-            <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
+            <ArrowRight className="w-5 h-5 text-indigo-500" />
           </Link>
         </div>
       </div>
@@ -582,26 +557,24 @@ export const DashboardPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <AnnouncementsBanner />
-      
+
       {/* Super Admin Welcome Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-purple-800 via-indigo-800 to-slate-950 p-7 sm:p-9 text-white shadow-xl shadow-purple-900/20">
-        <div className="absolute -right-16 -top-16 w-64 h-64 bg-purple-500/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+      <div className="bg-gradient-to-r from-purple-900 to-indigo-900 border border-purple-800/60 rounded-xl p-6 text-white shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-[11px] font-bold uppercase tracking-wider text-purple-200 backdrop-blur-sm border border-white/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-purple-200">
               Organization Super Admin
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-2.5">
+            </span>
+            <h1 className="text-2xl font-bold tracking-tight mt-1">
               WorkTrack Administration Console
             </h1>
-            <p className="text-sm text-purple-100/90 mt-1 font-medium">
+            <p className="text-sm text-purple-100 mt-1">
               Company-wide governance, user permissions, audit tracking, and organization structure
             </p>
           </div>
           <Link
             to="/admin/users"
-            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-lg shadow-purple-900/30 hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white text-purple-900 font-semibold text-xs shadow-xs hover:bg-purple-50 transition-colors shrink-0"
           >
             Manage Accounts & Roles
           </Link>
@@ -668,56 +641,47 @@ export const DashboardPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Link
           to="/admin/users"
-          className="p-6 rounded-3xl bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 shadow-sm hover-card-lift flex items-center justify-between group"
+          className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-purple-500 transition-colors flex items-center justify-between"
         >
           <div>
-            <div className="w-10 h-10 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-3">
-              <Users className="w-5 h-5" />
-            </div>
-            <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-purple-600 transition-colors">
+            <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
               User Directory & CSV Import
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Add users, modify roles, or bulk import CSV
             </p>
           </div>
-          <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-purple-500 group-hover:translate-x-1 transition-all" />
+          <ArrowRight className="w-5 h-5 text-purple-500" />
         </Link>
 
         <Link
           to="/settings"
-          className="p-6 rounded-3xl bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 shadow-sm hover-card-lift flex items-center justify-between group"
+          className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-purple-500 transition-colors flex items-center justify-between"
         >
           <div>
-            <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-3">
-              <Clock className="w-5 h-5" />
-            </div>
-            <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
+            <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
               Working Days & Holiday Calendar
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Configure reporting deadline & grace period
             </p>
           </div>
-          <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all" />
+          <ArrowRight className="w-5 h-5 text-purple-500" />
         </Link>
 
         <Link
           to="/admin/audit-logs"
-          className="p-6 rounded-3xl bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 shadow-sm hover-card-lift flex items-center justify-between group"
+          className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-purple-500 transition-colors flex items-center justify-between"
         >
           <div>
-            <div className="w-10 h-10 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-3">
-              <ShieldAlert className="w-5 h-5" />
-            </div>
-            <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-purple-600 transition-colors">
+            <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
               Security Audit Logs
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Inspect administrative events & login history
             </p>
           </div>
-          <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-purple-500 group-hover:translate-x-1 transition-all" />
+          <ShieldAlert className="w-5 h-5 text-purple-500" />
         </Link>
       </div>
     </div>

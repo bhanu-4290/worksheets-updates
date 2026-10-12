@@ -110,8 +110,8 @@ export const Badge: React.FC<BadgeProps> = ({ children, variant = "default", lab
       case "URGENT":
       case "CRITICAL":
         return {
-          container: "bg-gradient-to-r from-rose-500 to-rose-600 text-white border-transparent font-bold shadow-xs shadow-rose-500/30",
-          dot: "bg-white animate-ping",
+          container: "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-800 font-semibold",
+          dot: "bg-rose-500",
         };
       case "HIGH":
         return {
@@ -134,7 +134,7 @@ export const Badge: React.FC<BadgeProps> = ({ children, variant = "default", lab
       case "OPEN":
         return {
           container: "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800",
-          dot: "bg-amber-500 animate-pulse",
+          dot: "bg-amber-500",
         };
       case "RESOLVED":
         return {
@@ -151,11 +151,11 @@ export const Badge: React.FC<BadgeProps> = ({ children, variant = "default", lab
   };
 
   const style = getStyle();
-  const sizeClass = size === "sm" ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-1 text-xs";
+  const sizeClass = size === "sm" ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-0.5 text-xs";
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border tracking-wide font-medium shadow-2xs transition-all ${style.container} ${sizeClass}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border tracking-normal font-medium transition-colors ${style.container} ${sizeClass}`}
     >
       <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${style.dot}`} />
       <span>{text}</span>

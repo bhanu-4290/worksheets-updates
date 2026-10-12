@@ -81,7 +81,7 @@ export const TaskDetailPage: React.FC = () => {
 
   if (error || !task) {
     return (
-      <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-2xl p-6 text-center text-xs text-rose-800 dark:text-rose-300">
+      <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl p-6 text-center text-xs text-rose-800 dark:text-rose-300">
         <AlertCircle className="w-8 h-8 mx-auto mb-2" />
         <p className="font-semibold">{error || "Task not found"}</p>
         <Link to="/tasks" className="inline-block mt-3 text-indigo-600 underline">
@@ -98,7 +98,7 @@ export const TaskDetailPage: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-colors"
+            className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
@@ -125,7 +125,7 @@ export const TaskDetailPage: React.FC = () => {
           <select
             value={task.status}
             onChange={(e) => handleStatusChange(e.target.value as TaskStatus)}
-            className="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <option value="TO_DO">To Do</option>
             <option value="IN_PROGRESS">In Progress</option>
@@ -142,7 +142,7 @@ export const TaskDetailPage: React.FC = () => {
         {/* Left Column (2 Cols): Details & Comments */}
         <div className="lg:col-span-2 space-y-6">
           {/* Description */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
             <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
               Description & Requirements
             </h2>
@@ -157,7 +157,7 @@ export const TaskDetailPage: React.FC = () => {
           </div>
 
           {/* Linked Daily Work Logs */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
                 Linked Daily Work Logs ({task.dailyWorkEntries?.length || 0})
@@ -192,7 +192,7 @@ export const TaskDetailPage: React.FC = () => {
           </div>
 
           {/* Comments Thread */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
             <div className="flex items-center gap-2">
               <MessageSquare className="w-4 h-4 text-indigo-500" />
               <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -242,7 +242,7 @@ export const TaskDetailPage: React.FC = () => {
 
         {/* Right Column: Meta Information & Audit History */}
         <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4 text-xs">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4 text-xs">
             <h3 className="font-semibold text-slate-900 dark:text-white text-sm border-b border-slate-100 dark:border-slate-800 pb-2">
               Task Details
             </h3>
@@ -315,7 +315,7 @@ export const TaskDetailPage: React.FC = () => {
           </div>
 
           {/* Task History */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-3">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-3">
             <div className="flex items-center gap-2">
               <History className="w-4 h-4 text-slate-400" />
               <h3 className="text-xs font-semibold text-slate-900 dark:text-white">

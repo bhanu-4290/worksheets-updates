@@ -207,20 +207,20 @@ export const DailyReportPage: React.FC = () => {
       {/* Top Header & Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
             Daily Work Reporting
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Log daily activities, linked project tasks, deliverables, and blockers. Work hours are optional.
           </p>
         </div>
 
-        <div className="flex items-center gap-1.5 p-1.5 bg-slate-200/60 dark:bg-slate-800/80 backdrop-blur-md rounded-2xl self-start sm:self-auto border border-slate-200/50 dark:border-slate-700/50">
+        <div className="flex items-center gap-1.5 p-1 bg-slate-200/70 dark:bg-slate-800 rounded-xl self-start sm:self-auto">
           <button
             onClick={() => setActiveTab("form")}
-            className={`px-4.5 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               activeTab === "form"
-                ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md shadow-black/5"
+                ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
             }`}
           >
@@ -231,9 +231,9 @@ export const DailyReportPage: React.FC = () => {
               setActiveTab("history");
               loadHistoryReports();
             }}
-            className={`px-4.5 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               activeTab === "history"
-                ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md shadow-black/5"
+                ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
             }`}
           >
@@ -244,10 +244,10 @@ export const DailyReportPage: React.FC = () => {
 
       {message && (
         <div
-          className={`p-4 rounded-2xl text-xs font-medium flex items-center gap-3 shadow-xs animate-in fade-in zoom-in-95 duration-150 ${
+          className={`p-4 rounded-xl text-xs font-medium flex items-center gap-3 ${
             message.type === "success"
-              ? "bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30"
-              : "bg-rose-500/10 text-rose-800 dark:text-rose-300 border border-rose-500/30"
+              ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+              : "bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
           }`}
         >
           {message.type === "success" ? (
@@ -265,25 +265,23 @@ export const DailyReportPage: React.FC = () => {
       {activeTab === "form" && (
         <div className="space-y-6">
           {/* Date Selector & Optional Hours Notice */}
-          <div className="bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-5">
-            <div className="flex items-center gap-3.5">
-              <div className="p-3 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 shrink-0">
-                <Calendar className="w-5 h-5" />
-              </div>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Calendar className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Reporting Date
                 </label>
                 <input
                   type="date"
                   value={reportingDate}
                   onChange={(e) => setReportingDate(e.target.value)}
-                  className="mt-1 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                  className="mt-1 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
             </div>
 
-            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 max-w-xl text-xs text-indigo-900 dark:text-indigo-300 leading-relaxed">
+            <div className="flex items-start gap-2.5 p-3 rounded-lg bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 max-w-xl text-xs text-indigo-900 dark:text-indigo-300">
               <Info className="w-4 h-4 shrink-0 text-indigo-600 dark:text-indigo-400 mt-0.5" />
               <span>
                 <strong>Optional Working Hours Policy:</strong> Entering work hours is strictly optional. Unreported hours are distinguished from zero hours and will never be used as evidence of non-productivity.
@@ -292,18 +290,18 @@ export const DailyReportPage: React.FC = () => {
           </div>
 
           {/* Activity Entries List */}
-          <div className="space-y-5">
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <span>Activity Entries</span>
-                <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-indigo-500/15 text-indigo-700 dark:text-indigo-300">
+                <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400">
                   {entries.length}
                 </span>
               </h2>
               <button
                 type="button"
                 onClick={addEntry}
-                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 font-bold text-xs transition-colors border border-indigo-200/50 dark:border-indigo-800/50 shadow-xs"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 font-semibold text-xs transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" /> Add Another Activity
               </button>
@@ -312,14 +310,14 @@ export const DailyReportPage: React.FC = () => {
             {entries.map((entry, index) => (
               <div
                 key={index}
-                className="bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-sm space-y-5 relative transition-all hover:border-indigo-500/30"
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4 relative"
               >
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-3.5">
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-7 h-7 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center font-bold text-xs shadow-md shadow-indigo-500/20">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">
                       {index + 1}
                     </span>
-                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                       Activity Entry #{index + 1}
                     </span>
                   </div>
@@ -327,7 +325,7 @@ export const DailyReportPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => removeEntry(index)}
-                      className="text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors text-xs font-semibold flex items-center gap-1.5"
+                      className="text-slate-400 hover:text-rose-600 p-1 rounded transition-colors text-xs flex items-center gap-1"
                     >
                       <Trash2 className="w-4 h-4" /> Remove
                     </button>
@@ -337,7 +335,7 @@ export const DailyReportPage: React.FC = () => {
                 {/* Title & Linked Task */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                       Activity Title *
                     </label>
                     <input
@@ -346,18 +344,18 @@ export const DailyReportPage: React.FC = () => {
                       placeholder="e.g. Implement Role Scoping Middleware"
                       value={entry.activityTitle}
                       onChange={(e) => updateEntry(index, "activityTitle", e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-white text-xs font-medium focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+                      className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                       Link to Task (Optional)
                     </label>
                     <select
                       value={entry.taskId || ""}
                       onChange={(e) => updateEntry(index, "taskId", e.target.value || null)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-white text-xs font-medium focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+                      className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                       <option value="">-- No specific task --</option>
                       {tasks.map((t) => (
@@ -371,7 +369,7 @@ export const DailyReportPage: React.FC = () => {
 
                 {/* Description */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Detailed Work Description *
                   </label>
                   <textarea
@@ -380,38 +378,38 @@ export const DailyReportPage: React.FC = () => {
                     placeholder="Provide detailed description of tasks executed, technical decisions, and progress..."
                     value={entry.description}
                     onChange={(e) => updateEntry(index, "description", e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-white text-xs font-medium focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all leading-relaxed"
+                    className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
 
                 {/* Optional Hours Row */}
-                <div className="p-4.5 rounded-2xl bg-indigo-50/30 dark:bg-indigo-950/20 border border-indigo-100/60 dark:border-indigo-900/40 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+                    <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
                       Start Time (Optional)
                     </label>
                     <input
                       type="time"
                       value={entry.startTime || ""}
                       onChange={(e) => updateEntry(index, "startTime", e.target.value || null)}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+                    <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
                       End Time (Optional)
                     </label>
                     <input
                       type="time"
                       value={entry.endTime || ""}
                       onChange={(e) => updateEntry(index, "endTime", e.target.value || null)}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+                    <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
                       Hours Spent (Optional)
                     </label>
                     <input
@@ -424,21 +422,18 @@ export const DailyReportPage: React.FC = () => {
                       onChange={(e) =>
                         updateEntry(index, "hoursSpent", e.target.value === "" ? null : parseFloat(e.target.value))
                       }
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
                 </div>
 
                 {/* Progress & Status */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-2xl bg-slate-50/60 dark:bg-slate-800/30 border border-slate-200/60 dark:border-slate-800">
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                        Progress Percentage
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        Progress Percentage: {entry.progressPercentage}%
                       </label>
-                      <span className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400">
-                        {entry.progressPercentage}%
-                      </span>
                     </div>
                     <input
                       type="range"
@@ -447,18 +442,18 @@ export const DailyReportPage: React.FC = () => {
                       step="5"
                       value={entry.progressPercentage}
                       onChange={(e) => updateEntry(index, "progressPercentage", parseInt(e.target.value, 10))}
-                      className="w-full accent-indigo-600 cursor-pointer h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none"
+                      className="w-full accent-indigo-600 cursor-pointer"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                       Activity Status
                     </label>
                     <select
                       value={entry.status}
                       onChange={(e) => updateEntry(index, "status", e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-white text-xs font-medium focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+                      className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                       <option value="IN_PROGRESS">In Progress</option>
                       <option value="COMPLETED">Completed</option>
@@ -470,7 +465,7 @@ export const DailyReportPage: React.FC = () => {
                 {/* Deliverables & Blockers */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                       Deliverables / Accomplishments
                     </label>
                     <input
@@ -478,12 +473,12 @@ export const DailyReportPage: React.FC = () => {
                       placeholder="e.g. Merged PR #104, tested in staging"
                       value={entry.deliverables || ""}
                       onChange={(e) => updateEntry(index, "deliverables", e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-white text-xs font-medium focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+                      className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                       Blockers / Challenges
                     </label>
                     <input
@@ -491,7 +486,7 @@ export const DailyReportPage: React.FC = () => {
                       placeholder="e.g. Waiting on VPN firewall rule exception"
                       value={entry.blockers || ""}
                       onChange={(e) => updateEntry(index, "blockers", e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-white text-xs font-medium focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+                      className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
                 </div>
@@ -499,7 +494,7 @@ export const DailyReportPage: React.FC = () => {
                 {/* Support Required & Next Day Plan */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                       Support Required (Optional)
                     </label>
                     <input
@@ -507,12 +502,12 @@ export const DailyReportPage: React.FC = () => {
                       placeholder="e.g. Need Manager escalation with IT team"
                       value={entry.supportRequired || ""}
                       onChange={(e) => updateEntry(index, "supportRequired", e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-white text-xs font-medium focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+                      className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                       Next Working Day's Plan
                     </label>
                     <input
@@ -520,7 +515,7 @@ export const DailyReportPage: React.FC = () => {
                       placeholder="e.g. Run load tests and benchmark response latency"
                       value={entry.nextDayPlan || ""}
                       onChange={(e) => updateEntry(index, "nextDayPlan", e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-white text-xs font-medium focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+                      className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
                 </div>
@@ -529,12 +524,12 @@ export const DailyReportPage: React.FC = () => {
           </div>
 
           {/* Form Actions */}
-          <div className="flex items-center justify-end gap-3.5 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
             <button
               type="button"
               disabled={submitting}
               onClick={() => handleSave("DRAFT")}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-xs hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs hover:bg-slate-50 transition-colors disabled:opacity-50"
             >
               <Save className="w-4 h-4" /> Save as Draft
             </button>
@@ -543,7 +538,7 @@ export const DailyReportPage: React.FC = () => {
               type="button"
               disabled={submitting}
               onClick={() => handleSave("SUBMITTED")}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-xs transition-colors disabled:opacity-50"
             >
               {submitting ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -571,7 +566,7 @@ export const DailyReportPage: React.FC = () => {
                   setStatusFilter(e.target.value);
                   loadHistoryReports();
                 }}
-                className="px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 shadow-xs"
+                className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300"
               >
                 <option value="">All Statuses</option>
                 <option value="DRAFT">Draft</option>
@@ -581,46 +576,46 @@ export const DailyReportPage: React.FC = () => {
                 <option value="REVISION_REQUESTED">Revision Requested</option>
               </select>
             </div>
-            <span className="text-xs font-medium text-slate-400">
+            <span className="text-xs text-slate-400">
               Found {historyReports.length} reports
             </span>
           </div>
 
           {historyReports.length === 0 ? (
-            <div className="bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 rounded-3xl p-12 text-center text-slate-400 text-xs font-medium">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-12 text-center text-slate-400 text-xs">
               No daily reports found.
             </div>
           ) : (
-            <div className="bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50/70 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px] font-bold border-b border-slate-100 dark:border-slate-800">
+                  <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 uppercase tracking-wider text-[10px]">
                     <tr>
-                      <th className="px-6 py-4">Reporting Date</th>
-                      <th className="px-6 py-4">Employee</th>
-                      <th className="px-6 py-4">Activities</th>
-                      <th className="px-6 py-4">Recorded Hours</th>
-                      <th className="px-6 py-4">Status</th>
-                      <th className="px-6 py-4">Lead Reviewer</th>
-                      <th className="px-6 py-4 text-right">Action</th>
+                      <th className="px-6 py-3.5 font-bold">Reporting Date</th>
+                      <th className="px-6 py-3.5 font-bold">Employee</th>
+                      <th className="px-6 py-3.5 font-bold">Activities</th>
+                      <th className="px-6 py-3.5 font-bold">Recorded Hours</th>
+                      <th className="px-6 py-3.5 font-bold">Status</th>
+                      <th className="px-6 py-3.5 font-bold">Lead Reviewer</th>
+                      <th className="px-6 py-3.5 font-bold text-right">Action</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {historyReports.map((r) => (
                       <tr
                         key={r.id}
-                        className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
+                        className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
                       >
-                        <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">
+                        <td className="px-6 py-4 font-semibold text-slate-900 dark:text-white">
                           {r.reportingDate}
                         </td>
-                        <td className="px-6 py-4 text-slate-600 dark:text-slate-300 font-medium">
+                        <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
                           {r.user.fullName}
                         </td>
                         <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
                           {r.entriesCount} entries
                         </td>
-                        <td className="px-6 py-4 text-slate-600 dark:text-slate-400 font-mono font-medium">
+                        <td className="px-6 py-4 text-slate-600 dark:text-slate-400 font-mono">
                           {r.totalHoursRecorded ? `${r.totalHoursRecorded}h` : "Unreported"}
                         </td>
                         <td className="px-6 py-4">
@@ -632,7 +627,7 @@ export const DailyReportPage: React.FC = () => {
                         <td className="px-6 py-4 text-right">
                           <Link
                             to={`/reports/${r.id}`}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-bold hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors"
+                            className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-semibold hover:bg-indigo-100 transition-colors"
                           >
                             <Eye className="w-3.5 h-3.5" /> Details
                           </Link>
