@@ -8,7 +8,7 @@ export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("Password123!");
+  const [password, setPassword] = useState("Matrix@4290");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,13 +27,13 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleDemoLogin = async (demoEmail: string) => {
-    setEmail(demoEmail);
-    setPassword("Password123!");
+  const handleDemoLogin = async (demoIdentifier: string) => {
+    setEmail(demoIdentifier);
+    setPassword("Matrix@4290");
     setError(null);
     setLoading(true);
     try {
-      await login(demoEmail, "Password123!");
+      await login(demoIdentifier, "Matrix@4290");
       navigate("/dashboard");
     } catch (err: any) {
       setError(err.message || "Demo login failed");
@@ -43,53 +43,57 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-100 dark:bg-slate-950">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4 bg-slate-900 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.25),rgba(255,255,255,0))]">
+      {/* Ambient background glow orbs */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="relative z-10 w-full max-w-md my-8">
         {/* Brand Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-600 text-white font-bold text-xl shadow-lg shadow-indigo-200 dark:shadow-none mb-3">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-600 text-white font-extrabold text-2xl shadow-xl shadow-indigo-500/25 ring-4 ring-indigo-500/20 mb-3.5">
             W
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <h1 className="text-3xl font-extrabold tracking-tight text-white">
             WorkTrack Enterprise
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Employee Daily Work Tracking & Management System
+          <p className="text-xs text-slate-400 mt-1 font-medium">
+            Daily Work Tracking & Team Performance System
           </p>
         </div>
 
         {/* Card */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-6 sm:p-8">
+        <div className="bg-slate-900/80 backdrop-blur-2xl border border-slate-800/90 rounded-3xl shadow-2xl p-7 sm:p-9">
           {error && (
-            <div className="mb-6 p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300 text-xs flex items-start gap-3">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <div className="mb-6 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-medium flex items-start gap-3 animate-in fade-in duration-150">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
               <span>{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4.5">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                Official Email Address
+              <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
+                Username or Email Address
               </label>
               <input
-                type="email"
+                type="text"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@worktrack.company"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                placeholder="e.g. rahul or rahul@worktrack.company"
+                className="w-full px-4 py-3 rounded-xl border border-slate-700/80 bg-slate-800/60 text-white text-xs font-medium placeholder-slate-500 focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
               />
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider">
                   Password
                 </label>
                 <Link
                   to="/forgot-password"
-                  className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+                  className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 hover:underline"
                 >
                   Forgot password?
                 </Link>
@@ -100,82 +104,106 @@ export const LoginPage: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                className="w-full px-4 py-3 rounded-xl border border-slate-700/80 bg-slate-800/60 text-white text-xs font-medium placeholder-slate-500 focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-md shadow-indigo-200 dark:shadow-none transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+              className="w-full mt-3 py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/25 transition-all flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60"
             >
               {loading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
-                  <LogIn className="w-4 h-4" /> Sign In
+                  <LogIn className="w-4 h-4" /> Sign In to WorkTrack
                 </>
               )}
             </button>
           </form>
 
-          {/* Quick Demo Personas */}
-          <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 mb-3">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-              <span>One-Click Demo Personas (Password: Password123!)</span>
+          {/* Quick Team Personas */}
+          <div className="mt-7 pt-6 border-t border-slate-800">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 mb-3.5">
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+              <span>One-Click Team Login (Password: Matrix@4290)</span>
             </div>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <button
                 type="button"
-                onClick={() => handleDemoLogin("admin@worktrack.company")}
-                className="p-2.5 rounded-lg border border-purple-200 dark:border-purple-900 bg-purple-50 dark:bg-purple-950/30 text-purple-900 dark:text-purple-300 hover:bg-purple-100 text-left font-medium transition-colors"
+                onClick={() => handleDemoLogin("rahul@worktrack.company")}
+                className="p-2.5 rounded-xl border border-purple-500/30 bg-purple-950/30 text-purple-200 hover:bg-purple-900/40 text-left transition-all hover-card-lift"
               >
-                <div className="font-bold">Super Admin</div>
-                <div className="text-[10px] text-purple-600 dark:text-purple-400 truncate">
-                  Eleanor Vance
+                <div className="font-bold flex items-center justify-between">
+                  <span>Rahul</span>
+                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 font-mono">ADMIN</span>
+                </div>
+                <div className="text-[10px] text-purple-400/80 truncate mt-0.5">
+                  Super Admin
                 </div>
               </button>
 
               <button
                 type="button"
-                onClick={() => handleDemoLogin("manager.eng@worktrack.company")}
-                className="p-2.5 rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/30 text-blue-900 dark:text-blue-300 hover:bg-blue-100 text-left font-medium transition-colors"
+                onClick={() => handleDemoLogin("phani@worktrack.company")}
+                className="p-2.5 rounded-xl border border-blue-500/30 bg-blue-950/30 text-blue-200 hover:bg-blue-900/40 text-left transition-all hover-card-lift"
               >
-                <div className="font-bold">Engineering Manager</div>
-                <div className="text-[10px] text-blue-600 dark:text-blue-400 truncate">
-                  Marcus Sterling
+                <div className="font-bold flex items-center justify-between">
+                  <span>Phani</span>
+                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-300 font-mono">MANAGER</span>
+                </div>
+                <div className="text-[10px] text-blue-400/80 truncate mt-0.5">
+                  Department Manager
                 </div>
               </button>
 
               <button
                 type="button"
-                onClick={() => handleDemoLogin("lead.frontend@worktrack.company")}
-                className="p-2.5 rounded-lg border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-300 hover:bg-emerald-100 text-left font-medium transition-colors"
+                onClick={() => handleDemoLogin("tharun@worktrack.company")}
+                className="p-2.5 rounded-xl border border-emerald-500/30 bg-emerald-950/30 text-emerald-200 hover:bg-emerald-900/40 text-left transition-all hover-card-lift"
               >
-                <div className="font-bold">Frontend Team Lead</div>
-                <div className="text-[10px] text-emerald-600 dark:text-emerald-400 truncate">
-                  David Kim
+                <div className="font-bold flex items-center justify-between">
+                  <span>Tharun</span>
+                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono">LEAD</span>
+                </div>
+                <div className="text-[10px] text-emerald-400/80 truncate mt-0.5">
+                  Team Leader
                 </div>
               </button>
 
               <button
                 type="button"
-                onClick={() => handleDemoLogin("exec.dev1@worktrack.company")}
-                className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-200 hover:bg-slate-100 text-left font-medium transition-colors"
+                onClick={() => handleDemoLogin("bhanu@worktrack.company")}
+                className="p-2.5 rounded-xl border border-indigo-500/30 bg-indigo-950/30 text-indigo-200 hover:bg-indigo-900/40 text-left transition-all hover-card-lift"
               >
-                <div className="font-bold">Executive Employee</div>
-                <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                  Alex Rivera
+                <div className="font-bold flex items-center justify-between">
+                  <span>Bhanu</span>
+                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-mono">EXEC</span>
+                </div>
+                <div className="text-[10px] text-indigo-400/80 truncate mt-0.5">
+                  Executive
                 </div>
               </button>
             </div>
+
+            <button
+              type="button"
+              onClick={() => handleDemoLogin("naveen@worktrack.company")}
+              className="mt-2 w-full p-2.5 rounded-xl border border-slate-700 bg-slate-800/40 text-slate-300 hover:bg-slate-800 text-left transition-all hover-card-lift flex items-center justify-between"
+            >
+              <div>
+                <span className="font-bold text-xs">Naveen</span>
+                <span className="text-[10px] text-slate-400 ml-2">Executive</span>
+              </div>
+              <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-700 text-slate-300 font-mono">EXEC</span>
+            </button>
           </div>
         </div>
 
-        <div className="text-center mt-6 text-xs text-slate-400 flex items-center justify-center gap-1.5">
+        <div className="text-center mt-6 text-xs text-slate-500 flex items-center justify-center gap-1.5 font-medium">
           <ShieldCheck className="w-4 h-4 text-emerald-500" />
-          <span>Internal Corporate System • Encrypted Session Cookie</span>
+          <span>Internal Corporate System • Encrypted Session Token</span>
         </div>
       </div>
     </div>

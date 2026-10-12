@@ -14,7 +14,8 @@ interface BadgeProps {
     | "warning"
     | "danger"
     | "info"
-    | "default";
+    | "default"
+    | string;
   label?: string;
   size?: "sm" | "md";
 }
@@ -22,76 +23,142 @@ interface BadgeProps {
 export const Badge: React.FC<BadgeProps> = ({ children, variant = "default", label, size = "md" }) => {
   const text = label || children;
 
-  const getStyle = () => {
+  const getStyle = (): { container: string; dot: string } => {
     switch (variant) {
       // Roles
       case "SUPER_ADMIN":
-        return "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 border-purple-200 dark:border-purple-800";
+        return {
+          container: "bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border-purple-200/80 dark:border-purple-800/80",
+          dot: "bg-purple-500",
+        };
       case "MANAGER":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border-blue-200 dark:border-blue-800";
+        return {
+          container: "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200/80 dark:border-blue-800/80",
+          dot: "bg-blue-500",
+        };
       case "TEAM_LEAD":
-        return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800";
+        return {
+          container: "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200/80 dark:border-amber-800/80",
+          dot: "bg-amber-500",
+        };
       case "EXECUTIVE":
-        return "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700";
+        return {
+          container: "bg-slate-100 text-slate-700 dark:bg-slate-800/80 dark:text-slate-300 border-slate-200 dark:border-slate-700",
+          dot: "bg-slate-400",
+        };
 
       // Report Statuses
       case "APPROVED":
-        return "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800";
+        return {
+          container: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/80 font-semibold",
+          dot: "bg-emerald-500",
+        };
       case "SUBMITTED":
-        return "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border-amber-300 dark:border-amber-800";
+        return {
+          container: "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800/80 font-semibold",
+          dot: "bg-amber-500 animate-pulse",
+        };
       case "UNDER_REVIEW":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border-blue-300 dark:border-blue-800";
+        return {
+          container: "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800/80 font-semibold",
+          dot: "bg-blue-500 animate-pulse",
+        };
       case "REVISION_REQUESTED":
-        return "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border-rose-300 dark:border-rose-800";
+        return {
+          container: "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-800/80 font-semibold",
+          dot: "bg-rose-500",
+        };
       case "DRAFT":
-        return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700";
+        return {
+          container: "bg-slate-100 text-slate-600 dark:bg-slate-800/80 dark:text-slate-400 border-slate-200 dark:border-slate-700",
+          dot: "bg-slate-400",
+        };
 
       // Task Statuses
       case "COMPLETED":
-        return "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-300";
+        return {
+          container: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
+          dot: "bg-emerald-500",
+        };
       case "IN_PROGRESS":
-        return "bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 border-indigo-300";
+        return {
+          container: "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800",
+          dot: "bg-indigo-500 animate-pulse",
+        };
       case "TO_DO":
-        return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-300";
+        return {
+          container: "bg-slate-100 text-slate-700 dark:bg-slate-800/80 dark:text-slate-300 border-slate-200 dark:border-slate-700",
+          dot: "bg-slate-400",
+        };
       case "BLOCKED":
-        return "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border-rose-300";
+        return {
+          container: "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-800",
+          dot: "bg-rose-500",
+        };
       case "IN_REVIEW":
-        return "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300 border-sky-300";
+        return {
+          container: "bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border-sky-200 dark:border-sky-800",
+          dot: "bg-sky-500",
+        };
       case "CANCELLED":
-        return "bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 border-zinc-300";
+        return {
+          container: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800/80 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700",
+          dot: "bg-zinc-400",
+        };
 
       // Priorities
       case "URGENT":
       case "CRITICAL":
-        return "bg-rose-500 text-white border-transparent font-bold animate-pulse";
+        return {
+          container: "bg-gradient-to-r from-rose-500 to-rose-600 text-white border-transparent font-bold shadow-xs shadow-rose-500/30",
+          dot: "bg-white animate-ping",
+        };
       case "HIGH":
-        return "bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300 border-orange-300";
+        return {
+          container: "bg-orange-50 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300 border-orange-200 dark:border-orange-800",
+          dot: "bg-orange-500",
+        };
       case "MEDIUM":
-        return "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border-amber-300";
+        return {
+          container: "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800",
+          dot: "bg-amber-500",
+        };
       case "LOW":
       case "NORMAL":
-        return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200";
+        return {
+          container: "bg-slate-100 text-slate-700 dark:bg-slate-800/80 dark:text-slate-300 border-slate-200 dark:border-slate-700",
+          dot: "bg-slate-400",
+        };
 
       // Escalation Statuses
       case "OPEN":
-        return "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border-amber-300";
+        return {
+          container: "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800",
+          dot: "bg-amber-500 animate-pulse",
+        };
       case "RESOLVED":
-        return "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-300";
-      case "ESCALATED_TO_ADMIN":
-        return "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border-purple-300 font-semibold";
+        return {
+          container: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
+          dot: "bg-emerald-500",
+        };
 
       default:
-        return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200";
+        return {
+          container: "bg-slate-100 text-slate-700 dark:bg-slate-800/80 dark:text-slate-300 border-slate-200 dark:border-slate-700",
+          dot: "bg-slate-400",
+        };
     }
   };
 
-  const sizeClass = size === "sm" ? "px-2 py-0.5 text-xs" : "px-2.5 py-1 text-xs font-medium";
+  const style = getStyle();
+  const sizeClass = size === "sm" ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-1 text-xs";
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border shadow-sm transition-colors ${getStyle()} ${sizeClass}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border tracking-wide font-medium shadow-2xs transition-all ${style.container} ${sizeClass}`}
     >
-      {text}
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${style.dot}`} />
+      <span>{text}</span>
     </span>
   );
 };
