@@ -1,0 +1,32 @@
+[Unit]
+Description=WorkTrack Enterprise Backend Service
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=worktrack
+WorkingDirectory=/opt/worktrack/server
+ExecStart=/usr/bin/node dist/index.js
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=worktrack-api
+
+# Environment variables
+Environment=NODE_ENV=production
+Environment=PORT=5000
+Environment=DATABASE_URL=postgresql://worktrack_admin:WorkTrackSecurePass2026!@localhost:5432/worktrack_db?schema=public
+Environment=JWT_SECRET=super_secret_production_jwt_key_random_32_characters_minimum
+Environment=JWT_EXPIRES_IN=7d
+Environment=USE_SYSTEM_POSTGRES=true
+
+# Security Hardening
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
