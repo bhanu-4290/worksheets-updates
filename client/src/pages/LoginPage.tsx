@@ -147,13 +147,13 @@ export const LoginPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleDemoLogin("phani@worktrack.company")}
-                className="p-2.5 rounded-xl border border-blue-500/30 bg-blue-950/30 text-blue-200 hover:bg-blue-900/40 text-left transition-all hover-card-lift"
+                className="p-2.5 rounded-xl border border-indigo-500/30 bg-indigo-950/30 text-indigo-200 hover:bg-indigo-900/40 text-left transition-all hover-card-lift"
               >
                 <div className="font-bold flex items-center justify-between">
                   <span>Phani</span>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono">MANAGER</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono">MANAGER</span>
                 </div>
-                <div className="text-[10px] text-blue-400/80 truncate mt-0.5">
+                <div className="text-[10px] text-indigo-400/80 truncate mt-0.5">
                   Department Manager
                 </div>
               </button>
@@ -175,13 +175,13 @@ export const LoginPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleDemoLogin("bhanu@worktrack.company")}
-                className="p-2.5 rounded-xl border border-indigo-500/30 bg-indigo-950/30 text-indigo-200 hover:bg-indigo-900/40 text-left transition-all hover-card-lift"
+                className="p-2.5 rounded-xl border border-blue-500/30 bg-blue-950/30 text-blue-200 hover:bg-blue-900/40 text-left transition-all hover-card-lift"
               >
                 <div className="font-bold flex items-center justify-between">
                   <span>Bhanu</span>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono">EXEC</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono">EXEC</span>
                 </div>
-                <div className="text-[10px] text-indigo-400/80 truncate mt-0.5">
+                <div className="text-[10px] text-blue-400/80 truncate mt-0.5">
                   Executive
                 </div>
               </button>
@@ -190,13 +190,13 @@ export const LoginPage: React.FC = () => {
             <button
               type="button"
               onClick={() => handleDemoLogin("naveen@worktrack.company")}
-              className="mt-2 w-full p-2.5 rounded-xl border border-slate-700 bg-slate-800/40 text-slate-300 hover:bg-slate-800 text-left transition-all hover-card-lift flex items-center justify-between"
+              className="mt-2 w-full p-2.5 rounded-xl border border-blue-500/30 bg-blue-950/30 text-blue-200 hover:bg-blue-900/40 text-left transition-all hover-card-lift flex items-center justify-between"
             >
               <div>
                 <span className="font-bold text-xs">Naveen</span>
-                <span className="text-[10px] text-slate-400 ml-2">Executive</span>
+                <span className="text-[10px] text-blue-300/80 ml-2">Executive</span>
               </div>
-              <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-700 text-slate-300 font-mono">EXEC</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono">EXEC</span>
             </button>
           </div>
         </div>

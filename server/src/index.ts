@@ -2,12 +2,19 @@ import { app } from "./app.js";
 import { initDatabase, prisma } from "./config/db.js";
 import { logger } from "./utils/logger.js";
 
+import { checkAndTriggerBirthdays } from "./controllers/announcement.controller.js";
+
 const PORT = process.env.PORT || 5000;
 
 async function bootstrap() {
   try {
     await initDatabase();
     logger.info("Database initialized successfully.");
+
+    // Initial check for any employee birthdays today
+    await checkAndTriggerBirthdays();
+    // Re-check every hour
+    setInterval(checkAndTriggerBirthdays, 1000 * 60 * 60);
 
     const server = app.listen(PORT, () => {
       logger.info(`🚀 WorkTrack API Server running on http://localhost:${PORT}`);

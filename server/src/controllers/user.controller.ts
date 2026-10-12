@@ -5,6 +5,7 @@ import { prisma } from "../config/db.js";
 import { Role } from "@prisma/client";
 import { isSuperAdmin, isManager, isTeamLead, canAccessEmployee } from "../middleware/scope.middleware.js";
 import { logAuditEvent } from "../utils/audit.js";
+import { checkAndTriggerBirthdays } from "./announcement.controller.js";
 
 const createUserSchema = z.object({
   employeeId: z.string().min(2),
@@ -18,6 +19,7 @@ const createUserSchema = z.object({
   teamLeadId: z.string().optional().nullable(),
   teamId: z.string().optional().nullable(),
   joiningDate: z.string().optional(),
+  dateOfBirth: z.string().optional().nullable(),
 });
 
 const updateUserSchema = z.object({
@@ -27,6 +29,7 @@ const updateUserSchema = z.object({
   departmentId: z.string().nullable().optional(),
   managerId: z.string().nullable().optional(),
   teamLeadId: z.string().nullable().optional(),
+  dateOfBirth: z.string().nullable().optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -91,6 +94,7 @@ export async function getUsers(req: Request, res: Response, next: NextFunction):
         managerId: true,
         teamLeadId: true,
         joiningDate: true,
+        dateOfBirth: true,
         isActive: true,
         createdAt: true,
         department: { select: { id: true, name: true, code: true } },
@@ -199,6 +203,7 @@ export async function createUser(req: Request, res: Response, next: NextFunction
           managerId: data.managerId || null,
           teamLeadId: data.teamLeadId || null,
           joiningDate: data.joiningDate ? new Date(data.joiningDate) : new Date(),
+          dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
         },
       });
 
@@ -213,6 +218,11 @@ export async function createUser(req: Request, res: Response, next: NextFunction
 
       return created;
     });
+
+    // Automatically trigger birthday celebration if today is the employee's birthday
+    if (data.dateOfBirth) {
+      checkAndTriggerBirthdays().catch((e) => console.error("[BIRTHDAY] Error triggering:", e));
+    }
 
     await logAuditEvent({
       userId: req.user!.id,
@@ -270,12 +280,21 @@ export async function updateUser(req: Request, res: Response, next: NextFunction
       return;
     }
 
+    const updateData: any = {
+      ...data,
+    };
+    if (data.dateOfBirth !== undefined) {
+      updateData.dateOfBirth = data.dateOfBirth ? new Date(data.dateOfBirth) : null;
+    }
+
     const updated = await prisma.user.update({
       where: { id },
-      data: {
-        ...data,
-      },
+      data: updateData,
     });
+
+    if (data.dateOfBirth) {
+      checkAndTriggerBirthdays().catch((e) => console.error("[BIRTHDAY] Error triggering:", e));
+    }
 
     await logAuditEvent({
       userId: req.user!.id,

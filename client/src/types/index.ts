@@ -60,6 +60,7 @@ export interface User {
   managerId?: string | null;
   teamLeadId?: string | null;
   joiningDate: string;
+  dateOfBirth?: string | null;
   isActive: boolean;
   department?: Department | null;
   manager?: { id: string; fullName: string; email: string; jobTitle?: string } | null;

@@ -120,6 +120,7 @@ model User {
   managerId    String?
   teamLeadId   String?
   joiningDate  DateTime  @default(now())
+  dateOfBirth  DateTime?
   isActive     Boolean   @default(true)
   profileImage String?
   createdAt    DateTime  @default(now())

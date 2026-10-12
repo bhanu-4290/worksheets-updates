@@ -12,7 +12,110 @@ const createAnnouncementSchema = z.object({
   isPinned: z.boolean().default(false),
 });
 
+export async function checkAndTriggerBirthdays(): Promise<void> {
+  try {
+    const now = new Date();
+    const utcMonth = now.getUTCMonth();
+    const utcDate = now.getUTCDate();
+    const localMonth = now.getMonth();
+    const localDate = now.getDate();
+    const currentYear = now.getFullYear();
+
+    const activeUsersWithDob = await prisma.user.findMany({
+      where: {
+        isActive: true,
+        dateOfBirth: { not: null },
+      },
+    });
+
+    if (activeUsersWithDob.length === 0) return;
+
+    // Filter users whose birthday is today (comparing month and date)
+    const birthdayUsers = activeUsersWithDob.filter((u) => {
+      if (!u.dateOfBirth) return false;
+      const dob = new Date(u.dateOfBirth);
+      const dobUtcMonth = dob.getUTCMonth();
+      const dobUtcDate = dob.getUTCDate();
+      const dobLocalMonth = dob.getMonth();
+      const dobLocalDate = dob.getDate();
+
+      return (
+        (dobUtcMonth === utcMonth && dobUtcDate === utcDate) ||
+        (dobLocalMonth === localMonth && dobLocalDate === localDate)
+      );
+    });
+
+    if (birthdayUsers.length === 0) return;
+
+    // Retrieve Super Admin as the official wishes sender
+    const superAdmin = await prisma.user.findFirst({
+      where: { role: "SUPER_ADMIN", isActive: true },
+      orderBy: { createdAt: "asc" },
+    });
+
+    const startOfYear = new Date(currentYear, 0, 1);
+
+    for (const bUser of birthdayUsers) {
+      const birthdayTitle = `🎉 Happy Birthday, ${bUser.fullName}!`;
+
+      // Verify if birthday announcement was already published this calendar year
+      const existingAnnouncement = await prisma.announcement.findFirst({
+        where: {
+          title: birthdayTitle,
+          createdAt: { gte: startOfYear },
+        },
+      });
+
+      if (!existingAnnouncement) {
+        const senderId = superAdmin ? superAdmin.id : bUser.id;
+
+        // 1. Company-wide celebration announcement
+        await prisma.announcement.create({
+          data: {
+            title: birthdayTitle,
+            content: `Today the entire WorkTrack family celebrates ${bUser.fullName} (${bUser.jobTitle}) on their birthday! 🎂🎈✨\n\nWishing you boundless happiness, great health, and continued success. Have a truly wonderful and memorable day!`,
+            priority: "HIGH",
+            targetScope: "ALL",
+            isPinned: true,
+            authorId: senderId,
+          },
+        });
+
+        // 2. Personal Direct Chat message from Admin
+        if (superAdmin && superAdmin.id !== bUser.id) {
+          await prisma.chatMessage.create({
+            data: {
+              senderId: superAdmin.id,
+              receiverId: bUser.id,
+              content: `🎂 Happy Birthday, ${bUser.fullName}! 🌟 On behalf of the entire management and team, wishing you a joyous birthday and a wonderful year ahead! 🎉`,
+            },
+          });
+        }
+
+        // 3. Direct in-app notification to birthday user
+        await prisma.notification.create({
+          data: {
+            recipientId: bUser.id,
+            senderId: superAdmin ? superAdmin.id : null,
+            eventType: "BIRTHDAY_WISHES",
+            title: `🎂 Happy Birthday from the Team!`,
+            message: `Wishing you a wonderful birthday, ${bUser.fullName}! A special celebration announcement has been posted in your honor.`,
+            link: "/announcements",
+          },
+        });
+
+        console.log(`[BIRTHDAY] Automated birthday celebration triggered for ${bUser.fullName} (${bUser.email}).`);
+      }
+    }
+  } catch (err) {
+    console.error("[BIRTHDAY] Error in checkAndTriggerBirthdays:", err);
+  }
+}
+
 export async function getAnnouncements(req: Request, res: Response): Promise<void> {
+  // Check and trigger any birthdays for today
+  await checkAndTriggerBirthdays();
+
   const user = req.user!;
 
   // Fetch user's department and teams for scope filtering

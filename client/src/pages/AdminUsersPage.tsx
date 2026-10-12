@@ -13,6 +13,7 @@ import {
   Edit,
   Shield,
   FileSpreadsheet,
+  Cake,
 } from "lucide-react";
 
 export const AdminUsersPage: React.FC = () => {
@@ -35,6 +36,7 @@ export const AdminUsersPage: React.FC = () => {
     teamId: "",
     managerId: "",
     teamLeadId: "",
+    dateOfBirth: "",
   });
   const [createLoading, setCreateLoading] = useState(false);
 
@@ -48,6 +50,7 @@ export const AdminUsersPage: React.FC = () => {
     departmentId: "",
     managerId: "",
     teamLeadId: "",
+    dateOfBirth: "",
   });
 
   // CSV Import Modal
@@ -94,6 +97,7 @@ export const AdminUsersPage: React.FC = () => {
         managerId: createData.managerId || null,
         teamLeadId: createData.teamLeadId || null,
         teamId: createData.teamId || null,
+        dateOfBirth: createData.dateOfBirth || null,
       });
       setShowCreateModal(false);
       setCreateData({
@@ -107,6 +111,7 @@ export const AdminUsersPage: React.FC = () => {
         teamId: "",
         managerId: "",
         teamLeadId: "",
+        dateOfBirth: "",
       });
       loadUsers();
     } catch (err: any) {
@@ -125,6 +130,7 @@ export const AdminUsersPage: React.FC = () => {
         departmentId: editData.departmentId || null,
         managerId: editData.managerId || null,
         teamLeadId: editData.teamLeadId || null,
+        dateOfBirth: editData.dateOfBirth || null,
       });
       setShowEditModal(false);
       setSelectedUser(null);
@@ -246,6 +252,12 @@ export const AdminUsersPage: React.FC = () => {
                       <div className="text-[11px] text-indigo-600 dark:text-indigo-400 mt-0.5">
                         {u.jobTitle}
                       </div>
+                      {u.dateOfBirth && (
+                        <div className="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 mt-1 font-semibold">
+                          <Cake className="w-3 h-3" />
+                          <span>Birthday: {new Date(u.dateOfBirth).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <Badge variant={u.role} size="sm" />
@@ -278,6 +290,7 @@ export const AdminUsersPage: React.FC = () => {
                               departmentId: u.departmentId || "",
                               managerId: u.managerId || "",
                               teamLeadId: u.teamLeadId || "",
+                              dateOfBirth: u.dateOfBirth ? u.dateOfBirth.split("T")[0] : "",
                             });
                             setShowEditModal(true);
                           }}
@@ -436,6 +449,28 @@ export const AdminUsersPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Birthday / Date of Birth Section */}
+          <div className="p-3.5 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 rounded-xl space-y-1.5">
+            <div className="flex items-center gap-2 text-xs font-bold text-amber-800 dark:text-amber-300">
+              <Cake className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              <span>Birthday & Automated Celebrations</span>
+            </div>
+            <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+              On the employee's birthday, WorkTrack automatically publishes a company-wide celebration announcement and delivers personalized celebratory wishes to their inbox!
+            </p>
+            <div className="pt-1">
+              <label className="block text-xs font-semibold mb-1 text-slate-800 dark:text-slate-200">
+                Birthday (Date of Birth)
+              </label>
+              <input
+                type="date"
+                value={createData.dateOfBirth}
+                onChange={(e) => setCreateData({ ...createData, dateOfBirth: e.target.value })}
+                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+              />
+            </div>
+          </div>
+
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
@@ -554,6 +589,25 @@ export const AdminUsersPage: React.FC = () => {
                     </option>
                   ))}
               </select>
+            </div>
+          </div>
+
+          {/* Birthday / Date of Birth Section */}
+          <div className="p-3.5 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 rounded-xl space-y-1.5">
+            <div className="flex items-center gap-2 text-xs font-bold text-amber-800 dark:text-amber-300">
+              <Cake className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              <span>Birthday & Celebrations</span>
+            </div>
+            <div className="pt-1">
+              <label className="block text-xs font-semibold mb-1 text-slate-800 dark:text-slate-200">
+                Birthday (Date of Birth)
+              </label>
+              <input
+                type="date"
+                value={editData.dateOfBirth}
+                onChange={(e) => setEditData({ ...editData, dateOfBirth: e.target.value })}
+                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+              />
             </div>
           </div>
 

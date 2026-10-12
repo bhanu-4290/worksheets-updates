@@ -85,8 +85,11 @@ export async function initDatabase(): Promise<void> {
             CONSTRAINT "announcements_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "departments"("id") ON DELETE CASCADE ON UPDATE CASCADE,
             CONSTRAINT "announcements_teamId_fkey" FOREIGN KEY ("teamId") REFERENCES "teams"("id") ON DELETE CASCADE ON UPDATE CASCADE
         );
+
+        -- Ensure dateOfBirth column exists on users table
+        ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "dateOfBirth" TIMESTAMP(3);
       `);
-      console.log("[DB] PostgreSQL schema is ready (with Chat & Announcements).");
+      console.log("[DB] PostgreSQL schema is ready (with Chat, Announcements & Date of Birth).");
     } catch (err) {
       console.error("[DB] Error checking/applying schema:", err);
       throw err;

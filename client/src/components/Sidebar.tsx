@@ -5,10 +5,8 @@ import {
   LayoutDashboard,
   FileText,
   CheckSquare,
-  AlertTriangle,
   Users,
   FolderKanban,
-  BarChart3,
   Building2,
   Network,
   UserCog,
@@ -137,10 +135,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                   <ClipboardCheck className="w-4 h-4 transition-transform group-hover:scale-110" />
                   Review Queue
                 </Link>
-                <Link to="/escalations" onClick={onClose} className={linkClass("/escalations")}>
-                  <AlertTriangle className="w-4 h-4 transition-transform group-hover:scale-110" />
-                  Blocker Escalations
-                </Link>
                 <Link to="/team" onClick={onClose} className={linkClass("/team")}>
                   <Users className="w-4 h-4 transition-transform group-hover:scale-110" />
                   Team Overview
@@ -155,10 +149,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               <span>Organization</span>
             </div>
             <div className="space-y-1">
-              <Link to="/analytics" onClick={onClose} className={linkClass("/analytics")}>
-                <BarChart3 className="w-4 h-4 transition-transform group-hover:scale-110" />
-                Analytics & KPIs
-              </Link>
               <Link to="/projects" onClick={onClose} className={linkClass("/projects")}>
                 <FolderKanban className="w-4 h-4 transition-transform group-hover:scale-110" />
                 Projects
