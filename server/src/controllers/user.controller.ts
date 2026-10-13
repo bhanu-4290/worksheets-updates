@@ -36,12 +36,12 @@ const updateUserSchema = z.object({
 export async function getUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const user = req.user!;
-    const { departmentId, role, search, status } = req.query;
+    const { departmentId, role, search, status, flow } = req.query;
 
     const where: any = {};
 
-    // Organizational Scope Filter
-    if (isSuperAdmin(user)) {
+    // Organizational Scope Filter (bypassed when requesting organization-wide flow chart)
+    if (flow === "true" || isSuperAdmin(user)) {
       if (departmentId) where.departmentId = String(departmentId);
     } else if (isManager(user)) {
       // Manager can only see their department

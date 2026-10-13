@@ -3,6 +3,7 @@ import { api } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { Badge } from "../components/Badge";
 import { Modal } from "../components/Modal";
+import { EmployeeFlowModal } from "../components/EmployeeFlowModal";
 import { User, Role, Department, Team } from "../types";
 import {
   UserPlus,
@@ -14,6 +15,7 @@ import {
   Shield,
   FileSpreadsheet,
   Cake,
+  GitBranch,
 } from "lucide-react";
 
 export const AdminUsersPage: React.FC = () => {
@@ -22,6 +24,7 @@ export const AdminUsersPage: React.FC = () => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [showFlowModal, setShowFlowModal] = useState(false);
 
   // Create User Modal
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -189,16 +192,22 @@ export const AdminUsersPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setShowFlowModal(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-xs font-semibold hover:bg-indigo-100 transition-colors cursor-pointer"
+          >
+            <GitBranch className="w-3.5 h-3.5" /> Employee Flow Chart
+          </button>
           <button
             onClick={() => setShowCsvModal(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold hover:bg-slate-50 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold hover:bg-slate-50 transition-colors cursor-pointer"
           >
             <Upload className="w-3.5 h-3.5" /> Bulk CSV Import
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-sm transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
           >
             <UserPlus className="w-4 h-4" /> Create User
           </button>
@@ -665,6 +674,11 @@ export const AdminUsersPage: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      <EmployeeFlowModal
+        isOpen={showFlowModal}
+        onClose={() => setShowFlowModal(false)}
+      />
     </div>
   );
 };

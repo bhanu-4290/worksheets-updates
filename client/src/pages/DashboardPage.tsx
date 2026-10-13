@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { api } from "../services/api";
 import { StatCard } from "../components/StatCard";
 import { Badge } from "../components/Badge";
+import { EmployeeFlowModal } from "../components/EmployeeFlowModal";
 import { Link } from "react-router-dom";
 import {
   FileText,
@@ -28,6 +29,7 @@ export const DashboardPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState<any[]>([]);
   const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [showEmployeeFlow, setShowEmployeeFlow] = useState(false);
 
   useEffect(() => {
     loadDashboard();
@@ -170,24 +172,32 @@ export const DashboardPage: React.FC = () => {
             value={data.assignedTasks}
             icon={CheckSquare}
             color="indigo"
+            to="/tasks"
+            actionLabel="View Task Board"
           />
           <StatCard
             title="Tasks In Progress"
             value={data.inProgressTasks}
             icon={Clock}
             color="blue"
+            to="/tasks"
+            actionLabel="Active Work"
           />
           <StatCard
             title="Tasks Completed"
             value={data.completedTasks}
             icon={CheckCircle2}
             color="emerald"
+            to="/tasks"
+            actionLabel="Completed History"
           />
           <StatCard
             title="Overdue Tasks"
             value={data.overdueTasks}
             icon={AlertTriangle}
             color={data.overdueTasks > 0 ? "rose" : "slate"}
+            to="/tasks"
+            actionLabel="Check Deadlines"
           />
         </div>
 
@@ -320,6 +330,8 @@ export const DashboardPage: React.FC = () => {
             subtitle="Subordinate members"
             icon={Users}
             color="indigo"
+            onClick={() => setShowEmployeeFlow(true)}
+            actionLabel="View Flow"
           />
           <StatCard
             title="Today's Submissions"
@@ -327,6 +339,8 @@ export const DashboardPage: React.FC = () => {
             subtitle={`${data.pendingSubmissions} pending submission`}
             icon={FileText}
             color="blue"
+            to="/reviews"
+            actionLabel="Inspect"
           />
           <StatCard
             title="Reports Awaiting Review"
@@ -334,6 +348,8 @@ export const DashboardPage: React.FC = () => {
             subtitle="Require lead acknowledgement"
             icon={Clock}
             color={data.pendingReviews > 0 ? "amber" : "emerald"}
+            to="/reviews"
+            actionLabel="Review Queue"
           />
           <StatCard
             title="Returned for Correction"
@@ -341,6 +357,8 @@ export const DashboardPage: React.FC = () => {
             subtitle="Awaiting resubmission"
             icon={AlertTriangle}
             color={data.revisionsReturned > 0 ? "rose" : "slate"}
+            to="/reviews"
+            actionLabel="View Returned"
           />
         </div>
 
@@ -351,12 +369,16 @@ export const DashboardPage: React.FC = () => {
             value={data.teamTasks}
             icon={CheckSquare}
             color="indigo"
+            to="/tasks"
+            actionLabel="Open Task Board"
           />
           <StatCard
             title="Overdue Tasks"
             value={data.overdueTasks}
             icon={AlertTriangle}
             color={data.overdueTasks > 0 ? "rose" : "slate"}
+            to="/tasks"
+            actionLabel="Check Overdue"
           />
           <StatCard
             title="Blocked Tasks"
@@ -364,6 +386,8 @@ export const DashboardPage: React.FC = () => {
             subtitle="May require Manager escalation"
             icon={AlertTriangle}
             color={data.blockedTasks > 0 ? "amber" : "slate"}
+            to="/tasks"
+            actionLabel="Resolve"
           />
         </div>
 
@@ -385,15 +409,15 @@ export const DashboardPage: React.FC = () => {
           </Link>
 
           <Link
-            to="/escalations"
+            to="/tasks"
             className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-indigo-500 transition-colors flex items-center justify-between"
           >
             <div>
               <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
-                Escalate Blocker to Manager
+                Task & Project Board
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Forward critical issues to Dept Manager
+                Assign and monitor daily deliverables
               </p>
             </div>
             <ArrowRight className="w-5 h-5 text-indigo-500" />
@@ -414,6 +438,11 @@ export const DashboardPage: React.FC = () => {
             <ArrowRight className="w-5 h-5 text-indigo-500" />
           </Link>
         </div>
+
+        <EmployeeFlowModal
+          isOpen={showEmployeeFlow}
+          onClose={() => setShowEmployeeFlow(false)}
+        />
       </div>
     );
   }
@@ -437,16 +466,16 @@ export const DashboardPage: React.FC = () => {
                 {user.department?.name || "Department"} Executive Console
               </h1>
               <p className="text-sm text-indigo-200/80 mt-1">
-                Monitor reporting compliance, track projects, and resolve escalated blockers
+                Monitor reporting compliance, track projects, and oversee team execution
               </p>
             </div>
-            <Link
-              to="/escalations"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs shadow-xs transition-colors shrink-0"
+            <button
+              onClick={() => setShowEmployeeFlow(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-xs transition-colors shrink-0 cursor-pointer"
             >
-              <AlertTriangle className="w-4 h-4" />
-              Critical Blockers ({data.criticalBlockers})
-            </Link>
+              <Users className="w-4 h-4" />
+              View Employee Flow
+            </button>
           </div>
         </div>
 
@@ -458,6 +487,8 @@ export const DashboardPage: React.FC = () => {
             subtitle={`${data.teamsCount} teams in department`}
             icon={Building2}
             color="blue"
+            onClick={() => setShowEmployeeFlow(true)}
+            actionLabel="Employee Flow"
           />
           <StatCard
             title="Today's Compliance"
@@ -465,6 +496,8 @@ export const DashboardPage: React.FC = () => {
             subtitle={`${data.todaySubmissions} of ${data.departmentEmployeeCount} submitted`}
             icon={TrendingUp}
             color={data.compliancePercentage >= 80 ? "emerald" : "amber"}
+            to="/reviews"
+            actionLabel="Check Reports"
           />
           <StatCard
             title="Pending Reviews"
@@ -472,6 +505,8 @@ export const DashboardPage: React.FC = () => {
             subtitle="Under team lead evaluation"
             icon={Clock}
             color="indigo"
+            to="/reviews"
+            actionLabel="Review Queue"
           />
           <StatCard
             title="Critical Blockers"
@@ -479,6 +514,8 @@ export const DashboardPage: React.FC = () => {
             subtitle="Requires management action"
             icon={AlertTriangle}
             color={data.criticalBlockers > 0 ? "rose" : "slate"}
+            to="/tasks"
+            actionLabel="Inspect Tasks"
           />
         </div>
 
@@ -490,6 +527,8 @@ export const DashboardPage: React.FC = () => {
             subtitle="Active across teams"
             icon={CheckSquare}
             color="indigo"
+            to="/tasks"
+            actionLabel="Open Task Board"
           />
           <StatCard
             title="Overdue Tasks"
@@ -497,36 +536,38 @@ export const DashboardPage: React.FC = () => {
             subtitle="Needs managerial reassignment"
             icon={AlertTriangle}
             color={data.deptOverdueTasks > 0 ? "rose" : "emerald"}
+            to="/tasks"
+            actionLabel="Review Overdue"
           />
         </div>
 
         {/* Manager Quick Navigation */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Link
-            to="/escalations"
+            to="/reviews"
             className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-indigo-500 transition-colors flex items-center justify-between"
           >
             <div>
               <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
-                Handle Escalations
+                Review Submissions
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Assign owners & record resolution notes
+                Inspect & approve daily team reports
               </p>
             </div>
             <ArrowRight className="w-5 h-5 text-indigo-500" />
           </Link>
 
           <Link
-            to="/analytics"
+            to="/projects"
             className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-indigo-500 transition-colors flex items-center justify-between"
           >
             <div>
               <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
-                Department Analytics & Exports
+                Department Projects
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Filter and export department CSV logs
+                Manage active project deliverables
               </p>
             </div>
             <ArrowRight className="w-5 h-5 text-indigo-500" />
@@ -547,6 +588,11 @@ export const DashboardPage: React.FC = () => {
             <ArrowRight className="w-5 h-5 text-indigo-500" />
           </Link>
         </div>
+
+        <EmployeeFlowModal
+          isOpen={showEmployeeFlow}
+          onClose={() => setShowEmployeeFlow(false)}
+        />
       </div>
     );
   }
@@ -572,12 +618,21 @@ export const DashboardPage: React.FC = () => {
               Company-wide governance, user permissions, audit tracking, and organization structure
             </p>
           </div>
-          <Link
-            to="/admin/users"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white text-purple-900 font-semibold text-xs shadow-xs hover:bg-purple-50 transition-colors shrink-0"
-          >
-            Manage Accounts & Roles
-          </Link>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <button
+              onClick={() => setShowEmployeeFlow(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-purple-700/80 hover:bg-purple-600 text-white border border-purple-400/30 font-semibold text-xs shadow-xs transition-colors cursor-pointer"
+            >
+              <Users className="w-4 h-4" />
+              Employee Flow Chart
+            </button>
+            <Link
+              to="/admin/users"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white text-purple-900 font-semibold text-xs shadow-xs hover:bg-purple-50 transition-colors"
+            >
+              Manage Accounts & Roles
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -588,24 +643,32 @@ export const DashboardPage: React.FC = () => {
           value={data.totalEmployees}
           icon={Users}
           color="purple"
+          onClick={() => setShowEmployeeFlow(true)}
+          actionLabel="View Employee Flow"
         />
         <StatCard
           title="Departments"
           value={data.totalDepartments}
           icon={Building2}
           color="blue"
+          to="/admin/departments"
+          actionLabel="Manage Departments"
         />
         <StatCard
           title="Teams"
           value={data.totalTeams}
           icon={Users}
           color="indigo"
+          to="/admin/teams"
+          actionLabel="Manage Teams"
         />
         <StatCard
           title="Active Projects"
           value={data.totalProjects}
           icon={FolderKanban}
           color="emerald"
+          to="/projects"
+          actionLabel="View Projects"
         />
       </div>
 
@@ -616,24 +679,32 @@ export const DashboardPage: React.FC = () => {
           value={data.todaySubmissions}
           icon={FileText}
           color="emerald"
+          to="/reviews"
+          actionLabel="View Submissions"
         />
         <StatCard
           title="Pending Reviews"
           value={data.pendingReviews}
           icon={Clock}
           color="amber"
+          to="/reviews"
+          actionLabel="Open Review Queue"
         />
         <StatCard
           title="Active Escalations"
           value={data.activeEscalations}
           icon={AlertTriangle}
           color={data.activeEscalations > 0 ? "rose" : "slate"}
+          to="/escalations"
+          actionLabel="View Escalations"
         />
         <StatCard
           title="Active Tasks"
           value={data.activeTasks}
           icon={CheckSquare}
           color="indigo"
+          to="/tasks"
+          actionLabel="Open Task Board"
         />
       </div>
 
@@ -684,6 +755,12 @@ export const DashboardPage: React.FC = () => {
           <ShieldAlert className="w-5 h-5 text-purple-500" />
         </Link>
       </div>
+
+      <EmployeeFlowModal
+        isOpen={showEmployeeFlow}
+        onClose={() => setShowEmployeeFlow(false)}
+      />
     </div>
   );
 };
+

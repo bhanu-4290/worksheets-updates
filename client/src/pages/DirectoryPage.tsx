@@ -2,14 +2,16 @@ import React, { useEffect, useState } from "react";
 import { api } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { Badge } from "../components/Badge";
+import { EmployeeFlowModal } from "../components/EmployeeFlowModal";
 import { User, Department } from "../types";
-import { Search, Download, Users, Mail, Building2, UserCheck } from "lucide-react";
+import { Search, Download, UserCheck, GitBranch } from "lucide-react";
 
 export const DirectoryPage: React.FC = () => {
   const { user } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showFlowModal, setShowFlowModal] = useState(false);
 
   const [search, setSearch] = useState("");
   const [deptFilter, setDeptFilter] = useState("");
@@ -22,7 +24,7 @@ export const DirectoryPage: React.FC = () => {
   const loadDirectory = async () => {
     setLoading(true);
     try {
-      let q = "";
+      let q = "flow=true&";
       if (deptFilter) q += `departmentId=${deptFilter}&`;
       if (roleFilter) q += `role=${roleFilter}&`;
       const [uRes, dRes]: any = await Promise.all([
@@ -87,14 +89,22 @@ export const DirectoryPage: React.FC = () => {
           </p>
         </div>
 
-        {user?.role !== "EXECUTIVE" && (
+        <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={handleExportCsv}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-sm transition-colors self-start sm:self-auto"
+            onClick={() => setShowFlowModal(true)}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
           >
-            <Download className="w-4 h-4" /> Export Directory CSV
+            <GitBranch className="w-4 h-4" /> View Employee Flow
           </button>
-        )}
+          {user?.role !== "EXECUTIVE" && (
+            <button
+              onClick={handleExportCsv}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
+            >
+              <Download className="w-4 h-4" /> Export Directory CSV
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Filter Bar */}
@@ -202,6 +212,11 @@ export const DirectoryPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      <EmployeeFlowModal
+        isOpen={showFlowModal}
+        onClose={() => setShowFlowModal(false)}
+      />
     </div>
   );
 };
