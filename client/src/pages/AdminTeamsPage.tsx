@@ -110,6 +110,24 @@ export const AdminTeamsPage: React.FC = () => {
         <div className="flex items-center justify-center min-h-[40vh]">
           <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-md animate-spin" />
         </div>
+      ) : teams.length === 0 ? (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-12 text-center shadow-xs">
+          <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center mx-auto mb-3">
+            <Plus className="w-6 h-6" />
+          </div>
+          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+            No teams created yet
+          </h3>
+          <p className="text-xs text-slate-400 max-w-sm mx-auto mt-1 mb-4">
+            Group employees by unit under departments and assign a Team Lead to oversee daily reporting.
+          </p>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs transition-colors cursor-pointer"
+          >
+            <Plus className="w-4 h-4" /> Create Your First Team
+          </button>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {teams.map((t) => (

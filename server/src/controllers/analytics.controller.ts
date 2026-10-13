@@ -278,6 +278,99 @@ export async function getDashboardKpi(req: Request, res: Response, next: NextFun
       where: { status: { notIn: [TaskStatus.COMPLETED, TaskStatus.CANCELLED] } },
     });
 
+    const missingSubmissionsToday = Math.max(0, totalEmployees - todaySubmissions);
+    const submissionRate = totalEmployees > 0 ? Math.round((todaySubmissions / totalEmployees) * 100) : 0;
+
+    // 7-day submissions trend (last 7 days up to today)
+    const sevenDayTrend: Array<{ date: string; dayLabel: string; submitted: number; total: number; compliancePct: number }> = [];
+    const dayNamesShort = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setUTCDate(d.getUTCDate() - i);
+      const dStr = d.toISOString().split("T")[0];
+      const count = await prisma.dailyReport.count({
+        where: { reportingDate: d, status: { not: ReportStatus.DRAFT } },
+      });
+      const pct = totalEmployees > 0 ? Math.round((count / totalEmployees) * 100) : 0;
+      sevenDayTrend.push({
+        date: dStr,
+        dayLabel: dayNamesShort[d.getUTCDay()],
+        submitted: count,
+        total: totalEmployees,
+        compliancePct: pct,
+      });
+    }
+
+    // Department-wise submission breakdown
+    const departments = await prisma.department.findMany({
+      where: { isActive: true },
+      include: {
+        users: { where: { isActive: true }, select: { id: true } },
+      },
+      orderBy: { name: "asc" },
+    });
+
+    const departmentSubmissions = await Promise.all(
+      departments.map(async (dept) => {
+        const userIds = dept.users.map((u) => u.id);
+        const submitted = await prisma.dailyReport.count({
+          where: {
+            userId: { in: userIds },
+            reportingDate: today,
+            status: { not: ReportStatus.DRAFT },
+          },
+        });
+        const total = userIds.length;
+        const compliance = total > 0 ? Math.round((submitted / total) * 100) : 100;
+        return {
+          id: dept.id,
+          name: dept.name,
+          code: dept.code,
+          totalEmployees: total,
+          submittedToday: submitted,
+          pendingToday: Math.max(0, total - submitted),
+          compliancePct: compliance,
+        };
+      })
+    );
+
+    // Recent activity feed (latest submitted reports & escalations)
+    const recentReports = await prisma.dailyReport.findMany({
+      where: { status: { not: ReportStatus.DRAFT } },
+      include: {
+        user: { select: { id: true, fullName: true, email: true, jobTitle: true, department: { select: { name: true } } } },
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 6,
+    });
+
+    const recentEscalations = await prisma.blockerEscalation.findMany({
+      include: {
+        escalatedBy: { select: { id: true, fullName: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 4,
+    });
+
+    const activityFeed = [
+      ...recentReports.map((r) => ({
+        id: `rep-${r.id}`,
+        type: "REPORT_SUBMITTED" as const,
+        title: `${r.user.fullName} submitted report`,
+        subtitle: `${r.user.department?.name || "General"} • ${r.reportingDate.toISOString().split("T")[0]}`,
+        status: r.status,
+        timestamp: r.updatedAt.toISOString(),
+      })),
+      ...recentEscalations.map((e) => ({
+        id: `esc-${e.id}`,
+        type: "ESCALATION" as const,
+        title: `Escalation: ${e.title}`,
+        subtitle: `Reported by ${e.escalatedBy?.fullName || "Employee"} • ${e.urgency}`,
+        status: e.status,
+        timestamp: e.createdAt.toISOString(),
+      })),
+    ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 8);
+
     res.json({
       success: true,
       data: {
@@ -287,9 +380,14 @@ export async function getDashboardKpi(req: Request, res: Response, next: NextFun
         totalTeams,
         totalProjects,
         todaySubmissions,
+        missingSubmissionsToday,
+        submissionRate,
         pendingReviews,
         activeEscalations,
         activeTasks,
+        sevenDayTrend,
+        departmentSubmissions,
+        activityFeed,
       },
     });
   } catch (err) {

@@ -22,6 +22,8 @@ import {
   Users,
   FileText,
   GitBranch,
+  X,
+  ArrowRight,
 } from "lucide-react";
 import { EmployeeFlowModal } from "../components/EmployeeFlowModal";
 
@@ -51,6 +53,7 @@ export const DailyReportPage: React.FC = () => {
   const [selectedUserId, setSelectedUserId] = useState<string>(user?.id || "");
   const [teamUsers, setTeamUsers] = useState<any[]>([]);
   const [showEmployeeFlow, setShowEmployeeFlow] = useState(false);
+  const [previewReport, setPreviewReport] = useState<DailyReport | null>(null);
 
   // Calendar Month State
   const [calendarMonth, setCalendarMonth] = useState<Date>(() => {
@@ -1173,80 +1176,167 @@ export const DailyReportPage: React.FC = () => {
           </div>
 
           {historyReports.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-12 text-center text-slate-400 text-xs">
-              No daily task sheets found.
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-12 text-center text-slate-400 text-xs shadow-xs">
+              No daily task sheets found matching this status filter.
             </div>
           ) : (
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden shadow-xs">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 uppercase tracking-wider text-[10px]">
-                    <tr>
-                      <th className="px-6 py-3.5 font-bold">Reporting Date</th>
-                      <th className="px-6 py-3.5 font-bold">Employee</th>
-                      <th className="px-6 py-3.5 font-bold">Updated Tasks</th>
-                      <th className="px-6 py-3.5 font-bold">Recorded Hours</th>
-                      <th className="px-6 py-3.5 font-bold">Status</th>
-                      <th className="px-6 py-3.5 font-bold">Lead Reviewer</th>
-                      <th className="px-6 py-3.5 font-bold text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {historyReports.map((r) => (
-                      <tr
-                        key={r.id}
-                        className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
-                      >
-                        <td className="px-6 py-4 font-semibold text-slate-900 dark:text-white">
-                          {r.reportingDate}
-                        </td>
-                        <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
-                          {r.user?.fullName}
-                        </td>
-                        <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
-                          <div className="font-semibold text-slate-800 dark:text-slate-200">
-                            {r.entriesCount} task(s)
+            <div className={`grid grid-cols-1 ${previewReport ? "lg:grid-cols-12" : ""} gap-4 items-start`}>
+              {/* History Table */}
+              <div className={`${previewReport ? "lg:col-span-7" : "w-full"} bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs`}>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50/70 dark:bg-slate-800/50 text-slate-400 uppercase tracking-wider text-[10px] font-bold border-b border-slate-200/80 dark:border-slate-800">
+                      <tr>
+                        <th className="px-4 py-3">Reporting Date</th>
+                        <th className="px-4 py-3">Employee</th>
+                        <th className="px-4 py-3">Tasks</th>
+                        <th className="px-3 py-3">Hours</th>
+                        <th className="px-3 py-3">Status</th>
+                        <th className="px-4 py-3 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {historyReports.map((r) => {
+                        const isPreviewSelected = previewReport?.id === r.id;
+                        return (
+                          <tr
+                            key={r.id}
+                            onClick={() => setPreviewReport(r)}
+                            className={`cursor-pointer transition-colors ${
+                              isPreviewSelected
+                                ? "bg-blue-50/80 dark:bg-blue-950/40"
+                                : "hover:bg-slate-50/60 dark:hover:bg-slate-800/40"
+                            }`}
+                          >
+                            <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">
+                              {r.reportingDate}
+                            </td>
+                            <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                              {r.user?.fullName}
+                            </td>
+                            <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
+                              <span className="font-semibold text-slate-800 dark:text-slate-200">
+                                {r.entriesCount} task(s)
+                              </span>
+                            </td>
+                            <td className="px-3 py-3 text-slate-600 dark:text-slate-400 font-mono">
+                              {r.totalHoursRecorded ? `${r.totalHoursRecorded}h` : "-"}
+                            </td>
+                            <td className="px-3 py-3">
+                              <Badge variant={r.status} size="sm" />
+                            </td>
+                            <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => setPreviewReport(r)}
+                                  className="px-2 py-1 rounded-md text-xs font-semibold text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors"
+                                  title="Open Side Preview"
+                                >
+                                  Preview
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    handleSelectCalendarDate(r.reportingDate);
+                                    setActiveTab("form");
+                                  }}
+                                  className="px-2 py-1 rounded-md text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                  title="Open in Calendar"
+                                >
+                                  Calendar
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Side Preview Panel */}
+              {previewReport && (
+                <div className="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-4 shadow-xs space-y-3.5 sticky top-20">
+                  <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-slate-100 dark:border-slate-800">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                          Task Sheet: {previewReport.reportingDate}
+                        </h3>
+                        <Badge variant={previewReport.status} size="sm" />
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        {previewReport.user?.fullName} • {previewReport.entriesCount} activities
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setPreviewReport(null)}
+                      className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      title="Close Preview"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Activities summary */}
+                  <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+                    {previewReport.entries && previewReport.entries.length > 0 ? (
+                      previewReport.entries.map((entry: any, i: number) => (
+                        <div
+                          key={entry.id || i}
+                          className="p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 text-xs space-y-1"
+                        >
+                          <div className="flex items-center justify-between font-bold text-slate-800 dark:text-slate-200">
+                            <span>{i + 1}. {entry.activityTitle}</span>
+                            <span className="font-mono text-[10px] text-slate-400 font-normal">
+                              {entry.hoursSpent ? `${entry.hoursSpent}h` : ""}
+                            </span>
                           </div>
-                          {r.entries && r.entries.length > 0 && (
-                            <div className="text-[11px] text-slate-400 truncate max-w-xs">
-                              {r.entries.map((e: any) => e.activityTitle).join(", ")}
+                          <p className="text-[11px] text-slate-600 dark:text-slate-300">
+                            {entry.description}
+                          </p>
+                          {entry.deliverables && (
+                            <div className="text-[10px] text-slate-500">
+                              <strong>Deliverable:</strong> {entry.deliverables}
                             </div>
                           )}
-                        </td>
-                        <td className="px-6 py-4 text-slate-600 dark:text-slate-400 font-mono">
-                          {r.totalHoursRecorded ? `${r.totalHoursRecorded}h` : "Unreported"}
-                        </td>
-                        <td className="px-6 py-4">
-                          <Badge variant={r.status} size="sm" />
-                        </td>
-                        <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
-                          {r.latestReview?.reviewer?.fullName || "N/A"}
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                handleSelectCalendarDate(r.reportingDate);
-                                setActiveTab("form");
-                              }}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                            >
-                              <Calendar className="w-3.5 h-3.5" /> Open in Calendar
-                            </button>
-                            <Link
-                              to={`/reports/${r.id}`}
-                              className="inline-flex items-center gap-1 px-3 py-1 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-semibold hover:bg-blue-100 transition-colors"
-                            >
-                              <Eye className="w-3.5 h-3.5" /> Details
-                            </Link>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                          {entry.blockers && (
+                            <div className="text-[10px] text-rose-600 dark:text-rose-400 font-medium">
+                              <strong>Blocker:</strong> {entry.blockers}
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs text-slate-400 italic">No entry details available.</p>
+                    )}
+                  </div>
+
+                  {/* Actions footer */}
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleSelectCalendarDate(previewReport.reportingDate);
+                        setActiveTab("form");
+                      }}
+                      className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 font-semibold hover:underline"
+                    >
+                      <Calendar className="w-3.5 h-3.5" /> Edit on Calendar
+                    </button>
+                    <Link
+                      to={`/reports/${previewReport.id}`}
+                      className="inline-flex items-center gap-1 text-slate-600 dark:text-slate-300 font-semibold hover:underline"
+                    >
+                      Full Details <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { api } from "../services/api";
 import { Badge } from "../components/Badge";
-import { Modal } from "../components/Modal";
 import { Link } from "react-router-dom";
 import {
   ClipboardCheck,
@@ -12,6 +11,14 @@ import {
   MessageSquare,
   Clock,
   Filter,
+  Check,
+  RotateCcw,
+  User,
+  Building2,
+  Calendar,
+  AlertTriangle,
+  ArrowRight,
+  Send,
 } from "lucide-react";
 
 export const ReviewQueuePage: React.FC = () => {
@@ -19,15 +26,13 @@ export const ReviewQueuePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
-
-  // Review Modals
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
-  const [showApproveModal, setShowApproveModal] = useState(false);
-  const [approveComments, setApproveComments] = useState("Acknowledged and approved.");
 
-  const [showRevisionModal, setShowRevisionModal] = useState(false);
+  // Review Actions
+  const [approveComments, setApproveComments] = useState("Acknowledged and approved.");
   const [revisionComments, setRevisionComments] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+  const [actionMessage, setActionMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
     loadReviewQueue();
@@ -38,46 +43,17 @@ export const ReviewQueuePage: React.FC = () => {
     try {
       const url = statusFilter ? `/reviews/queue?status=${statusFilter}` : "/reviews/queue";
       const res: any = await api.get(url);
-      if (res.success) setReports(res.data || []);
+      if (res.success) {
+        const data = res.data || [];
+        setReports(data);
+        if (data.length > 0 && !selectedReportId) {
+          setSelectedReportId(data[0].id);
+        }
+      }
     } catch (err) {
       console.error("Failed to load review queue:", err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleApprove = async () => {
-    if (!selectedReportId) return;
-    setActionLoading(true);
-    try {
-      await api.post(`/reviews/${selectedReportId}/approve`, { comments: approveComments });
-      setShowApproveModal(false);
-      setSelectedReportId(null);
-      loadReviewQueue();
-    } catch (err: any) {
-      alert(err.message || "Approval failed");
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleRequestRevision = async () => {
-    if (!selectedReportId || !revisionComments.trim()) {
-      alert("Mandatory comment is required when requesting revisions.");
-      return;
-    }
-    setActionLoading(true);
-    try {
-      await api.post(`/reviews/${selectedReportId}/request-revision`, {
-        comments: revisionComments,
-      });
-      setShowRevisionModal(false);
-      setSelectedReportId(null);
-      loadReviewQueue();
-    } catch (err: any) {
-      alert(err.message || "Correction request failed");
-    } finally {
-      setActionLoading(false);
     }
   };
 
@@ -87,233 +63,389 @@ export const ReviewQueuePage: React.FC = () => {
     return (
       r.user?.fullName?.toLowerCase().includes(q) ||
       r.user?.employeeId?.toLowerCase().includes(q) ||
-      r.reportingDate?.includes(q)
+      r.reportingDate?.includes(q) ||
+      r.user?.jobTitle?.toLowerCase().includes(q)
     );
   });
 
+  const selectedReport = reports.find((r) => r.id === selectedReportId) || filtered[0] || null;
+
+  const handleApprove = async () => {
+    if (!selectedReport) return;
+    setActionLoading(true);
+    setActionMessage(null);
+    try {
+      await api.post(`/reviews/${selectedReport.id}/approve`, { comments: approveComments });
+      setActionMessage({ type: "success", text: `Report for ${selectedReport.reportingDate} approved successfully!` });
+      loadReviewQueue();
+    } catch (err: any) {
+      setActionMessage({ type: "error", text: err.message || "Approval failed" });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRequestRevision = async () => {
+    if (!selectedReport) return;
+    if (!revisionComments.trim()) {
+      setActionMessage({ type: "error", text: "Mandatory comments are required when requesting revisions." });
+      return;
+    }
+    setActionLoading(true);
+    setActionMessage(null);
+    try {
+      await api.post(`/reviews/${selectedReport.id}/request-revision`, {
+        comments: revisionComments.trim(),
+      });
+      setActionMessage({ type: "success", text: "Correction requested. Notification sent to employee." });
+      setRevisionComments("");
+      loadReviewQueue();
+    } catch (err: any) {
+      setActionMessage({ type: "error", text: err.message || "Failed to request correction" });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-4">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
             Daily Report Review Queue
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Review daily task sheets submitted by subordinate team members across today, yesterday, and previous weeks.
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Supervisory evaluation console: acknowledge submissions, inspect task hours, and provide feedback.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2">
           <Link
             to="/reports"
-            className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-semibold shadow-xs hover:bg-slate-50 transition-colors"
           >
-            Open Task Sheet Calendar
+            <Calendar className="w-3.5 h-3.5" />
+            <span>Task Sheet Calendar</span>
           </Link>
-
-          <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search employee or date..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300"
-          >
-            <option value="ALL">All Task Sheets (All Dates)</option>
-            <option value="SUBMITTED">Awaiting Review</option>
-            <option value="REVISION_REQUESTED">Revision Requested</option>
-            <option value="APPROVED">Already Approved</option>
-            <option value="DRAFT">Saved Drafts</option>
-          </select>
         </div>
       </div>
 
+      {/* Filter Chips Bar */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-3 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="flex flex-wrap items-center gap-2">
+          {[
+            { id: "ALL", label: "All Submissions" },
+            { id: "SUBMITTED", label: "Awaiting Review" },
+            { id: "REVISION_REQUESTED", label: "Revision Requested" },
+            { id: "APPROVED", label: "Approved" },
+            { id: "DRAFT", label: "Drafts" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setStatusFilter(tab.id)}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                statusFilter === tab.id
+                  ? "bg-blue-600 text-white shadow-xs"
+                  : "bg-slate-100/70 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200/70"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="relative">
+          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search employee or date..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-8 pr-3 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-48 sm:w-56"
+          />
+        </div>
+      </div>
+
+      {/* Split View Container */}
       {loading ? (
         <div className="flex items-center justify-center min-h-[40vh]">
           <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-md animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-10 text-center text-slate-400 text-xs">
-          <ClipboardCheck className="w-10 h-10 mx-auto mb-2 text-slate-300 dark:text-slate-600" />
-          <p className="font-semibold text-slate-700 dark:text-slate-300">Queue is Clear</p>
-          <p className="mt-1">No reports pending review matching current filter.</p>
+        /* Useful Empty State */
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-10 text-center shadow-xs">
+          <div className="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-3">
+            <CheckCircle2 className="w-6 h-6" />
+          </div>
+          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+            Review Queue is All Caught Up
+          </h3>
+          <p className="text-xs text-slate-400 max-w-sm mx-auto mt-1 mb-4">
+            No submissions requiring action match "{statusFilter}". All daily work sheets in your scope are acknowledged.
+          </p>
+          <button
+            onClick={() => setStatusFilter("ALL")}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+          >
+            <RotateCcw className="w-3.5 h-3.5" /> View All Submitted Sheets
+          </button>
         </div>
       ) : (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden shadow-xs">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 uppercase tracking-wider text-[10px]">
-                <tr>
-                  <th className="px-6 py-3.5 font-bold">Employee</th>
-                  <th className="px-6 py-3.5 font-bold">Date</th>
-                  <th className="px-6 py-3.5 font-bold">Activities</th>
-                  <th className="px-6 py-3.5 font-bold">Recorded Hours</th>
-                  <th className="px-6 py-3.5 font-bold">Status</th>
-                  <th className="px-6 py-3.5 font-bold">Blockers</th>
-                  <th className="px-6 py-3.5 font-bold text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {filtered.map((r) => (
-                  <tr key={r.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-                    <td className="px-6 py-4">
-                      <div className="font-semibold text-slate-900 dark:text-white">
-                        {r.user.fullName}
-                      </div>
-                      <div className="text-[10px] text-slate-400">
-                        {r.user.employeeId} • {r.user.jobTitle}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 font-medium text-slate-800 dark:text-slate-200">
-                      {r.reportingDate}
-                    </td>
-                    <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
-                      {r.entriesCount} activities
-                    </td>
-                    <td className="px-6 py-4 text-slate-600 dark:text-slate-400 font-mono">
-                      {r.totalHoursRecorded ? `${r.totalHoursRecorded}h` : "Unreported"}
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge variant={r.status} size="sm" />
-                    </td>
-                    <td className="px-6 py-4">
-                      {r.blockers?.length > 0 ? (
-                        <span className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400 font-semibold text-[11px]">
-                          <AlertCircle className="w-3.5 h-3.5" /> {r.blockers.length} Blocker(s)
-                        </span>
-                      ) : (
-                        <span className="text-slate-400 text-[11px]">None</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Link
-                          to={`/reports/${r.id}`}
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800"
-                          title="Inspect Report"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Link>
+        /* ======================================================== */
+        /* SPLIT VIEW: MASTER LIST ON LEFT, DETAIL ON RIGHT */
+        /* ======================================================== */
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
+          {/* Left Column: Report Queue List */}
+          <div className="md:col-span-5 lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-2.5 shadow-xs max-h-[750px] overflow-y-auto space-y-1.5">
+            <div className="px-2 py-1 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 dark:border-slate-800 pb-2 mb-1">
+              <span>Submissions ({filtered.length})</span>
+              <span>Select to inspect</span>
+            </div>
 
-                        {r.status !== "APPROVED" && (
-                          <>
-                            <button
-                              onClick={() => {
-                                setSelectedReportId(r.id);
-                                setShowRevisionModal(true);
-                              }}
-                              className="px-2.5 py-1 rounded-lg border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 text-[11px] font-semibold"
-                            >
-                              Request Revision
-                            </button>
-                            <button
-                              onClick={() => {
-                                setSelectedReportId(r.id);
-                                setShowApproveModal(true);
-                              }}
-                              className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold shadow-sm flex items-center gap-1"
-                            >
-                              <CheckCircle2 className="w-3.5 h-3.5" /> Approve
-                            </button>
-                          </>
-                        )}
+            {filtered.map((r) => {
+              const isSelected = selectedReport?.id === r.id;
+              const initials = r.user?.fullName
+                ?.split(" ")
+                .filter(Boolean)
+                .map((n: string) => n[0])
+                .slice(0, 2)
+                .join("") || "EM";
+
+              return (
+                <div
+                  key={r.id}
+                  onClick={() => {
+                    setSelectedReportId(r.id);
+                    setActionMessage(null);
+                  }}
+                  className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                    isSelected
+                      ? "bg-blue-50/70 dark:bg-blue-950/40 border-blue-400 dark:border-blue-700 shadow-xs border-l-4 border-l-blue-600"
+                      : "bg-white dark:bg-slate-800/40 border-slate-200/70 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-blue-600/10 text-blue-700 dark:text-blue-300 flex items-center justify-center font-bold text-xs shrink-0">
+                        {initials}
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                          {r.user?.fullName}
+                        </h4>
+                        <span className="text-[10px] text-slate-400 block truncate">
+                          {r.user?.jobTitle}
+                        </span>
+                      </div>
+                    </div>
+                    <Badge variant={r.status} size="sm" />
+                  </div>
+
+                  <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500">
+                    <span className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1">
+                      <Calendar className="w-3 h-3 text-slate-400" /> {r.reportingDate}
+                    </span>
+                    <span className="font-mono text-slate-400">
+                      {r.totalHoursRecorded ? `${r.totalHoursRecorded}h` : "Hours unlogged"}
+                    </span>
+                  </div>
+
+                  {r.blockers && r.blockers.length > 0 && (
+                    <div className="mt-1.5 flex items-center gap-1 text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded">
+                      <AlertTriangle className="w-3 h-3 shrink-0" />
+                      <span>{r.blockers.length} Blocker(s) reported</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Right Column: Live Report Review Detail */}
+          <div className="md:col-span-7 lg:col-span-8 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
+            {selectedReport ? (
+              <>
+                {/* Detail Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-base shrink-0 shadow-xs">
+                      {selectedReport.user?.fullName
+                        ?.split(" ")
+                        .filter(Boolean)
+                        .map((n: string) => n[0])
+                        .slice(0, 2)
+                        .join("")}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                          {selectedReport.user?.fullName}
+                        </h2>
+                        <Badge variant={selectedReport.status} size="sm" />
+                      </div>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        {selectedReport.user?.jobTitle} • {selectedReport.user?.department?.name || "Operations"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Link
+                      to={`/reports/${selectedReport.id}`}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 text-xs font-semibold transition-colors"
+                    >
+                      <Eye className="w-3.5 h-3.5" /> Full Page
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Status Message */}
+                {actionMessage && (
+                  <div
+                    className={`p-3 rounded-lg text-xs flex items-center gap-2 ${
+                      actionMessage.type === "success"
+                        ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800"
+                        : "bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-200 border border-rose-200 dark:border-rose-800"
+                    }`}
+                  >
+                    {actionMessage.type === "success" ? (
+                      <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                    )}
+                    <span>{actionMessage.text}</span>
+                  </div>
+                )}
+
+                {/* Supervisor Review Action Box */}
+                <div className="bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-800 dark:text-slate-200">
+                    <span className="flex items-center gap-1.5">
+                      <ClipboardCheck className="w-4 h-4 text-blue-600" /> Supervisory Review &amp; Evaluation
+                    </span>
+                    <span className="text-[11px] font-normal text-slate-400">
+                      Reporting Date: <strong>{selectedReport.reportingDate}</strong>
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Approve form */}
+                    <div className="space-y-2 p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800">
+                      <label className="block text-[11px] font-bold uppercase text-emerald-700 dark:text-emerald-400">
+                        Approve Sheet
+                      </label>
+                      <input
+                        type="text"
+                        value={approveComments}
+                        onChange={(e) => setApproveComments(e.target.value)}
+                        placeholder="Acknowledgement comments..."
+                        className="w-full px-2.5 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-xs bg-slate-50 dark:bg-slate-800"
+                      />
+                      <button
+                        onClick={handleApprove}
+                        disabled={actionLoading}
+                        className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-xs transition-colors cursor-pointer"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Acknowledge &amp; Approve</span>
+                      </button>
+                    </div>
+
+                    {/* Request correction form */}
+                    <div className="space-y-2 p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800">
+                      <label className="block text-[11px] font-bold uppercase text-amber-700 dark:text-amber-400">
+                        Request Revisions
+                      </label>
+                      <input
+                        type="text"
+                        value={revisionComments}
+                        onChange={(e) => setRevisionComments(e.target.value)}
+                        placeholder="Feedback on what needs correction..."
+                        className="w-full px-2.5 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-xs bg-slate-50 dark:bg-slate-800"
+                      />
+                      <button
+                        onClick={handleRequestRevision}
+                        disabled={actionLoading}
+                        className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs shadow-xs transition-colors cursor-pointer"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        <span>Return for Revision</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Activities Breakdown */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white">
+                    <span>Activities Completed ({selectedReport.entries?.length || 0})</span>
+                    <span className="font-mono text-slate-500">
+                      Total Hours: {selectedReport.totalHoursRecorded ? `${selectedReport.totalHoursRecorded} hrs` : "N/A"}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    {selectedReport.entries?.map((entry: any, idx: number) => (
+                      <div
+                        key={entry.id || idx}
+                        className="p-3.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2 text-xs"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <span className="font-bold text-slate-900 dark:text-white">
+                              {idx + 1}. {entry.activityTitle}
+                            </span>
+                            {entry.task && (
+                              <span className="ml-2 font-mono text-[10px] text-blue-600 dark:text-blue-400 font-bold">
+                                [{entry.task.taskCode}]
+                              </span>
+                            )}
+                          </div>
+                          <Badge variant={entry.status} size="sm" />
+                        </div>
+
+                        <p className="text-slate-600 dark:text-slate-300 text-xs">
+                          {entry.description}
+                        </p>
+
+                        {entry.deliverables && (
+                          <div className="text-[11px] text-slate-500">
+                            <strong>Deliverables:</strong> {entry.deliverables}
+                          </div>
+                        )}
+
+                        {entry.blockers && (
+                          <div className="p-2 rounded bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200 text-[11px] flex items-start gap-1.5">
+                            <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-rose-600" />
+                            <div>
+                              <strong>Blocker:</strong> {entry.blockers}
+                              {entry.supportRequired && (
+                                <div className="mt-0.5">
+                                  <strong>Support Required:</strong> {entry.supportRequired}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+                          <span>Progress: {entry.progressPercentage}%</span>
+                          <span>Recorded: {entry.hoursSpent ? `${entry.hoursSpent} hrs` : "N/A"}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-20 text-slate-400 text-xs">
+                Select a report from the left list to inspect details and perform review.
+              </div>
+            )}
           </div>
         </div>
       )}
-
-      {/* Approve Modal */}
-      <Modal
-        isOpen={showApproveModal}
-        onClose={() => setShowApproveModal(false)}
-        title="Acknowledge & Approve Daily Report"
-      >
-        <div className="space-y-4">
-          <p className="text-xs text-slate-600 dark:text-slate-400">
-            Confirm approval of daily report. The submission status will be set to <strong>APPROVED</strong> and recorded with your reviewer credentials.
-          </p>
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Feedback Comments (Optional)
-            </label>
-            <textarea
-              rows={3}
-              value={approveComments}
-              onChange={(e) => setApproveComments(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div className="flex items-center justify-end gap-3 pt-2">
-            <button
-              onClick={() => setShowApproveModal(false)}
-              className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold"
-            >
-              Cancel
-            </button>
-            <button
-              disabled={actionLoading}
-              onClick={handleApprove}
-              className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md"
-            >
-              {actionLoading ? "Approving..." : "Confirm Approval"}
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Revision Request Modal */}
-      <Modal
-        isOpen={showRevisionModal}
-        onClose={() => setShowRevisionModal(false)}
-        title="Request Corrections with Mandatory Comment"
-      >
-        <div className="space-y-4">
-          <div className="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 rounded-lg text-xs text-rose-800 dark:text-rose-300">
-            Mandatory comment required. Please specify what corrections are needed so the employee can resubmit.
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Feedback Comments *
-            </label>
-            <textarea
-              rows={4}
-              required
-              placeholder="e.g. Please specify the deliverables achieved and provide links to the repository PR."
-              value={revisionComments}
-              onChange={(e) => setRevisionComments(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500"
-            />
-          </div>
-          <div className="flex items-center justify-end gap-3 pt-2">
-            <button
-              onClick={() => setShowRevisionModal(false)}
-              className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold"
-            >
-              Cancel
-            </button>
-            <button
-              disabled={actionLoading || !revisionComments.trim()}
-              onClick={handleRequestRevision}
-              className="px-5 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-md disabled:opacity-50"
-            >
-              {actionLoading ? "Sending..." : "Submit Correction Request"}
-            </button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 };
