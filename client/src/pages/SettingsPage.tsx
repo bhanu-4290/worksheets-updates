@@ -85,7 +85,7 @@ export const SettingsPage: React.FC = () => {
       </div>
 
       {savedMessage && (
-        <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 text-emerald-800 dark:text-emerald-300 text-xs flex items-center gap-2">
+        <div className="p-4 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 text-emerald-800 dark:text-emerald-300 text-xs flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4" />
           <span>Company settings updated successfully!</span>
         </div>
@@ -93,14 +93,14 @@ export const SettingsPage: React.FC = () => {
 
       {loading || !settings ? (
         <div className="flex items-center justify-center min-h-[40vh]">
-          <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-md animate-spin" />
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Company Policy Form */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs space-y-4">
             <h2 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-              <Settings className="w-4 h-4 text-indigo-500" />
+              <Settings className="w-4 h-4 text-blue-500" />
               Reporting Deadlines & Working Days
             </h2>
 
@@ -169,7 +169,7 @@ export const SettingsPage: React.FC = () => {
               <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-sm transition-colors"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition-colors"
                 >
                   <Save className="w-4 h-4" /> Save Configuration
                 </button>
@@ -178,7 +178,7 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           {/* Holiday Calendar Management */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-emerald-500" />
@@ -233,7 +233,7 @@ export const SettingsPage: React.FC = () => {
               placeholder="e.g. Independence Day"
               value={holidayForm.name}
               onChange={(e) => setHolidayForm({ ...holidayForm, name: e.target.value })}
-              className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+              className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
             />
           </div>
 
@@ -244,7 +244,7 @@ export const SettingsPage: React.FC = () => {
               required
               value={holidayForm.date}
               onChange={(e) => setHolidayForm({ ...holidayForm, date: e.target.value })}
-              className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+              className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
             />
           </div>
 
@@ -254,7 +254,7 @@ export const SettingsPage: React.FC = () => {
               id="isRecurring"
               checked={holidayForm.isRecurring}
               onChange={(e) => setHolidayForm({ ...holidayForm, isRecurring: e.target.checked })}
-              className="rounded text-indigo-600"
+              className="rounded text-blue-600"
             />
             <label htmlFor="isRecurring" className="text-xs font-medium text-slate-700 dark:text-slate-300">
               Recurring annually
@@ -265,13 +265,13 @@ export const SettingsPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowHolidayModal(false)}
-              className="px-4 py-2 rounded-xl border text-xs"
+              className="px-4 py-2 rounded-lg border text-xs"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md"
+              className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md"
             >
               Add Holiday
             </button>

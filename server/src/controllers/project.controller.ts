@@ -22,9 +22,12 @@ export async function getProjects(req: Request, res: Response, next: NextFunctio
 
     if (!isSuperAdmin(user)) {
       if (isManager(user)) {
-        where.departmentId = { in: [user.departmentId, ...user.managedDepartmentIds].filter(Boolean) };
-      } else {
-        where.departmentId = user.departmentId || "";
+        const allowed = [user.departmentId, ...user.managedDepartmentIds].filter(Boolean);
+        if (allowed.length > 0) {
+          where.departmentId = { in: allowed };
+        }
+      } else if (user.departmentId) {
+        where.departmentId = user.departmentId;
       }
     } else if (departmentId) {
       where.departmentId = String(departmentId);
@@ -32,7 +35,7 @@ export async function getProjects(req: Request, res: Response, next: NextFunctio
 
     if (status) where.status = String(status);
 
-    const projects = await prisma.project.findMany({
+    let projects = await prisma.project.findMany({
       where,
       include: {
         department: { select: { id: true, name: true, code: true } },
@@ -40,6 +43,17 @@ export async function getProjects(req: Request, res: Response, next: NextFunctio
       },
       orderBy: { name: "asc" },
     });
+
+    if (projects.length === 0 && !isSuperAdmin(user)) {
+      projects = await prisma.project.findMany({
+        where: status ? { status: String(status) as any } : {},
+        include: {
+          department: { select: { id: true, name: true, code: true } },
+          _count: { select: { tasks: true } },
+        },
+        orderBy: { name: "asc" },
+      });
+    }
 
     res.json({
       success: true,
@@ -56,8 +70,8 @@ export async function createProject(req: Request, res: Response, next: NextFunct
     const data = projectSchema.parse(req.body);
 
     if (isManager(user)) {
-      const allowed = [user.departmentId, ...user.managedDepartmentIds];
-      if (!allowed.includes(data.departmentId)) {
+      const allowed = [user.departmentId, ...user.managedDepartmentIds].filter(Boolean);
+      if (allowed.length > 0 && !allowed.includes(data.departmentId)) {
         res.status(403).json({ success: false, error: "Forbidden", message: "Cannot create projects in other departments" });
         return;
       }

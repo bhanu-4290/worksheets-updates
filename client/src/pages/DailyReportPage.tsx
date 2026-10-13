@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../services/api";
 import { Badge } from "../components/Badge";
@@ -16,20 +16,53 @@ import {
   Eye,
   Info,
   Filter,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  Users,
+  FileText,
+  GitBranch,
 } from "lucide-react";
+import { EmployeeFlowModal } from "../components/EmployeeFlowModal";
+
+function toLocalYMD(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
 
 export const DailyReportPage: React.FC = () => {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
 
+  const todayStr = useMemo(() => toLocalYMD(new Date()), []);
+  const yesterdayStr = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return toLocalYMD(d);
+  }, []);
+
   const [activeTab, setActiveTab] = useState<"form" | "history">(
     searchParams.get("tab") === "history" ? "history" : "form"
   );
 
+  // Selected employee filter (for Supervisors viewing subordinate task sheet calendars)
+  const [selectedUserId, setSelectedUserId] = useState<string>(user?.id || "");
+  const [teamUsers, setTeamUsers] = useState<any[]>([]);
+  const [showEmployeeFlow, setShowEmployeeFlow] = useState(false);
+
+  // Calendar Month State
+  const [calendarMonth, setCalendarMonth] = useState<Date>(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
+
   // Form State
   const [reportingDate, setReportingDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
+    searchParams.get("date") || todayStr
   );
+  const [activeReportForDate, setActiveReportForDate] = useState<DailyReport | null>(null);
   const [entries, setEntries] = useState<DailyWorkEntry[]>([
     {
       activityTitle: "",
@@ -37,7 +70,7 @@ export const DailyReportPage: React.FC = () => {
       taskId: null,
       startTime: "",
       endTime: "",
-      hoursSpent: null, // Strictly optional!
+      hoursSpent: null,
       progressPercentage: 50,
       status: "IN_PROGRESS",
       deliverables: "",
@@ -52,15 +85,37 @@ export const DailyReportPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  // History state
+  // All reports for the selected user (powers the Calendar, Missed Days tracker, Yesterday/Week feed, and History tab)
   const [historyReports, setHistoryReports] = useState<DailyReport[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>("");
 
+  const canInspectOthers =
+    user?.role === "SUPER_ADMIN" || user?.role === "MANAGER" || user?.role === "TEAM_LEAD";
+  const isViewingSelf = !selectedUserId || selectedUserId === user?.id;
+
+  useEffect(() => {
+    if (user?.id && !selectedUserId) {
+      setSelectedUserId(user.id);
+    }
+    if (canInspectOthers) {
+      api
+        .get("/users?status=active&flow=true")
+        .then((res: any) => {
+          if (res.success) setTeamUsers(res.data || []);
+        })
+        .catch(() => {});
+    }
+  }, [user]);
+
   useEffect(() => {
     loadAssignedTasks();
-    loadExistingReportForDate(reportingDate);
-    loadHistoryReports();
-  }, [reportingDate]);
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    loadExistingReportForDate(reportingDate, selectedUserId || user.id);
+    loadHistoryReports(selectedUserId || user.id);
+  }, [reportingDate, selectedUserId, user]);
 
   const loadAssignedTasks = async () => {
     try {
@@ -71,13 +126,15 @@ export const DailyReportPage: React.FC = () => {
     }
   };
 
-  const loadExistingReportForDate = async (dateStr: string) => {
+  const loadExistingReportForDate = async (dateStr: string, targetUserId: string) => {
     try {
       setLoading(true);
-      const res: any = await api.get(`/daily-reports?startDate=${dateStr}&endDate=${dateStr}`);
+      const res: any = await api.get(
+        `/daily-reports?startDate=${dateStr}&endDate=${dateStr}&employeeId=${targetUserId}`
+      );
       if (res.success && res.data && res.data.length > 0) {
         const rep = res.data[0];
-        // Populate form with existing report entries for editing
+        setActiveReportForDate(rep);
         if (rep.entries && rep.entries.length > 0) {
           setEntries(
             rep.entries.map((e: any) => ({
@@ -89,7 +146,7 @@ export const DailyReportPage: React.FC = () => {
           );
         }
       } else {
-        // Reset default empty entry if no report exists for this date
+        setActiveReportForDate(null);
         setEntries([
           {
             activityTitle: "",
@@ -108,19 +165,147 @@ export const DailyReportPage: React.FC = () => {
         ]);
       }
     } catch {
-      // Ignored
+      setActiveReportForDate(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const loadHistoryReports = async () => {
+  const loadHistoryReports = async (targetUserId?: string) => {
     try {
-      const url = statusFilter ? `/daily-reports?status=${statusFilter}` : "/daily-reports";
-      const res: any = await api.get(url);
+      const uid = targetUserId || selectedUserId || user?.id || "";
+      const params = new URLSearchParams();
+      if (uid) params.set("employeeId", uid);
+      if (statusFilter) params.set("status", statusFilter);
+      const res: any = await api.get(`/daily-reports?${params.toString()}`);
       if (res.success) setHistoryReports(res.data || []);
     } catch {
       // Ignored
+    }
+  };
+
+  // Map reports by YYYY-MM-DD for O(1) lookup on the Calendar
+  const reportsByDate = useMemo(() => {
+    const map: Record<string, DailyReport> = {};
+    for (const r of historyReports) {
+      if (r.reportingDate) {
+        map[r.reportingDate] = r;
+      }
+    }
+    return map;
+  }, [historyReports]);
+
+  // Build Calendar Grid for `calendarMonth`
+  const calendarDays = useMemo(() => {
+    const year = calendarMonth.getFullYear();
+    const month = calendarMonth.getMonth();
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0);
+    const startWeekday = firstDayOfMonth.getDay(); // 0 (Sun) - 6 (Sat)
+    const daysInMonth = lastDayOfMonth.getDate();
+
+    const cells: Array<{
+      dateStr: string | null;
+      dayNumber: number | null;
+      isToday: boolean;
+      isSelected: boolean;
+      isPastWorkday: boolean;
+      isWeekend: boolean;
+      report: DailyReport | null;
+    }> = [];
+
+    for (let i = 0; i < startWeekday; i++) {
+      cells.push({
+        dateStr: null,
+        dayNumber: null,
+        isToday: false,
+        isSelected: false,
+        isPastWorkday: false,
+        isWeekend: false,
+        report: null,
+      });
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateObj = new Date(year, month, day);
+      const dateStr = toLocalYMD(dateObj);
+      const weekday = dateObj.getDay();
+      const isWeekend = weekday === 0 || weekday === 6;
+      const isToday = dateStr === todayStr;
+      const isSelected = dateStr === reportingDate;
+      // Past working day: Mon-Fri after 15-10-2026 and strictly before today (dates up to 2026-10-15 remain blank)
+      const isPastWorkday = !isWeekend && dateStr > "2026-10-15" && dateStr < todayStr;
+      const report = reportsByDate[dateStr] || null;
+
+      cells.push({
+        dateStr,
+        dayNumber: day,
+        isToday,
+        isSelected,
+        isPastWorkday,
+        isWeekend,
+        report,
+      });
+    }
+
+    return cells;
+  }, [calendarMonth, reportsByDate, reportingDate, todayStr]);
+
+  // Missed working days in the currently viewed calendar month
+  const missedDatesInMonth = useMemo(() => {
+    return calendarDays
+      .filter((c) => c.dateStr && c.isPastWorkday && !c.report)
+      .map((c) => c.dateStr as string)
+      .reverse();
+  }, [calendarDays]);
+
+  // Updated days in the currently viewed calendar month
+  const updatedDatesCount = useMemo(() => {
+    return calendarDays.filter((c) => c.dateStr && c.report).length;
+  }, [calendarDays]);
+
+  // Most recent updated report (from yesterday or earlier) so user can carry forward tasks or inspect yesterday's updates
+  const latestPreviousReport = useMemo(() => {
+    return historyReports.find((r) => r.reportingDate <= todayStr) || null;
+  }, [historyReports, todayStr]);
+
+  const yesterdayReport = useMemo(() => {
+    return reportsByDate[yesterdayStr] || null;
+  }, [reportsByDate, yesterdayStr]);
+
+  const handleCopyPreviousTasks = (sourceReport: DailyReport) => {
+    if (!sourceReport.entries || sourceReport.entries.length === 0) return;
+    setEntries(
+      sourceReport.entries.map((e: any) => ({
+        activityTitle: e.activityTitle || "",
+        description: e.description || "",
+        taskId: e.taskId || null,
+        startTime: e.startTime || "",
+        endTime: e.endTime || "",
+        hoursSpent: e.hoursSpent ?? null,
+        progressPercentage: e.progressPercentage ?? 50,
+        status: e.status || "IN_PROGRESS",
+        deliverables: e.deliverables || "",
+        blockers: e.blockers || "",
+        supportRequired: e.supportRequired || "",
+        nextDayPlan: e.nextDayPlan || "",
+      }))
+    );
+    setMessage({
+      type: "success",
+      text: `Loaded ${sourceReport.entries.length} task entry(s) from ${sourceReport.reportingDate} into the ${reportingDate} sheet. Review and click Submit to save.`,
+    });
+  };
+
+  const handleSelectCalendarDate = (dateStr: string) => {
+    setReportingDate(dateStr);
+    setMessage(null);
+    const d = new Date(dateStr + "T00:00:00");
+    if (
+      d.getFullYear() !== calendarMonth.getFullYear() ||
+      d.getMonth() !== calendarMonth.getMonth()
+    ) {
+      setCalendarMonth(new Date(d.getFullYear(), d.getMonth(), 1));
     }
   };
 
@@ -160,7 +345,6 @@ export const DailyReportPage: React.FC = () => {
   const handleSave = async (submitStatus: "DRAFT" | "SUBMITTED") => {
     setMessage(null);
 
-    // Validation
     for (let i = 0; i < entries.length; i++) {
       if (!entries[i].activityTitle.trim()) {
         setMessage({ type: "error", text: `Activity ${i + 1}: Title is required.` });
@@ -186,15 +370,17 @@ export const DailyReportPage: React.FC = () => {
         })),
       };
 
-      const res: any = await api.post("/daily-reports", payload);
+      await api.post("/daily-reports", payload);
       setMessage({
         type: "success",
-        text: submitStatus === "SUBMITTED"
-          ? "Daily report submitted successfully for Team Lead review!"
-          : "Draft saved successfully.",
+        text:
+          submitStatus === "SUBMITTED"
+            ? `Task sheet for ${reportingDate} submitted and marked as Updated on your calendar.`
+            : `Draft saved for ${reportingDate}.`,
       });
 
-      loadHistoryReports();
+      await loadExistingReportForDate(reportingDate, selectedUserId || user?.id || "");
+      await loadHistoryReports(selectedUserId || user?.id || "");
     } catch (err: any) {
       setMessage({ type: "error", text: err.message || "Failed to save daily report." });
     } finally {
@@ -203,48 +389,366 @@ export const DailyReportPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3.5 sm:space-y-4">
       {/* Top Header & Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Daily Work Reporting
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Daily Work Reporting &amp; Task Sheet Calendar
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Log daily activities, linked project tasks, deliverables, and blockers. Work hours are optional.
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Track daily task sheets on the calendar, review updates from yesterday or previous weeks, and fill in any missed working days.
           </p>
         </div>
 
-        <div className="flex items-center gap-1.5 p-1 bg-slate-200/70 dark:bg-slate-800 rounded-xl self-start sm:self-auto">
-          <button
-            onClick={() => setActiveTab("form")}
-            className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              activeTab === "form"
-                ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
-            }`}
-          >
-            Report Form
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab("history");
-              loadHistoryReports();
-            }}
-            className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              activeTab === "history"
-                ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
-            }`}
-          >
-            Previous Reports
-          </button>
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          {canInspectOthers && (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md px-2.5 py-1">
+                <Users className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                <select
+                  value={selectedUserId}
+                  onChange={(e) => setSelectedUserId(e.target.value)}
+                  className="bg-transparent text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none"
+                >
+                  <option value={user?.id || ""}>My Task Sheet ({user?.fullName})</option>
+                  {teamUsers
+                    .filter((u) => u.id !== user?.id)
+                    .map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.fullName} ({u.role.replace("_", " ")})
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowEmployeeFlow(true)}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-semibold hover:bg-blue-100 transition-colors cursor-pointer"
+                title="View MATRIX Organizational Flow Chart"
+              >
+                <GitBranch className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Employee Flow</span>
+              </button>
+            </div>
+          )}
+
+          <div className="flex items-center gap-1.5 p-1 bg-slate-200/70 dark:bg-slate-800 rounded-md">
+            <button
+              onClick={() => setActiveTab("form")}
+              className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
+                activeTab === "form"
+                  ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+              }`}
+            >
+              Calendar &amp; Task Sheet
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab("history");
+                loadHistoryReports();
+              }}
+              className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
+                activeTab === "history"
+                  ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+              }`}
+            >
+              All Previous Sheets ({historyReports.length})
+            </button>
+          </div>
         </div>
+      </div>
+
+      {/* ======================================================== */}
+      {/* INTERACTIVE TASK SHEET CALENDAR & MISSED DAYS TRACKER */}
+      {/* ======================================================== */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 sm:p-4.5 shadow-xs space-y-3.5">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-md p-1">
+              <button
+                type="button"
+                onClick={() =>
+                  setCalendarMonth(
+                    new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1)
+                  )
+                }
+                className="p-1.5 rounded hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 cursor-pointer"
+                title="Previous Month"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="px-3 text-xs font-bold text-slate-900 dark:text-white min-w-[130px] text-center">
+                {calendarMonth.toLocaleDateString(undefined, {
+                  month: "long",
+                  year: "numeric",
+                })}
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  setCalendarMonth(
+                    new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1)
+                  )
+                }
+                className="p-1.5 rounded hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 cursor-pointer"
+                title="Next Month"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Quick Jump Buttons: Yesterday & Today */}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleSelectCalendarDate(yesterdayStr)}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold border transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  reportingDate === yesterdayStr
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-500"
+                }`}
+              >
+                <Clock className="w-3.5 h-3.5" />
+                Yesterday ({yesterdayStr})
+                {yesterdayReport ? (
+                  <span className="px-1.5 py-0.2 rounded text-[10px] bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold">
+                    Updated
+                  </span>
+                ) : (
+                  <span className="px-1.5 py-0.2 rounded text-[10px] bg-rose-500/20 text-rose-700 dark:text-rose-300 font-bold">
+                    Missed
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSelectCalendarDate(todayStr)}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold border transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  reportingDate === todayStr
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-500"
+                }`}
+              >
+                <Calendar className="w-3.5 h-3.5" />
+                Today ({todayStr})
+              </button>
+            </div>
+          </div>
+
+          {/* Legend & Monthly Counters */}
+          <div className="flex flex-wrap items-center gap-3 text-xs">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 font-semibold">
+              <span className="w-2 h-2 rounded-xs bg-emerald-500" />
+              Updated Sheets: {updatedDatesCount}
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60 font-semibold">
+              <span className="w-2 h-2 rounded-xs bg-rose-500" />
+              Missed Workdays: {missedDatesInMonth.length}
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 font-semibold">
+              <span className="w-2 h-2 rounded-xs bg-amber-500" />
+              Draft / Revision
+            </span>
+          </div>
+        </div>
+
+        {/* 7-Day Calendar Grid */}
+        <div>
+          <div className="grid grid-cols-7 gap-1.5 text-center text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">
+            <div>Sun</div>
+            <div>Mon</div>
+            <div>Tue</div>
+            <div>Wed</div>
+            <div>Thu</div>
+            <div>Fri</div>
+            <div>Sat</div>
+          </div>
+
+          <div className="grid grid-cols-7 gap-1.5">
+            {calendarDays.map((cell, idx) => {
+              if (!cell.dateStr || cell.dayNumber === null) {
+                return (
+                  <div
+                    key={`empty-${idx}`}
+                    className="h-16 sm:h-20 rounded-md bg-slate-50/50 dark:bg-slate-950/30 border border-transparent"
+                  />
+                );
+              }
+
+              const rep = cell.report;
+              const isSubmittedOrApproved =
+                rep &&
+                (rep.status === "SUBMITTED" ||
+                  rep.status === "APPROVED" ||
+                  rep.status === "UNDER_REVIEW");
+              const isDraftOrRevision =
+                rep && (rep.status === "DRAFT" || rep.status === "REVISION_REQUESTED");
+              const isMissed = !rep && cell.isPastWorkday;
+
+              let cellStyle =
+                "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-blue-500";
+              if (isSubmittedOrApproved) {
+                cellStyle =
+                  "bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800/70 text-emerald-900 dark:text-emerald-200 hover:border-emerald-500";
+              } else if (isDraftOrRevision) {
+                cellStyle =
+                  "bg-amber-50/70 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800/70 text-amber-900 dark:text-amber-200 hover:border-amber-500";
+              } else if (isMissed) {
+                cellStyle =
+                  "bg-rose-50/60 dark:bg-rose-950/25 border-rose-200 dark:border-rose-900/60 text-rose-900 dark:text-rose-200 hover:border-rose-500";
+              } else if (cell.isWeekend) {
+                cellStyle =
+                  "bg-slate-50 dark:bg-slate-950/50 border-slate-200/60 dark:border-slate-800/60 text-slate-400 dark:text-slate-500 hover:border-blue-400";
+              }
+
+              return (
+                <button
+                  key={cell.dateStr}
+                  type="button"
+                  onClick={() => handleSelectCalendarDate(cell.dateStr!)}
+                  className={`h-16 sm:h-20 p-1.5 sm:p-2 rounded-md border text-left flex flex-col justify-between transition-colors cursor-pointer relative ${cellStyle} ${
+                    cell.isSelected ? "ring-2 ring-blue-600 dark:ring-blue-400" : ""
+                  }`}
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <span
+                      className={`text-xs font-bold ${
+                        cell.isToday
+                          ? "px-1.5 py-0.5 rounded bg-blue-600 text-white"
+                          : ""
+                      }`}
+                    >
+                      {cell.dayNumber}
+                    </span>
+                    {isSubmittedOrApproved && (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    )}
+                    {isDraftOrRevision && (
+                      <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                    )}
+                    {isMissed && (
+                      <AlertCircle className="w-3.5 h-3.5 text-rose-500 dark:text-rose-400 shrink-0" />
+                    )}
+                  </div>
+
+                  <div className="w-full truncate">
+                    {rep ? (
+                      <div>
+                        <div className="text-[10px] font-bold uppercase tracking-tight truncate">
+                          {rep.entriesCount || rep.entries?.length || 1} task(s)
+                        </div>
+                        <div className="text-[9px] opacity-80 truncate hidden sm:block">
+                          {rep.entries?.[0]?.activityTitle || rep.status}
+                        </div>
+                      </div>
+                    ) : isMissed ? (
+                      <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400">
+                        Missed
+                      </span>
+                    ) : cell.isToday ? (
+                      <span className="text-[10px] font-semibold text-blue-600 dark:text-blue-400">
+                        Today
+                      </span>
+                    ) : cell.isWeekend ? (
+                      <span className="text-[9px] opacity-60 hidden sm:inline">Weekend</span>
+                    ) : null}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Missed Days Quick-Fill Strip */}
+        {missedDatesInMonth.length > 0 && (
+          <div className="p-3 rounded-md bg-rose-50/70 dark:bg-rose-950/25 border border-rose-200 dark:border-rose-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-xs text-rose-800 dark:text-rose-300 font-semibold">
+              <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+              <span>
+                Missed Task Sheet Dates (click any date to open &amp; update the missed sheet):
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {missedDatesInMonth.slice(0, 8).map((dStr) => (
+                <button
+                  key={dStr}
+                  type="button"
+                  onClick={() => {
+                    handleSelectCalendarDate(dStr);
+                    setActiveTab("form");
+                  }}
+                  className={`px-2.5 py-1 rounded text-[11px] font-bold transition-colors cursor-pointer ${
+                    reportingDate === dStr
+                      ? "bg-rose-600 text-white"
+                      : "bg-white dark:bg-slate-900 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800 hover:bg-rose-100"
+                  }`}
+                >
+                  {dStr === yesterdayStr ? `${dStr} (Yesterday)` : dStr}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Recent Updates Summary (Yesterday & Past Week Always Visible Today / Next Week) */}
+        {historyReports.length > 0 && (
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Recent Updated Task Sheets (Visible Across Days &amp; Weeks)
+              </span>
+              {isViewingSelf && latestPreviousReport && !activeReportForDate && (
+                <button
+                  type="button"
+                  onClick={() => handleCopyPreviousTasks(latestPreviousReport)}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  Copy tasks from {latestPreviousReport.reportingDate} into {reportingDate}
+                </button>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {historyReports.slice(0, 7).map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => {
+                    handleSelectCalendarDate(r.reportingDate);
+                    setActiveTab("form");
+                  }}
+                  className={`px-3 py-1.5 rounded-md border text-xs flex items-center gap-2 transition-colors cursor-pointer ${
+                    reportingDate === r.reportingDate
+                      ? "border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200 font-bold"
+                      : "border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 hover:border-blue-400"
+                  }`}
+                >
+                  <FileText className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                  <span>
+                    {r.reportingDate === yesterdayStr
+                      ? `${r.reportingDate} (Yesterday)`
+                      : r.reportingDate === todayStr
+                      ? `${r.reportingDate} (Today)`
+                      : r.reportingDate}
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold">
+                    {r.entriesCount || r.entries?.length || 1} task(s)
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {message && (
         <div
-          className={`p-4 rounded-xl text-xs font-medium flex items-center gap-3 ${
+          className={`p-4 rounded-lg text-xs font-medium flex items-center gap-3 ${
             message.type === "success"
               ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
               : "bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
@@ -260,72 +764,130 @@ export const DailyReportPage: React.FC = () => {
       )}
 
       {/* ======================================================== */}
-      {/* TAB 1: REPORT FORM */}
+      {/* TAB 1: REPORT FORM & SELECTED DATE TASK SHEET VIEW */}
       {/* ======================================================== */}
       {activeTab === "form" && (
         <div className="space-y-6">
-          {/* Date Selector & Optional Hours Notice */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <Calendar className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Reporting Date
-                </label>
-                <input
-                  type="date"
-                  value={reportingDate}
-                  onChange={(e) => setReportingDate(e.target.value)}
-                  className="mt-1 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
+          {/* Date Selector & Status Banner */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-3">
+                <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0" />
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Selected Task Sheet Date
+                  </label>
+                  <input
+                    type="date"
+                    value={reportingDate}
+                    onChange={(e) => handleSelectCalendarDate(e.target.value)}
+                    className="mt-1 px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
               </div>
+
+              {activeReportForDate ? (
+                <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-md bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <div className="text-xs">
+                    <div className="font-bold text-emerald-900 dark:text-emerald-200 flex items-center gap-2">
+                      <span>Task Sheet Recorded for {reportingDate}</span>
+                      <Badge variant={activeReportForDate.status} size="sm" />
+                    </div>
+                    <div className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-0.5">
+                      {activeReportForDate.entries?.length || activeReportForDate.entriesCount} task(s) logged
+                      {activeReportForDate.id && (
+                        <>
+                          {" • "}
+                          <Link
+                            to={`/reports/${activeReportForDate.id}`}
+                            className="underline font-semibold"
+                          >
+                            Open Full Report View
+                          </Link>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60">
+                  <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <div className="text-xs">
+                    <div className="font-bold text-amber-900 dark:text-amber-200">
+                      {reportingDate < todayStr
+                        ? `No Task Sheet Updated on ${reportingDate} (Missed)`
+                        : `Task Sheet Not Yet Submitted for ${reportingDate}`}
+                    </div>
+                    <div className="text-[11px] text-amber-700 dark:text-amber-400">
+                      {isViewingSelf
+                        ? "Fill out your tasks below and click Submit to record this date on your calendar."
+                        : "This employee has not submitted a task sheet for this date."}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="flex items-start gap-2.5 p-3 rounded-lg bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 max-w-xl text-xs text-indigo-900 dark:text-indigo-300">
-              <Info className="w-4 h-4 shrink-0 text-indigo-600 dark:text-indigo-400 mt-0.5" />
+            <div className="flex items-start gap-2.5 p-3 rounded-lg bg-blue-50/70 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 max-w-md text-xs text-blue-900 dark:text-blue-300">
+              <Info className="w-4 h-4 shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
               <span>
-                <strong>Optional Working Hours Policy:</strong> Entering work hours is strictly optional. Unreported hours are distinguished from zero hours and will never be used as evidence of non-productivity.
+                <strong>Persistent Task History:</strong> Tasks updated yesterday or last week remain visible on the calendar and automatically sync progress to the Task Board.
               </span>
             </div>
           </div>
 
           {/* Activity Entries List */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <span>Activity Entries</span>
-                <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400">
+                <span>Task Sheet Entries for {reportingDate}</span>
+                <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
                   {entries.length}
                 </span>
               </h2>
-              <button
-                type="button"
-                onClick={addEntry}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 font-semibold text-xs transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" /> Add Another Activity
-              </button>
+              {isViewingSelf && (
+                <div className="flex items-center gap-2">
+                  {latestPreviousReport && (
+                    <button
+                      type="button"
+                      onClick={() => handleCopyPreviousTasks(latestPreviousReport)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 font-semibold text-xs transition-colors cursor-pointer"
+                    >
+                      <Copy className="w-3.5 h-3.5 text-blue-600" />
+                      Load Tasks from {latestPreviousReport.reportingDate}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={addEntry}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 font-semibold text-xs transition-colors cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add Another Activity
+                  </button>
+                </div>
+              )}
             </div>
 
             {entries.map((entry, index) => (
               <div
                 key={index}
-                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4 relative"
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs space-y-4 relative"
               >
                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                   <div className="flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">
+                    <span className="w-6 h-6 rounded-md bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
                       {index + 1}
                     </span>
                     <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                       Activity Entry #{index + 1}
                     </span>
                   </div>
-                  {entries.length > 1 && (
+                  {isViewingSelf && entries.length > 1 && (
                     <button
                       type="button"
                       onClick={() => removeEntry(index)}
-                      className="text-slate-400 hover:text-rose-600 p-1 rounded transition-colors text-xs flex items-center gap-1"
+                      className="text-slate-400 hover:text-rose-600 p-1 rounded transition-colors text-xs flex items-center gap-1 cursor-pointer"
                     >
                       <Trash2 className="w-4 h-4" /> Remove
                     </button>
@@ -341,26 +903,37 @@ export const DailyReportPage: React.FC = () => {
                     <input
                       type="text"
                       required
+                      disabled={!isViewingSelf}
                       placeholder="e.g. Implement Role Scoping Middleware"
                       value={entry.activityTitle}
                       onChange={(e) => updateEntry(index, "activityTitle", e.target.value)}
-                      className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-70"
                     />
                   </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Link to Task (Optional)
+                      Link to Assigned Task (Syncs Progress)
                     </label>
                     <select
+                      disabled={!isViewingSelf}
                       value={entry.taskId || ""}
-                      onChange={(e) => updateEntry(index, "taskId", e.target.value || null)}
-                      className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      onChange={(e) => {
+                        const selectedTaskId = e.target.value || null;
+                        updateEntry(index, "taskId", selectedTaskId);
+                        if (selectedTaskId && !entry.activityTitle) {
+                          const foundTask = tasks.find((t) => t.id === selectedTaskId);
+                          if (foundTask) {
+                            updateEntry(index, "activityTitle", foundTask.title);
+                          }
+                        }
+                      }}
+                      className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-70"
                     >
                       <option value="">-- No specific task --</option>
                       {tasks.map((t) => (
                         <option key={t.id} value={t.id}>
-                          {t.taskCode}: {t.title}
+                          {t.taskCode}: {t.title} ({t.progressPercentage}%)
                         </option>
                       ))}
                     </select>
@@ -375,10 +948,11 @@ export const DailyReportPage: React.FC = () => {
                   <textarea
                     rows={3}
                     required
+                    disabled={!isViewingSelf}
                     placeholder="Provide detailed description of tasks executed, technical decisions, and progress..."
                     value={entry.description}
                     onChange={(e) => updateEntry(index, "description", e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-70"
                   />
                 </div>
 
@@ -390,9 +964,10 @@ export const DailyReportPage: React.FC = () => {
                     </label>
                     <input
                       type="time"
+                      disabled={!isViewingSelf}
                       value={entry.startTime || ""}
                       onChange={(e) => updateEntry(index, "startTime", e.target.value || null)}
-                      className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
@@ -402,9 +977,10 @@ export const DailyReportPage: React.FC = () => {
                     </label>
                     <input
                       type="time"
+                      disabled={!isViewingSelf}
                       value={entry.endTime || ""}
                       onChange={(e) => updateEntry(index, "endTime", e.target.value || null)}
-                      className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
@@ -417,12 +993,17 @@ export const DailyReportPage: React.FC = () => {
                       step="0.5"
                       min="0"
                       max="24"
+                      disabled={!isViewingSelf}
                       placeholder="Leave blank if not tracking"
                       value={entry.hoursSpent ?? ""}
                       onChange={(e) =>
-                        updateEntry(index, "hoursSpent", e.target.value === "" ? null : parseFloat(e.target.value))
+                        updateEntry(
+                          index,
+                          "hoursSpent",
+                          e.target.value === "" ? null : parseFloat(e.target.value)
+                        )
                       }
-                      className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                 </div>
@@ -440,9 +1021,12 @@ export const DailyReportPage: React.FC = () => {
                       min="0"
                       max="100"
                       step="5"
+                      disabled={!isViewingSelf}
                       value={entry.progressPercentage}
-                      onChange={(e) => updateEntry(index, "progressPercentage", parseInt(e.target.value, 10))}
-                      className="w-full accent-indigo-600 cursor-pointer"
+                      onChange={(e) =>
+                        updateEntry(index, "progressPercentage", parseInt(e.target.value, 10))
+                      }
+                      className="w-full accent-blue-600 cursor-pointer"
                     />
                   </div>
 
@@ -451,9 +1035,10 @@ export const DailyReportPage: React.FC = () => {
                       Activity Status
                     </label>
                     <select
+                      disabled={!isViewingSelf}
                       value={entry.status}
                       onChange={(e) => updateEntry(index, "status", e.target.value)}
-                      className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="IN_PROGRESS">In Progress</option>
                       <option value="COMPLETED">Completed</option>
@@ -470,10 +1055,11 @@ export const DailyReportPage: React.FC = () => {
                     </label>
                     <input
                       type="text"
+                      disabled={!isViewingSelf}
                       placeholder="e.g. Merged PR #104, tested in staging"
                       value={entry.deliverables || ""}
                       onChange={(e) => updateEntry(index, "deliverables", e.target.value)}
-                      className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
@@ -483,10 +1069,11 @@ export const DailyReportPage: React.FC = () => {
                     </label>
                     <input
                       type="text"
+                      disabled={!isViewingSelf}
                       placeholder="e.g. Waiting on VPN firewall rule exception"
                       value={entry.blockers || ""}
                       onChange={(e) => updateEntry(index, "blockers", e.target.value)}
-                      className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                 </div>
@@ -499,10 +1086,11 @@ export const DailyReportPage: React.FC = () => {
                     </label>
                     <input
                       type="text"
+                      disabled={!isViewingSelf}
                       placeholder="e.g. Need Manager escalation with IT team"
                       value={entry.supportRequired || ""}
                       onChange={(e) => updateEntry(index, "supportRequired", e.target.value)}
-                      className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
@@ -512,10 +1100,11 @@ export const DailyReportPage: React.FC = () => {
                     </label>
                     <input
                       type="text"
+                      disabled={!isViewingSelf}
                       placeholder="e.g. Run load tests and benchmark response latency"
                       value={entry.nextDayPlan || ""}
                       onChange={(e) => updateEntry(index, "nextDayPlan", e.target.value)}
-                      className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                 </div>
@@ -524,31 +1113,33 @@ export const DailyReportPage: React.FC = () => {
           </div>
 
           {/* Form Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
-            <button
-              type="button"
-              disabled={submitting}
-              onClick={() => handleSave("DRAFT")}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs hover:bg-slate-50 transition-colors disabled:opacity-50"
-            >
-              <Save className="w-4 h-4" /> Save as Draft
-            </button>
+          {isViewingSelf && (
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+              <button
+                type="button"
+                disabled={submitting}
+                onClick={() => handleSave("DRAFT")}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs hover:bg-slate-50 transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                <Save className="w-4 h-4" /> Save as Draft ({reportingDate})
+              </button>
 
-            <button
-              type="button"
-              disabled={submitting}
-              onClick={() => handleSave("SUBMITTED")}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-xs transition-colors disabled:opacity-50"
-            >
-              {submitting ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <>
-                  <Send className="w-4 h-4" /> Submit for Team Lead Review
-                </>
-              )}
-            </button>
-          </div>
+              <button
+                type="button"
+                disabled={submitting}
+                onClick={() => handleSave("SUBMITTED")}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                {submitting ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-md animate-spin" />
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" /> Submit Task Sheet ({reportingDate})
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -577,23 +1168,23 @@ export const DailyReportPage: React.FC = () => {
               </select>
             </div>
             <span className="text-xs text-slate-400">
-              Found {historyReports.length} reports
+              Found {historyReports.length} task sheets
             </span>
           </div>
 
           {historyReports.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-12 text-center text-slate-400 text-xs">
-              No daily reports found.
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-12 text-center text-slate-400 text-xs">
+              No daily task sheets found.
             </div>
           ) : (
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden shadow-xs">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 uppercase tracking-wider text-[10px]">
                     <tr>
                       <th className="px-6 py-3.5 font-bold">Reporting Date</th>
                       <th className="px-6 py-3.5 font-bold">Employee</th>
-                      <th className="px-6 py-3.5 font-bold">Activities</th>
+                      <th className="px-6 py-3.5 font-bold">Updated Tasks</th>
                       <th className="px-6 py-3.5 font-bold">Recorded Hours</th>
                       <th className="px-6 py-3.5 font-bold">Status</th>
                       <th className="px-6 py-3.5 font-bold">Lead Reviewer</th>
@@ -610,10 +1201,17 @@ export const DailyReportPage: React.FC = () => {
                           {r.reportingDate}
                         </td>
                         <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
-                          {r.user.fullName}
+                          {r.user?.fullName}
                         </td>
                         <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
-                          {r.entriesCount} entries
+                          <div className="font-semibold text-slate-800 dark:text-slate-200">
+                            {r.entriesCount} task(s)
+                          </div>
+                          {r.entries && r.entries.length > 0 && (
+                            <div className="text-[11px] text-slate-400 truncate max-w-xs">
+                              {r.entries.map((e: any) => e.activityTitle).join(", ")}
+                            </div>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-slate-600 dark:text-slate-400 font-mono">
                           {r.totalHoursRecorded ? `${r.totalHoursRecorded}h` : "Unreported"}
@@ -622,15 +1220,27 @@ export const DailyReportPage: React.FC = () => {
                           <Badge variant={r.status} size="sm" />
                         </td>
                         <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
-                          {r.latestReview?.reviewer?.fullName || "—"}
+                          {r.latestReview?.reviewer?.fullName || "N/A"}
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <Link
-                            to={`/reports/${r.id}`}
-                            className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-semibold hover:bg-indigo-100 transition-colors"
-                          >
-                            <Eye className="w-3.5 h-3.5" /> Details
-                          </Link>
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                handleSelectCalendarDate(r.reportingDate);
+                                setActiveTab("form");
+                              }}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                            >
+                              <Calendar className="w-3.5 h-3.5" /> Open in Calendar
+                            </button>
+                            <Link
+                              to={`/reports/${r.id}`}
+                              className="inline-flex items-center gap-1 px-3 py-1 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-semibold hover:bg-blue-100 transition-colors"
+                            >
+                              <Eye className="w-3.5 h-3.5" /> Details
+                            </Link>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -641,6 +1251,11 @@ export const DailyReportPage: React.FC = () => {
           )}
         </div>
       )}
+
+      <EmployeeFlowModal
+        isOpen={showEmployeeFlow}
+        onClose={() => setShowEmployeeFlow(false)}
+      />
     </div>
   );
 };

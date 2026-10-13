@@ -3,13 +3,15 @@ import { prisma } from "../config/db.js";
 import { z } from "zod";
 
 const createAnnouncementSchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters").max(200),
-  content: z.string().min(5, "Content must be at least 5 characters"),
+  title: z.string().trim().min(1, "Title is required").max(200),
+  content: z.string().trim().min(1, "Announcement details are required"),
   priority: z.enum(["LOW", "NORMAL", "HIGH", "URGENT"]).default("NORMAL"),
   targetScope: z.enum(["ALL", "DEPARTMENT", "TEAM"]).default("ALL"),
-  departmentId: z.string().uuid().optional().nullable(),
-  teamId: z.string().uuid().optional().nullable(),
+  departmentId: z.preprocess((v) => (!v ? null : v), z.string().uuid().optional().nullable()),
+  teamId: z.preprocess((v) => (!v ? null : v), z.string().uuid().optional().nullable()),
   isPinned: z.boolean().default(false),
+  attachmentUrl: z.preprocess((v) => (!v ? null : v), z.string().optional().nullable()),
+  attachmentName: z.preprocess((v) => (!v ? null : v), z.string().max(255).optional().nullable()),
 });
 
 export async function checkAndTriggerBirthdays(): Promise<void> {
@@ -56,12 +58,12 @@ export async function checkAndTriggerBirthdays(): Promise<void> {
     const startOfYear = new Date(currentYear, 0, 1);
 
     for (const bUser of birthdayUsers) {
-      const birthdayTitle = `🎉 Happy Birthday, ${bUser.fullName}!`;
+      const birthdayTitle = `Happy Birthday, ${bUser.fullName}!`;
 
       // Verify if birthday announcement was already published this calendar year
       const existingAnnouncement = await prisma.announcement.findFirst({
         where: {
-          title: birthdayTitle,
+          title: { contains: `Happy Birthday, ${bUser.fullName}` },
           createdAt: { gte: startOfYear },
         },
       });
@@ -73,7 +75,7 @@ export async function checkAndTriggerBirthdays(): Promise<void> {
         await prisma.announcement.create({
           data: {
             title: birthdayTitle,
-            content: `Today the entire WorkTrack family celebrates ${bUser.fullName} (${bUser.jobTitle}) on their birthday! 🎂🎈✨\n\nWishing you boundless happiness, great health, and continued success. Have a truly wonderful and memorable day!`,
+            content: `Today the entire team celebrates ${bUser.fullName} (${bUser.jobTitle}) on their birthday.\n\nWishing you great health, happiness, and continued success in the year ahead.`,
             priority: "HIGH",
             targetScope: "ALL",
             isPinned: true,
@@ -87,7 +89,7 @@ export async function checkAndTriggerBirthdays(): Promise<void> {
             data: {
               senderId: superAdmin.id,
               receiverId: bUser.id,
-              content: `🎂 Happy Birthday, ${bUser.fullName}! 🌟 On behalf of the entire management and team, wishing you a joyous birthday and a wonderful year ahead! 🎉`,
+              content: `Happy Birthday, ${bUser.fullName}! On behalf of the management and team, wishing you a great birthday and a successful year ahead.`,
             },
           });
         }
@@ -98,8 +100,8 @@ export async function checkAndTriggerBirthdays(): Promise<void> {
             recipientId: bUser.id,
             senderId: superAdmin ? superAdmin.id : null,
             eventType: "BIRTHDAY_WISHES",
-            title: `🎂 Happy Birthday from the Team!`,
-            message: `Wishing you a wonderful birthday, ${bUser.fullName}! A special celebration announcement has been posted in your honor.`,
+            title: `Happy Birthday from the Team`,
+            message: `Wishing you a great birthday, ${bUser.fullName}! A birthday announcement has been posted on the bulletin board.`,
             link: "/announcements",
           },
         });
@@ -113,168 +115,231 @@ export async function checkAndTriggerBirthdays(): Promise<void> {
 }
 
 export async function getAnnouncements(req: Request, res: Response): Promise<void> {
-  // Check and trigger any birthdays for today
-  await checkAndTriggerBirthdays();
+  try {
+    // Check and trigger any birthdays for today
+    await checkAndTriggerBirthdays();
 
-  const user = req.user!;
+    const user = req.user!;
 
-  // Fetch user's department and teams for scope filtering
-  const userProfile = await prisma.user.findUnique({
-    where: { id: user.id },
-    include: {
-      teamMemberships: true,
-    },
-  });
+    // Fetch user's department and teams for scope filtering
+    const userProfile = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: {
+        teamMemberships: true,
+      },
+    });
 
-  const userDeptId = userProfile?.departmentId;
-  const userTeamIds = userProfile?.teamMemberships.map((tm) => tm.teamId) || [];
+    const userDeptId = userProfile?.departmentId;
+    const userTeamIds = userProfile?.teamMemberships.map((tm) => tm.teamId) || [];
 
-  let whereClause: any = {};
+    let whereClause: any = {};
 
-  if (user.role === "SUPER_ADMIN") {
-    // Super Admin sees all announcements
-    whereClause = {};
-  } else {
-    // Other users see:
-    // 1. Company-wide (targetScope: "ALL")
-    // 2. Department-specific (targetScope: "DEPARTMENT" and departmentId = user's dept)
-    // 3. Team-specific (targetScope: "TEAM" and teamId IN user's teams)
-    whereClause = {
-      OR: [
-        { targetScope: "ALL" },
-        ...(userDeptId ? [{ targetScope: "DEPARTMENT", departmentId: userDeptId }] : []),
-        ...(userTeamIds.length > 0 ? [{ targetScope: "TEAM", teamId: { in: userTeamIds } }] : []),
+    if (user.role === "SUPER_ADMIN") {
+      // Super Admin sees all announcements
+      whereClause = {};
+    } else {
+      // Other users see:
+      // 1. Company-wide (targetScope: "ALL")
+      // 2. Announcements they authored (authorId = user.id)
+      // 3. Department-specific (targetScope: "DEPARTMENT" and departmentId = user's dept)
+      // 4. Team-specific (targetScope: "TEAM" and teamId IN user's teams)
+      whereClause = {
+        OR: [
+          { targetScope: "ALL" },
+          { authorId: user.id },
+          ...(userDeptId ? [{ targetScope: "DEPARTMENT", departmentId: userDeptId }] : []),
+          ...(userTeamIds.length > 0 ? [{ targetScope: "TEAM", teamId: { in: userTeamIds } }] : []),
+        ],
+      };
+    }
+
+    const announcements = await prisma.announcement.findMany({
+      where: whereClause,
+      orderBy: [
+        { isPinned: "desc" },
+        { createdAt: "desc" },
       ],
-    };
+      include: {
+        author: {
+          select: {
+            id: true,
+            fullName: true,
+            role: true,
+            jobTitle: true,
+          },
+        },
+        department: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+          },
+        },
+        team: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+          },
+        },
+      },
+    });
+
+    res.json({
+      success: true,
+      data: announcements,
+    });
+  } catch (err: any) {
+    console.error("[ANNOUNCEMENT] Error fetching announcements:", err);
+    res.status(500).json({
+      success: false,
+      error: "ServerError",
+      message: err.message || "Failed to load announcements.",
+    });
   }
-
-  const announcements = await prisma.announcement.findMany({
-    where: whereClause,
-    orderBy: [
-      { isPinned: "desc" },
-      { createdAt: "desc" },
-    ],
-    include: {
-      author: {
-        select: {
-          id: true,
-          fullName: true,
-          role: true,
-          jobTitle: true,
-        },
-      },
-      department: {
-        select: {
-          id: true,
-          name: true,
-          code: true,
-        },
-      },
-      team: {
-        select: {
-          id: true,
-          name: true,
-          code: true,
-        },
-      },
-    },
-  });
-
-  res.json({
-    success: true,
-    data: announcements,
-  });
 }
 
 export async function createAnnouncement(req: Request, res: Response): Promise<void> {
-  const user = req.user!;
+  try {
+    const user = req.user!;
 
-  const parsed = createAnnouncementSchema.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({
-      success: false,
-      error: "ValidationError",
-      errors: parsed.error.flatten().fieldErrors,
-    });
-    return;
-  }
+    const parsed = createAnnouncementSchema.safeParse(req.body);
+    if (!parsed.success) {
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      const firstError = Object.values(fieldErrors).flat()[0];
+      res.status(400).json({
+        success: false,
+        error: "ValidationError",
+        message: firstError || "Please check the announcement fields and try again.",
+        errors: fieldErrors,
+      });
+      return;
+    }
 
-  const { title, content, priority, targetScope, departmentId, teamId, isPinned } = parsed.data;
-
-  const announcement = await prisma.announcement.create({
-    data: {
+    const {
       title,
       content,
       priority,
       targetScope,
-      departmentId: departmentId || null,
-      teamId: teamId || null,
-      isPinned: isPinned || false,
-      authorId: user.id,
-    },
-    include: {
-      author: {
-        select: {
-          id: true,
-          fullName: true,
-          role: true,
-        },
-      },
-      department: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-      team: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-    },
-  });
+      departmentId,
+      teamId,
+      isPinned,
+      attachmentUrl,
+      attachmentName,
+    } = parsed.data;
 
-  // Create notifications for targeted users
-  let recipients: { id: string }[] = [];
-  if (targetScope === "ALL") {
-    recipients = await prisma.user.findMany({
-      where: { isActive: true, id: { not: user.id } },
-      select: { id: true },
-    });
-  } else if (targetScope === "DEPARTMENT" && departmentId) {
-    recipients = await prisma.user.findMany({
-      where: { isActive: true, departmentId, id: { not: user.id } },
-      select: { id: true },
-    });
-  } else if (targetScope === "TEAM" && teamId) {
-    recipients = await prisma.user.findMany({
-      where: {
-        isActive: true,
-        id: { not: user.id },
-        teamMemberships: { some: { teamId } },
+    const resolvedDeptId = targetScope === "DEPARTMENT" ? departmentId || null : null;
+    const resolvedTeamId = targetScope === "TEAM" ? teamId || null : null;
+
+    if (targetScope === "DEPARTMENT" && !resolvedDeptId) {
+      res.status(400).json({
+        success: false,
+        error: "ValidationError",
+        message: "Please select a target department for this announcement.",
+      });
+      return;
+    }
+
+    if (targetScope === "TEAM" && !resolvedTeamId) {
+      res.status(400).json({
+        success: false,
+        error: "ValidationError",
+        message: "Please select a target team for this announcement.",
+      });
+      return;
+    }
+
+    const announcement = await prisma.announcement.create({
+      data: {
+        title,
+        content,
+        priority,
+        targetScope,
+        departmentId: resolvedDeptId,
+        teamId: resolvedTeamId,
+        isPinned: isPinned || false,
+        attachmentUrl: attachmentUrl || null,
+        attachmentName: attachmentName || null,
+        authorId: user.id,
       },
-      select: { id: true },
+      include: {
+        author: {
+          select: {
+            id: true,
+            fullName: true,
+            role: true,
+            jobTitle: true,
+          },
+        },
+        department: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+          },
+        },
+        team: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+          },
+        },
+      },
+    });
+
+    // Create notifications for targeted users (non-blocking)
+    try {
+      let recipients: { id: string }[] = [];
+      if (targetScope === "ALL") {
+        recipients = await prisma.user.findMany({
+          where: { isActive: true, id: { not: user.id } },
+          select: { id: true },
+        });
+      } else if (targetScope === "DEPARTMENT" && resolvedDeptId) {
+        recipients = await prisma.user.findMany({
+          where: { isActive: true, departmentId: resolvedDeptId, id: { not: user.id } },
+          select: { id: true },
+        });
+      } else if (targetScope === "TEAM" && resolvedTeamId) {
+        recipients = await prisma.user.findMany({
+          where: {
+            isActive: true,
+            id: { not: user.id },
+            teamMemberships: { some: { teamId: resolvedTeamId } },
+          },
+          select: { id: true },
+        });
+      }
+
+      if (recipients.length > 0) {
+        await prisma.notification.createMany({
+          data: recipients.map((r) => ({
+            recipientId: r.id,
+            senderId: user.id,
+            eventType: "NEW_ANNOUNCEMENT",
+            title: `Announcement: ${title}`,
+            message: content.length > 100 ? content.substring(0, 97) + "..." : content,
+            link: "/announcements",
+          })),
+        });
+      }
+    } catch (notifyErr) {
+      console.error("[ANNOUNCEMENT] Failed to create recipient notifications:", notifyErr);
+    }
+
+    res.status(201).json({
+      success: true,
+      data: announcement,
+    });
+  } catch (err: any) {
+    console.error("[ANNOUNCEMENT] Error creating announcement:", err);
+    res.status(500).json({
+      success: false,
+      error: "ServerError",
+      message: err.message || "Failed to publish announcement.",
     });
   }
-
-  if (recipients.length > 0) {
-    await prisma.notification.createMany({
-      data: recipients.map((r) => ({
-        recipientId: r.id,
-        senderId: user.id,
-        eventType: "NEW_ANNOUNCEMENT",
-        title: `Announcement: ${title}`,
-        message: content.length > 100 ? content.substring(0, 97) + "..." : content,
-        link: "/announcements",
-      })),
-    });
-  }
-
-  res.status(201).json({
-    success: true,
-    data: announcement,
-  });
 }
 
 export async function deleteAnnouncement(req: Request, res: Response): Promise<void> {

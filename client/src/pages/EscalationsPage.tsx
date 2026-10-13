@@ -137,7 +137,7 @@ export const EscalationsPage: React.FC = () => {
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-3">
           <select
             value={statusFilter}
@@ -170,10 +170,10 @@ export const EscalationsPage: React.FC = () => {
       {/* Escalations Grid */}
       {loading ? (
         <div className="flex items-center justify-center min-h-[40vh]">
-          <div className="w-8 h-8 border-3 border-rose-600 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-3 border-rose-600 border-t-transparent rounded-md animate-spin" />
         </div>
       ) : escalations.length === 0 ? (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-10 text-center text-slate-400 text-xs">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-10 text-center text-slate-400 text-xs">
           <CheckCircle2 className="w-10 h-10 mx-auto mb-2 text-emerald-500" />
           <p className="font-semibold text-slate-700 dark:text-slate-300">
             No Active Escalations
@@ -185,7 +185,7 @@ export const EscalationsPage: React.FC = () => {
           {escalations.map((esc) => (
             <div
               key={esc.id}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4 hover:shadow-md transition-shadow"
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs space-y-4 hover:shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-1">
@@ -207,7 +207,7 @@ export const EscalationsPage: React.FC = () => {
               </p>
 
               {esc.resolutionNotes && (
-                <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-xs">
+                <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-xs">
                   <span className="font-bold text-emerald-800 dark:text-emerald-300">
                     Resolution Note:
                   </span>
@@ -235,7 +235,7 @@ export const EscalationsPage: React.FC = () => {
                       );
                       setShowResolveModal(true);
                     }}
-                    className="px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-semibold hover:bg-indigo-100 transition-colors"
+                    className="px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-semibold hover:bg-blue-100 transition-colors"
                   >
                     Manage / Resolve
                   </button>
@@ -263,7 +263,7 @@ export const EscalationsPage: React.FC = () => {
               placeholder="e.g. Third-party OAuth API 500 error preventing login"
               value={newEscalation.title}
               onChange={(e) => setNewEscalation({ ...newEscalation, title: e.target.value })}
-              className="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500"
+              className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500"
             />
           </div>
 
@@ -279,7 +279,7 @@ export const EscalationsPage: React.FC = () => {
               onChange={(e) =>
                 setNewEscalation({ ...newEscalation, description: e.target.value })
               }
-              className="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500"
+              className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500"
             />
           </div>
 
@@ -294,7 +294,7 @@ export const EscalationsPage: React.FC = () => {
                 onChange={(e) =>
                   setNewEscalation({ ...newEscalation, departmentId: e.target.value })
                 }
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
               >
                 <option value="">Select Department</option>
                 {departments.map((d) => (
@@ -317,7 +317,7 @@ export const EscalationsPage: React.FC = () => {
                     urgency: e.target.value as EscalationUrgency,
                   })
                 }
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
               >
                 <option value="NORMAL">Normal</option>
                 <option value="HIGH">High</option>
@@ -330,14 +330,14 @@ export const EscalationsPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowCreateModal(false)}
-              className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-semibold"
+              className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={createLoading}
-              className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-md disabled:opacity-50"
+              className="px-5 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-md disabled:opacity-50"
             >
               {createLoading ? "Submitting..." : "Escalate Blocker"}
             </button>
@@ -352,7 +352,7 @@ export const EscalationsPage: React.FC = () => {
         title="Manage & Resolve Blocker Escalation"
       >
         <form onSubmit={handleResolve} className="space-y-4">
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs space-y-1">
+          <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800 text-xs space-y-1">
             <span className="font-bold text-slate-900 dark:text-white">
               {selectedEscalation?.title}
             </span>
@@ -366,7 +366,7 @@ export const EscalationsPage: React.FC = () => {
             <select
               value={resolveStatus}
               onChange={(e) => setResolveStatus(e.target.value as EscalationStatus)}
-              className="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+              className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
             >
               <option value="IN_PROGRESS">In Progress (Acknowledged)</option>
               <option value="RESOLVED">Resolved</option>
@@ -381,7 +381,7 @@ export const EscalationsPage: React.FC = () => {
             <select
               value={assignedOwnerId}
               onChange={(e) => setAssignedOwnerId(e.target.value)}
-              className="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+              className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
             >
               <option value="">-- Keep Current Owner --</option>
               {deptUsers.map((u) => (
@@ -402,7 +402,7 @@ export const EscalationsPage: React.FC = () => {
               placeholder="Detail the management decision, root cause fix, or administrative escalation reason..."
               value={resolutionNotes}
               onChange={(e) => setResolutionNotes(e.target.value)}
-              className="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -410,14 +410,14 @@ export const EscalationsPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowResolveModal(false)}
-              className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-semibold"
+              className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={resolveLoading}
-              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-md disabled:opacity-50"
+              className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-md disabled:opacity-50"
             >
               {resolveLoading ? "Saving..." : "Save Resolution"}
             </button>

@@ -51,7 +51,7 @@ export const AuditLogsPage: React.FC = () => {
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-3">
           <div className="relative">
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -85,10 +85,10 @@ export const AuditLogsPage: React.FC = () => {
 
       {loading ? (
         <div className="flex items-center justify-center min-h-[40vh]">
-          <div className="w-8 h-8 border-3 border-purple-600 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-md animate-spin" />
         </div>
       ) : (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 uppercase tracking-wider text-[10px]">
@@ -114,7 +114,7 @@ export const AuditLogsPage: React.FC = () => {
                       <div className="text-[10px] text-slate-400">{log.user?.email}</div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="px-2 py-0.5 rounded bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 font-bold font-sans text-[11px]">
+                      <span className="px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-bold font-sans text-[11px]">
                         {log.action}
                       </span>
                     </td>
@@ -122,7 +122,7 @@ export const AuditLogsPage: React.FC = () => {
                       {log.resourceType}
                     </td>
                     <td className="px-6 py-4 text-slate-600 dark:text-slate-300 max-w-xs truncate">
-                      {log.detailsJson || "—"}
+                      {log.detailsJson || "N/A"}
                     </td>
                     <td className="px-6 py-4 text-slate-400">{log.ipAddress || "127.0.0.1"}</td>
                   </tr>

@@ -92,14 +92,14 @@ export const DirectoryPage: React.FC = () => {
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setShowFlowModal(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
           >
             <GitBranch className="w-4 h-4" /> View Employee Flow
           </button>
           {user?.role !== "EXECUTIVE" && (
             <button
               onClick={handleExportCsv}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
             >
               <Download className="w-4 h-4" /> Export Directory CSV
             </button>
@@ -108,7 +108,7 @@ export const DirectoryPage: React.FC = () => {
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative">
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -117,7 +117,7 @@ export const DirectoryPage: React.FC = () => {
               placeholder="Search name, email, employee ID..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -153,10 +153,10 @@ export const DirectoryPage: React.FC = () => {
       {/* Directory Table */}
       {loading ? (
         <div className="flex items-center justify-center min-h-[40vh]">
-          <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-md animate-spin" />
         </div>
       ) : (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 uppercase tracking-wider text-[10px]">
@@ -179,7 +179,7 @@ export const DirectoryPage: React.FC = () => {
                       <div className="text-[10px] text-slate-400">
                         {emp.employeeId} • {emp.email}
                       </div>
-                      <div className="text-[11px] text-indigo-600 dark:text-indigo-400 mt-0.5">
+                      <div className="text-[11px] text-blue-600 dark:text-blue-400 mt-0.5">
                         {emp.jobTitle}
                       </div>
                     </td>
@@ -190,10 +190,10 @@ export const DirectoryPage: React.FC = () => {
                       {emp.department?.name || "None"}
                     </td>
                     <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
-                      {emp.teamLead?.fullName || "—"}
+                      {emp.teamLead?.fullName || "N/A"}
                     </td>
                     <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
-                      {emp.manager?.fullName || "—"}
+                      {emp.manager?.fullName || "N/A"}
                     </td>
                     <td className="px-6 py-4">
                       <span

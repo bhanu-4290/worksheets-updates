@@ -326,6 +326,43 @@ export async function saveDailyReport(req: Request, res: Response, next: NextFun
         })),
       });
 
+      // Sync linked tasks so task updates from yesterday/past days stay visible today and next week
+      for (const e of data.entries) {
+        if (e.taskId) {
+          const existingTask = await tx.task.findUnique({ where: { id: e.taskId } });
+          if (existingTask) {
+            const mappedStatus =
+              e.status === "COMPLETED"
+                ? "COMPLETED"
+                : e.status === "BLOCKED"
+                ? "BLOCKED"
+                : "IN_PROGRESS";
+
+            await tx.task.update({
+              where: { id: e.taskId },
+              data: {
+                progressPercentage:
+                  e.progressPercentage !== undefined
+                    ? e.progressPercentage
+                    : existingTask.progressPercentage,
+                status: mappedStatus as any,
+              },
+            });
+
+            await tx.taskHistory.create({
+              data: {
+                taskId: e.taskId,
+                userId: user.id,
+                action: "TASK_SHEET_UPDATED",
+                previousValue: `${existingTask.status} (${existingTask.progressPercentage}%)`,
+                newValue: `${mappedStatus} (${e.progressPercentage ?? existingTask.progressPercentage}%)`,
+                details: `Task sheet update for ${data.reportingDate}: ${e.activityTitle} - ${e.description}`,
+              },
+            });
+          }
+        }
+      }
+
       // If submitting, notify Team Lead
       if (isSubmitting) {
         if (user.teamLeadId) {

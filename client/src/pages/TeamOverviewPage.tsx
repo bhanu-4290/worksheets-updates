@@ -42,10 +42,10 @@ export const TeamOverviewPage: React.FC = () => {
 
       {loading ? (
         <div className="flex items-center justify-center min-h-[40vh]">
-          <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-md animate-spin" />
         </div>
       ) : teams.length === 0 ? (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-10 text-center text-slate-400 text-xs">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-10 text-center text-slate-400 text-xs">
           No teams found within your authorized organizational scope.
         </div>
       ) : (
@@ -53,14 +53,14 @@ export const TeamOverviewPage: React.FC = () => {
           {teams.map((team) => (
             <div
               key={team.id}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4"
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs space-y-4"
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
                 <div className="flex items-center gap-2.5">
                   <span className="font-bold text-base text-slate-900 dark:text-white">
                     {team.name}
                   </span>
-                  <span className="font-mono text-xs text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded-md font-semibold">
+                  <span className="font-mono text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded-md font-semibold">
                     {team.code}
                   </span>
                 </div>
@@ -70,7 +70,7 @@ export const TeamOverviewPage: React.FC = () => {
                     {team.department?.name}
                   </strong>{" "}
                   • Team Lead:{" "}
-                  <strong className="text-indigo-600 dark:text-indigo-400">
+                  <strong className="text-blue-600 dark:text-blue-400">
                     {team.teamLead?.fullName || "Unassigned"}
                   </strong>
                 </div>
@@ -88,7 +88,7 @@ export const TeamOverviewPage: React.FC = () => {
                     {team.members?.map((member) => (
                       <div
                         key={member.id}
-                        className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-2"
+                        className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-2"
                       >
                         <div className="min-w-0">
                           <div className="font-bold text-xs text-slate-900 dark:text-white truncate">

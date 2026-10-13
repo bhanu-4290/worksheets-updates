@@ -7,7 +7,7 @@ const options: swaggerJsdoc.Options = {
       title: "WorkTrack Enterprise REST API",
       version: "1.0.0",
       description:
-        "Official REST API documentation for WorkTrack — Employee Daily Work Tracking & Management System. Supports role-scoped operations for Super Admin, Managers, Team Leads, and Executives.",
+        "Official REST API documentation for WorkTrack: Employee Daily Work Tracking & Management System. Supports role-scoped operations for Super Admin, Managers, Team Leads, and Executives.",
     },
     servers: [
       {

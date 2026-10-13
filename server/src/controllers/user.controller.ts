@@ -250,14 +250,116 @@ export async function createUser(req: Request, res: Response, next: NextFunction
   }
 }
 
+const updateProfileSchema = z.object({
+  fullName: z.string().min(2, "Full name must be at least 2 characters").optional(),
+  email: z.string().email("Invalid email address").optional(),
+  jobTitle: z.string().min(2, "Job title must be at least 2 characters").optional(),
+  dateOfBirth: z.string().nullable().optional(),
+});
+
+export async function updateProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const user = req.user!;
+    const data = updateProfileSchema.parse(req.body);
+
+    if (data.email && data.email.toLowerCase() !== user.email.toLowerCase()) {
+      const existing = await prisma.user.findFirst({
+        where: { email: data.email.toLowerCase(), id: { not: user.id } },
+      });
+      if (existing) {
+        res.status(409).json({
+          success: false,
+          error: "Conflict",
+          message: "A user with this email already exists",
+        });
+        return;
+      }
+    }
+
+    const updateData: any = {};
+    if (data.fullName !== undefined) updateData.fullName = data.fullName.trim();
+    if (data.email !== undefined) updateData.email = data.email.toLowerCase().trim();
+    if (data.jobTitle !== undefined) updateData.jobTitle = data.jobTitle.trim();
+    if (data.dateOfBirth !== undefined) {
+      updateData.dateOfBirth = data.dateOfBirth ? new Date(data.dateOfBirth) : null;
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data: updateData,
+      select: {
+        id: true,
+        employeeId: true,
+        email: true,
+        fullName: true,
+        jobTitle: true,
+        role: true,
+        departmentId: true,
+        managerId: true,
+        teamLeadId: true,
+        joiningDate: true,
+        dateOfBirth: true,
+        isActive: true,
+        department: { select: { id: true, name: true, code: true } },
+        manager: { select: { id: true, fullName: true, email: true } },
+        teamLead: { select: { id: true, fullName: true, email: true } },
+      },
+    });
+
+    if (data.dateOfBirth) {
+      checkAndTriggerBirthdays().catch((e) => console.error("[BIRTHDAY] Error triggering:", e));
+    }
+
+    await logAuditEvent({
+      userId: user.id,
+      action: "PROFILE_UPDATED",
+      resourceType: "USER",
+      resourceId: user.id,
+      details: data,
+      ipAddress: req.ip,
+    });
+
+    res.json({
+      success: true,
+      message: "Profile details updated successfully",
+      data: updated,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function updateUser(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    const currentUser = req.user!;
     const { id } = req.params;
+    const isSelf = currentUser.id === id;
+    const isAdmin = isSuperAdmin(currentUser);
+
+    if (!isSelf && !isAdmin) {
+      res.status(403).json({
+        success: false,
+        error: "Forbidden",
+        message: "You can only edit your own details",
+      });
+      return;
+    }
+
     const data = updateUserSchema.parse(req.body);
 
     const target = await prisma.user.findUnique({ where: { id } });
     if (!target) {
       res.status(404).json({ success: false, error: "Not Found", message: "User not found" });
+      return;
+    }
+
+    // STRICT RULE: Date of Birth can ONLY be edited by the user themselves!
+    if (data.dateOfBirth !== undefined && !isSelf) {
+      res.status(403).json({
+        success: false,
+        error: "Forbidden",
+        message: "Date of Birth can only be set and edited by the employee themselves.",
+      });
       return;
     }
 
@@ -280,9 +382,17 @@ export async function updateUser(req: Request, res: Response, next: NextFunction
       return;
     }
 
-    const updateData: any = {
-      ...data,
-    };
+    const updateData: any = { ...data };
+
+    // Non-admins cannot alter their role, active status, department, or supervisor hierarchy
+    if (!isAdmin) {
+      delete updateData.role;
+      delete updateData.isActive;
+      delete updateData.departmentId;
+      delete updateData.managerId;
+      delete updateData.teamLeadId;
+    }
+
     if (data.dateOfBirth !== undefined) {
       updateData.dateOfBirth = data.dateOfBirth ? new Date(data.dateOfBirth) : null;
     }
@@ -297,7 +407,7 @@ export async function updateUser(req: Request, res: Response, next: NextFunction
     }
 
     await logAuditEvent({
-      userId: req.user!.id,
+      userId: currentUser.id,
       action: "USER_UPDATED",
       resourceType: "USER",
       resourceId: id,

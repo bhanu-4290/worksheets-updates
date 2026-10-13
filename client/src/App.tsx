@@ -25,6 +25,9 @@ import { NotificationsPage } from "./pages/NotificationsPage";
 import { ChatPage } from "./pages/ChatPage";
 import { AnnouncementsPage } from "./pages/AnnouncementsPage";
 import { ProfilePage } from "./pages/ProfilePage";
+import { HowToUsePage } from "./pages/HowToUsePage";
+import { PrivacyPolicyPage } from "./pages/PrivacyPolicyPage";
+import { TermsAndConditionsPage } from "./pages/TermsAndConditionsPage";
 import { AccessDeniedPage } from "./pages/AccessDeniedPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { Role } from "./types";
@@ -40,7 +43,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-950">
-        <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-md animate-spin" />
       </div>
     );
   }
@@ -56,15 +59,57 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
   return children;
 };
 
+const OptionalAuthRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-950">
+        <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-md animate-spin" />
+      </div>
+    );
+  }
+
+  if (user) {
+    return <Layout>{children}</Layout>;
+  }
+
+  return children;
+};
+
 export function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-            {/* Public Auth Routes */}
+            {/* Public Auth & Informational Routes */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route
+              path="/how-to-use"
+              element={
+                <OptionalAuthRoute>
+                  <HowToUsePage />
+                </OptionalAuthRoute>
+              }
+            />
+            <Route
+              path="/privacy-policy"
+              element={
+                <OptionalAuthRoute>
+                  <PrivacyPolicyPage />
+                </OptionalAuthRoute>
+              }
+            />
+            <Route
+              path="/terms-and-conditions"
+              element={
+                <OptionalAuthRoute>
+                  <TermsAndConditionsPage />
+                </OptionalAuthRoute>
+              }
+            />
 
             {/* Protected Workspace Routes */}
             <Route

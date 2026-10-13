@@ -28,21 +28,17 @@ const changePasswordSchema = z.object({
 export async function login(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { email, password } = loginSchema.parse(req.body);
-
-    let searchEmail = email.toLowerCase().trim();
-    if (!searchEmail.includes("@")) {
-      searchEmail = `${searchEmail}@worktrack.company`;
-    }
-    if (searchEmail === "admin@worktrack.company") {
-      searchEmail = "rahul@worktrack.company";
-    }
+    const rawInput = email.trim();
+    const lowerInput = rawInput.toLowerCase();
+    const upperInput = rawInput.toUpperCase();
 
     const user = await prisma.user.findFirst({
       where: {
         OR: [
-          { email: searchEmail },
-          { email: email.toLowerCase().trim() },
-          { employeeId: email.trim().toUpperCase() },
+          { email: lowerInput },
+          { employeeId: upperInput },
+          { employeeId: rawInput },
+          { email: { startsWith: `${lowerInput}@` } },
         ],
       },
       include: {

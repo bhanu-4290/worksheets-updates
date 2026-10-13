@@ -28,18 +28,18 @@ export const Badge: React.FC<BadgeProps> = ({ children, variant = "default", lab
       // Roles
       case "SUPER_ADMIN":
         return {
-          container: "bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border-purple-200/80 dark:border-purple-800/80",
-          dot: "bg-purple-500",
+          container: "bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300/80 dark:border-amber-800/80",
+          dot: "bg-amber-500",
         };
       case "MANAGER":
         return {
-          container: "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200/80 dark:border-indigo-800/80",
-          dot: "bg-indigo-500",
+          container: "bg-orange-50 text-orange-800 dark:bg-orange-950/60 dark:text-orange-300 border-orange-300/80 dark:border-orange-800/80",
+          dot: "bg-orange-500",
         };
       case "TEAM_LEAD":
         return {
-          container: "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200/80 dark:border-amber-800/80",
-          dot: "bg-amber-500",
+          container: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/80",
+          dot: "bg-emerald-500",
         };
       case "EXECUTIVE":
         return {
@@ -56,12 +56,12 @@ export const Badge: React.FC<BadgeProps> = ({ children, variant = "default", lab
       case "SUBMITTED":
         return {
           container: "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800/80 font-semibold",
-          dot: "bg-amber-500 animate-pulse",
+          dot: "bg-amber-500",
         };
       case "UNDER_REVIEW":
         return {
           container: "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800/80 font-semibold",
-          dot: "bg-blue-500 animate-pulse",
+          dot: "bg-blue-500",
         };
       case "REVISION_REQUESTED":
         return {
@@ -82,8 +82,8 @@ export const Badge: React.FC<BadgeProps> = ({ children, variant = "default", lab
         };
       case "IN_PROGRESS":
         return {
-          container: "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800",
-          dot: "bg-indigo-500 animate-pulse",
+          container: "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800",
+          dot: "bg-blue-500",
         };
       case "TO_DO":
         return {
@@ -155,9 +155,9 @@ export const Badge: React.FC<BadgeProps> = ({ children, variant = "default", lab
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border tracking-normal font-medium transition-colors ${style.container} ${sizeClass}`}
+      className={`inline-flex items-center gap-1.5 rounded-md border tracking-normal font-medium transition-colors ${style.container} ${sizeClass}`}
     >
-      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${style.dot}`} />
+      <span className={`w-1.5 h-1.5 rounded-xs shrink-0 ${style.dot}`} />
       <span>{text}</span>
     </span>
   );

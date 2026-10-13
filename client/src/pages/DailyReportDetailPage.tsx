@@ -85,17 +85,17 @@ export const DailyReportDetailPage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-md animate-spin" />
       </div>
     );
   }
 
   if (error || !report) {
     return (
-      <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl p-6 text-center text-xs text-rose-800 dark:text-rose-300">
+      <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-lg p-6 text-center text-xs text-rose-800 dark:text-rose-300">
         <AlertCircle className="w-8 h-8 mx-auto mb-2" />
         <p className="font-semibold">{error || "Report not found"}</p>
-        <Link to="/reports" className="inline-block mt-3 text-indigo-600 underline">
+        <Link to="/reports" className="inline-block mt-3 text-blue-600 underline">
           Back to Reports
         </Link>
       </div>
@@ -159,7 +159,7 @@ export const DailyReportDetailPage: React.FC = () => {
         {isOwnReport && report.status === "REVISION_REQUESTED" && (
           <Link
             to={`/reports/new?date=${report.reportingDate}`}
-            className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-sm transition-colors"
+            className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition-colors"
           >
             Revise & Resubmit Report
           </Link>
@@ -169,7 +169,7 @@ export const DailyReportDetailPage: React.FC = () => {
       {/* Review Feedback Banner */}
       {report.reviews && report.reviews.length > 0 && (
         <div
-          className={`p-4 rounded-xl border text-xs ${
+          className={`p-4 rounded-lg border text-xs ${
             report.status === "APPROVED"
               ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/60 text-emerald-900 dark:text-emerald-200"
               : "bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/60 text-rose-900 dark:text-rose-200"
@@ -188,19 +188,19 @@ export const DailyReportDetailPage: React.FC = () => {
 
       {/* Report Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+        <div className="p-4 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
           <span className="text-xs text-slate-500">Activities Reported</span>
           <p className="text-xl font-bold text-slate-900 dark:text-white mt-1">
             {report.entries.length} entries
           </p>
         </div>
-        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+        <div className="p-4 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
           <span className="text-xs text-slate-500">Recorded Hours (Optional)</span>
           <p className="text-xl font-bold text-slate-900 dark:text-white mt-1">
             {totalRecordedHours > 0 ? `${totalRecordedHours} hrs` : "Unreported"}
           </p>
         </div>
-        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+        <div className="p-4 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
           <span className="text-xs text-slate-500">Submission Timestamp</span>
           <p className="text-xl font-bold text-slate-900 dark:text-white mt-1">
             {report.submittedAt ? new Date(report.submittedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Draft"}
@@ -217,12 +217,12 @@ export const DailyReportDetailPage: React.FC = () => {
         {report.entries.map((entry, idx) => (
           <div
             key={entry.id || idx}
-            className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4"
+            className="p-5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4"
           >
             <div className="flex items-start justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-3">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">
+                  <span className="w-5 h-5 rounded-md bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
                     {idx + 1}
                   </span>
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white">
@@ -231,8 +231,8 @@ export const DailyReportDetailPage: React.FC = () => {
                   <Badge variant={entry.status as any} size="sm" />
                 </div>
                 {entry.task && (
-                  <div className="text-xs text-indigo-600 dark:text-indigo-400 mt-1 font-mono font-medium">
-                    Linked Task: {entry.task.taskCode} — {entry.task.title}
+                  <div className="text-xs text-blue-600 dark:text-blue-400 mt-1 font-mono font-medium">
+                    Linked Task: {entry.task.taskCode} - {entry.task.title}
                   </div>
                 )}
               </div>
@@ -258,7 +258,7 @@ export const DailyReportDetailPage: React.FC = () => {
             {/* Sub-grid for Deliverables and Blockers */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
               {entry.deliverables && (
-                <div className="p-3 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40">
+                <div className="p-3 rounded-lg bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40">
                   <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300">
                     Deliverables & Accomplishments:
                   </span>
@@ -269,7 +269,7 @@ export const DailyReportDetailPage: React.FC = () => {
               )}
 
               {entry.blockers && (
-                <div className="p-3 rounded-xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/40">
+                <div className="p-3 rounded-lg bg-rose-50/50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/40">
                   <span className="text-[11px] font-bold text-rose-800 dark:text-rose-300">
                     Blockers & Challenges:
                   </span>
@@ -294,7 +294,7 @@ export const DailyReportDetailPage: React.FC = () => {
 
       {/* Revision History Snapshots */}
       {report.revisionHistory && report.revisionHistory.length > 0 && (
-        <div className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
+        <div className="p-5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
           <div className="flex items-center gap-2">
             <History className="w-4 h-4 text-slate-500" />
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -338,20 +338,20 @@ export const DailyReportDetailPage: React.FC = () => {
               rows={3}
               value={approveComments}
               onChange={(e) => setApproveComments(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div className="flex items-center justify-end gap-3 pt-2">
             <button
               onClick={() => setShowApproveModal(false)}
-              className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-semibold"
+              className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold"
             >
               Cancel
             </button>
             <button
               disabled={actionLoading}
               onClick={handleApprove}
-              className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md"
+              className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md"
             >
               {actionLoading ? "Approving..." : "Confirm Approval"}
             </button>
@@ -366,7 +366,7 @@ export const DailyReportDetailPage: React.FC = () => {
         title="Request Corrections from Employee"
       >
         <div className="space-y-4">
-          <div className="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 rounded-xl text-xs text-rose-800 dark:text-rose-300">
+          <div className="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 rounded-lg text-xs text-rose-800 dark:text-rose-300">
             Mandatory comment required. Please specify what needs correction or clarification.
           </div>
           <div>
@@ -379,20 +379,20 @@ export const DailyReportDetailPage: React.FC = () => {
               placeholder="e.g. Please clarify test coverage and provide pull request reference link."
               value={revisionComments}
               onChange={(e) => setRevisionComments(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500"
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500"
             />
           </div>
           <div className="flex items-center justify-end gap-3 pt-2">
             <button
               onClick={() => setShowRevisionModal(false)}
-              className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-semibold"
+              className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold"
             >
               Cancel
             </button>
             <button
               disabled={actionLoading || !revisionComments.trim()}
               onClick={handleRequestRevision}
-              className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-md disabled:opacity-50"
+              className="px-5 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-md disabled:opacity-50"
             >
               {actionLoading ? "Submitting..." : "Send Correction Request"}
             </button>

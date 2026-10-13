@@ -66,21 +66,21 @@ export const NotificationsPage: React.FC = () => {
 
       {loading ? (
         <div className="flex items-center justify-center min-h-[40vh]">
-          <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-md animate-spin" />
         </div>
       ) : notifications.length === 0 ? (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-10 text-center text-slate-400 text-xs">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-10 text-center text-slate-400 text-xs">
           <Bell className="w-10 h-10 mx-auto mb-2 text-slate-300 dark:text-slate-600" />
           <p className="font-semibold text-slate-700 dark:text-slate-300">No Notifications</p>
           <p className="mt-1">You are all caught up.</p>
         </div>
       ) : (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden shadow-xs">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden shadow-xs">
           {notifications.map((n) => (
             <div
               key={n.id}
               className={`p-5 flex items-start justify-between gap-4 transition-colors ${
-                !n.isRead ? "bg-indigo-50/30 dark:bg-indigo-950/20" : ""
+                !n.isRead ? "bg-blue-50/30 dark:bg-blue-950/20" : ""
               }`}
             >
               <div className="space-y-1">
@@ -89,7 +89,7 @@ export const NotificationsPage: React.FC = () => {
                     {n.title}
                   </span>
                   {!n.isRead && (
-                    <span className="w-2 h-2 rounded-full bg-indigo-600 shrink-0" />
+                    <span className="w-2 h-2 rounded-md bg-blue-600 shrink-0" />
                   )}
                 </div>
                 <p className="text-xs text-slate-600 dark:text-slate-300">{n.message}</p>
@@ -103,7 +103,7 @@ export const NotificationsPage: React.FC = () => {
                   <Link
                     to={n.link}
                     onClick={() => handleMarkSingle(n.id)}
-                    className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 text-xs font-semibold flex items-center gap-1"
+                    className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 text-xs font-semibold flex items-center gap-1"
                   >
                     View <ArrowRight className="w-3.5 h-3.5" />
                   </Link>

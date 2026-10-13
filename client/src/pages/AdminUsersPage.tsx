@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 export const AdminUsersPage: React.FC = () => {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -128,13 +129,17 @@ export const AdminUsersPage: React.FC = () => {
     e.preventDefault();
     if (!selectedUser) return;
     try {
-      await api.put(`/users/${selectedUser.id}`, {
+      const payload: any = {
         ...editData,
         departmentId: editData.departmentId || null,
         managerId: editData.managerId || null,
         teamLeadId: editData.teamLeadId || null,
-        dateOfBirth: editData.dateOfBirth || null,
-      });
+      };
+      if (selectedUser.id !== currentUser?.id) {
+        delete payload.dateOfBirth;
+      }
+
+      await api.put(`/users/${selectedUser.id}`, payload);
       setShowEditModal(false);
       setSelectedUser(null);
       loadUsers();
@@ -195,19 +200,19 @@ export const AdminUsersPage: React.FC = () => {
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setShowFlowModal(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-xs font-semibold hover:bg-indigo-100 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 text-xs font-semibold hover:bg-blue-100 transition-colors cursor-pointer"
           >
             <GitBranch className="w-3.5 h-3.5" /> Employee Flow Chart
           </button>
           <button
             onClick={() => setShowCsvModal(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold hover:bg-slate-50 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold hover:bg-slate-50 transition-colors cursor-pointer"
           >
             <Upload className="w-3.5 h-3.5" /> Bulk CSV Import
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
           >
             <UserPlus className="w-4 h-4" /> Create User
           </button>
@@ -215,7 +220,7 @@ export const AdminUsersPage: React.FC = () => {
       </div>
 
       {/* Search */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs flex items-center justify-between gap-3 text-xs">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-xs flex items-center justify-between gap-3 text-xs">
         <div className="relative w-full max-w-sm">
           <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -232,10 +237,10 @@ export const AdminUsersPage: React.FC = () => {
       {/* Users Table */}
       {loading ? (
         <div className="flex items-center justify-center min-h-[40vh]">
-          <div className="w-8 h-8 border-3 border-purple-600 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-md animate-spin" />
         </div>
       ) : (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 uppercase tracking-wider text-[10px]">
@@ -258,7 +263,7 @@ export const AdminUsersPage: React.FC = () => {
                       <div className="text-[10px] text-slate-400">
                         {u.employeeId} • {u.email}
                       </div>
-                      <div className="text-[11px] text-indigo-600 dark:text-indigo-400 mt-0.5">
+                      <div className="text-[11px] text-blue-600 dark:text-blue-400 mt-0.5">
                         {u.jobTitle}
                       </div>
                       {u.dateOfBirth && (
@@ -275,8 +280,8 @@ export const AdminUsersPage: React.FC = () => {
                       {u.department?.name || "None"}
                     </td>
                     <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
-                      <div>Lead: {u.teamLead?.fullName || "—"}</div>
-                      <div>Mgr: {u.manager?.fullName || "—"}</div>
+                      <div>Lead: {u.teamLead?.fullName || "N/A"}</div>
+                      <div>Mgr: {u.manager?.fullName || "N/A"}</div>
                     </td>
                     <td className="px-6 py-4">
                       <span
@@ -349,7 +354,7 @@ export const AdminUsersPage: React.FC = () => {
                 placeholder="e.g. EMP042"
                 value={createData.employeeId}
                 onChange={(e) => setCreateData({ ...createData, employeeId: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
               />
             </div>
             <div>
@@ -360,7 +365,7 @@ export const AdminUsersPage: React.FC = () => {
                 placeholder="name@worktrack.company"
                 value={createData.email}
                 onChange={(e) => setCreateData({ ...createData, email: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
               />
             </div>
           </div>
@@ -374,7 +379,7 @@ export const AdminUsersPage: React.FC = () => {
                 placeholder="First & Last Name"
                 value={createData.fullName}
                 onChange={(e) => setCreateData({ ...createData, fullName: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
               />
             </div>
             <div>
@@ -385,7 +390,7 @@ export const AdminUsersPage: React.FC = () => {
                 placeholder="e.g. Cloud Security Architect"
                 value={createData.jobTitle}
                 onChange={(e) => setCreateData({ ...createData, jobTitle: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
               />
             </div>
           </div>
@@ -396,7 +401,7 @@ export const AdminUsersPage: React.FC = () => {
               <select
                 value={createData.role}
                 onChange={(e) => setCreateData({ ...createData, role: e.target.value as Role })}
-                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
               >
                 <option value="EXECUTIVE">Executive (Employee)</option>
                 <option value="TEAM_LEAD">Team Lead</option>
@@ -409,7 +414,7 @@ export const AdminUsersPage: React.FC = () => {
               <select
                 value={createData.departmentId}
                 onChange={(e) => setCreateData({ ...createData, departmentId: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
               >
                 <option value="">-- None --</option>
                 {departments.map((d) => (
@@ -427,7 +432,7 @@ export const AdminUsersPage: React.FC = () => {
               <select
                 value={createData.teamLeadId}
                 onChange={(e) => setCreateData({ ...createData, teamLeadId: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
               >
                 <option value="">-- None --</option>
                 {users
@@ -444,7 +449,7 @@ export const AdminUsersPage: React.FC = () => {
               <select
                 value={createData.managerId}
                 onChange={(e) => setCreateData({ ...createData, managerId: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
               >
                 <option value="">-- None --</option>
                 {users
@@ -459,13 +464,13 @@ export const AdminUsersPage: React.FC = () => {
           </div>
 
           {/* Birthday / Date of Birth Section */}
-          <div className="p-3.5 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 rounded-xl space-y-1.5">
+          <div className="p-3.5 bg-amber-50/70 dark:bg-amber-950/20 border border-amber-300 dark:border-amber-800/60 rounded-lg space-y-1.5">
             <div className="flex items-center gap-2 text-xs font-bold text-amber-800 dark:text-amber-300">
               <Cake className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-              <span>Birthday & Automated Celebrations</span>
+              <span>Birthday &amp; Automated Celebrations</span>
             </div>
             <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-              On the employee's birthday, WorkTrack automatically publishes a company-wide celebration announcement and delivers personalized celebratory wishes to their inbox!
+              On the employee's birthday, WorkTrack automatically publishes a company-wide celebration announcement and sends birthday wishes to their inbox.
             </p>
             <div className="pt-1">
               <label className="block text-xs font-semibold mb-1 text-slate-800 dark:text-slate-200">
@@ -475,23 +480,35 @@ export const AdminUsersPage: React.FC = () => {
                 type="date"
                 value={createData.dateOfBirth}
                 onChange={(e) => setCreateData({ ...createData, dateOfBirth: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+                className="w-full px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
               />
             </div>
           </div>
+
+          <p className="text-[11px] text-slate-500">
+            Employee account data is processed in accordance with the{" "}
+            <a href="/privacy-policy" className="text-blue-600 hover:underline">
+              Privacy Policy
+            </a>{" "}
+            and{" "}
+            <a href="/terms-and-conditions" className="text-blue-600 hover:underline">
+              Terms &amp; Conditions
+            </a>
+            .
+          </p>
 
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
               onClick={() => setShowCreateModal(false)}
-              className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-semibold"
+              className="px-4 py-2 rounded-md border border-slate-300 dark:border-slate-700 text-xs font-semibold"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={createLoading}
-              className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-md disabled:opacity-50"
+              className="px-5 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold disabled:opacity-50"
             >
               {createLoading ? "Creating..." : "Create Account"}
             </button>
@@ -514,7 +531,7 @@ export const AdminUsersPage: React.FC = () => {
                 required
                 value={editData.fullName}
                 onChange={(e) => setEditData({ ...editData, fullName: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
               />
             </div>
             <div>
@@ -524,7 +541,7 @@ export const AdminUsersPage: React.FC = () => {
                 required
                 value={editData.jobTitle}
                 onChange={(e) => setEditData({ ...editData, jobTitle: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
               />
             </div>
           </div>
@@ -535,7 +552,7 @@ export const AdminUsersPage: React.FC = () => {
               <select
                 value={editData.role}
                 onChange={(e) => setEditData({ ...editData, role: e.target.value as Role })}
-                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
               >
                 <option value="EXECUTIVE">Executive</option>
                 <option value="TEAM_LEAD">Team Lead</option>
@@ -548,7 +565,7 @@ export const AdminUsersPage: React.FC = () => {
               <select
                 value={editData.departmentId}
                 onChange={(e) => setEditData({ ...editData, departmentId: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
               >
                 <option value="">-- None --</option>
                 {departments.map((d) => (
@@ -566,7 +583,7 @@ export const AdminUsersPage: React.FC = () => {
               <select
                 value={editData.teamLeadId}
                 onChange={(e) => setEditData({ ...editData, teamLeadId: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
               >
                 <option value="">-- None --</option>
                 {users
@@ -583,7 +600,7 @@ export const AdminUsersPage: React.FC = () => {
               <select
                 value={editData.managerId}
                 onChange={(e) => setEditData({ ...editData, managerId: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
               >
                 <option value="">-- None --</option>
                 {users
@@ -602,7 +619,7 @@ export const AdminUsersPage: React.FC = () => {
           </div>
 
           {/* Birthday / Date of Birth Section */}
-          <div className="p-3.5 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 rounded-xl space-y-1.5">
+          <div className="p-3.5 bg-amber-50/70 dark:bg-amber-950/20 border border-amber-500/30 rounded-lg space-y-1.5">
             <div className="flex items-center gap-2 text-xs font-bold text-amber-800 dark:text-amber-300">
               <Cake className="w-4 h-4 text-amber-600 dark:text-amber-400" />
               <span>Birthday & Celebrations</span>
@@ -615,7 +632,7 @@ export const AdminUsersPage: React.FC = () => {
                 type="date"
                 value={editData.dateOfBirth}
                 onChange={(e) => setEditData({ ...editData, dateOfBirth: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
               />
             </div>
           </div>
@@ -624,13 +641,13 @@ export const AdminUsersPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowEditModal(false)}
-              className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-semibold"
+              className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-md"
+              className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-md"
             >
               Save Changes
             </button>
@@ -647,7 +664,7 @@ export const AdminUsersPage: React.FC = () => {
         <div className="space-y-4">
           <p className="text-xs text-slate-500">
             Paste CSV formatted text with columns:{" "}
-            <code className="text-indigo-600 font-bold">
+            <code className="text-blue-600 font-bold">
               EmployeeID,Email,FullName,JobTitle,Role
             </code>
           </p>
@@ -655,19 +672,19 @@ export const AdminUsersPage: React.FC = () => {
             rows={8}
             value={csvText}
             onChange={(e) => setCsvText(e.target.value)}
-            className="w-full p-3 font-mono text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+            className="w-full p-3 font-mono text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
           />
           <div className="flex items-center justify-end gap-3">
             <button
               onClick={() => setShowCsvModal(false)}
-              className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold"
+              className="px-4 py-2 rounded-lg border border-slate-300 text-xs font-semibold"
             >
               Cancel
             </button>
             <button
               disabled={csvLoading}
               onClick={handleImportCsv}
-              className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-md"
+              className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-md"
             >
               {csvLoading ? "Processing..." : "Validate & Import"}
             </button>

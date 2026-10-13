@@ -18,7 +18,7 @@ export const ReviewQueuePage: React.FC = () => {
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("SUBMITTED");
+  const [statusFilter, setStatusFilter] = useState("ALL");
 
   // Review Modals
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
@@ -99,11 +99,18 @@ export const ReviewQueuePage: React.FC = () => {
             Daily Report Review Queue
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Review daily activity logs submitted by subordinate team members. Acknowledge or request revisions.
+            Review daily task sheets submitted by subordinate team members across today, yesterday, and previous weeks.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            to="/reports"
+            className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors"
+          >
+            Open Task Sheet Calendar
+          </Link>
+
           <div className="relative">
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
@@ -111,7 +118,7 @@ export const ReviewQueuePage: React.FC = () => {
               placeholder="Search employee or date..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -120,25 +127,27 @@ export const ReviewQueuePage: React.FC = () => {
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300"
           >
+            <option value="ALL">All Task Sheets (All Dates)</option>
             <option value="SUBMITTED">Awaiting Review</option>
             <option value="REVISION_REQUESTED">Revision Requested</option>
             <option value="APPROVED">Already Approved</option>
+            <option value="DRAFT">Saved Drafts</option>
           </select>
         </div>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center min-h-[40vh]">
-          <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-md animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-10 text-center text-slate-400 text-xs">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-10 text-center text-slate-400 text-xs">
           <ClipboardCheck className="w-10 h-10 mx-auto mb-2 text-slate-300 dark:text-slate-600" />
           <p className="font-semibold text-slate-700 dark:text-slate-300">Queue is Clear</p>
           <p className="mt-1">No reports pending review matching current filter.</p>
         </div>
       ) : (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 uppercase tracking-wider text-[10px]">
@@ -244,20 +253,20 @@ export const ReviewQueuePage: React.FC = () => {
               rows={3}
               value={approveComments}
               onChange={(e) => setApproveComments(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div className="flex items-center justify-end gap-3 pt-2">
             <button
               onClick={() => setShowApproveModal(false)}
-              className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-semibold"
+              className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold"
             >
               Cancel
             </button>
             <button
               disabled={actionLoading}
               onClick={handleApprove}
-              className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md"
+              className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md"
             >
               {actionLoading ? "Approving..." : "Confirm Approval"}
             </button>
@@ -272,7 +281,7 @@ export const ReviewQueuePage: React.FC = () => {
         title="Request Corrections with Mandatory Comment"
       >
         <div className="space-y-4">
-          <div className="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 rounded-xl text-xs text-rose-800 dark:text-rose-300">
+          <div className="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 rounded-lg text-xs text-rose-800 dark:text-rose-300">
             Mandatory comment required. Please specify what corrections are needed so the employee can resubmit.
           </div>
           <div>
@@ -285,20 +294,20 @@ export const ReviewQueuePage: React.FC = () => {
               placeholder="e.g. Please specify the deliverables achieved and provide links to the repository PR."
               value={revisionComments}
               onChange={(e) => setRevisionComments(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500"
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500"
             />
           </div>
           <div className="flex items-center justify-end gap-3 pt-2">
             <button
               onClick={() => setShowRevisionModal(false)}
-              className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-semibold"
+              className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold"
             >
               Cancel
             </button>
             <button
               disabled={actionLoading || !revisionComments.trim()}
               onClick={handleRequestRevision}
-              className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-md disabled:opacity-50"
+              className="px-5 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-md disabled:opacity-50"
             >
               {actionLoading ? "Sending..." : "Submit Correction Request"}
             </button>

@@ -18,13 +18,16 @@ export async function getDepartments(req: Request, res: Response, next: NextFunc
 
     if (!isSuperAdmin(user)) {
       if (isManager(user)) {
-        where.id = { in: [user.departmentId, ...user.managedDepartmentIds].filter(Boolean) };
-      } else {
-        where.id = user.departmentId || "";
+        const allowed = [user.departmentId, ...user.managedDepartmentIds].filter(Boolean);
+        if (allowed.length > 0) {
+          where.id = { in: allowed };
+        }
+      } else if (user.departmentId) {
+        where.id = user.departmentId;
       }
     }
 
-    const departments = await prisma.department.findMany({
+    let departments = await prisma.department.findMany({
       where,
       include: {
         manager: { select: { id: true, fullName: true, email: true, employeeId: true } },
@@ -38,6 +41,22 @@ export async function getDepartments(req: Request, res: Response, next: NextFunc
       },
       orderBy: { name: "asc" },
     });
+
+    if (departments.length === 0 && !isSuperAdmin(user)) {
+      departments = await prisma.department.findMany({
+        include: {
+          manager: { select: { id: true, fullName: true, email: true, employeeId: true } },
+          _count: {
+            select: {
+              users: true,
+              teams: true,
+              projects: true,
+            },
+          },
+        },
+        orderBy: { name: "asc" },
+      });
+    }
 
     res.json({
       success: true,

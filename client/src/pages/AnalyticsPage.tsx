@@ -107,14 +107,14 @@ export const AnalyticsPage: React.FC = () => {
 
         <button
           onClick={handleExportCsv}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-sm transition-colors self-start sm:self-auto"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition-colors self-start sm:self-auto"
         >
           <FileSpreadsheet className="w-4 h-4" /> Export Scoped CSV
         </button>
       </div>
 
       {/* Date Filter Bar */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs flex flex-wrap items-center justify-between gap-4 text-xs">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-xs flex flex-wrap items-center justify-between gap-4 text-xs">
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-slate-500">From:</span>
@@ -138,7 +138,7 @@ export const AnalyticsPage: React.FC = () => {
 
         {complianceData && (
           <div className="flex items-center gap-3 text-slate-500">
-            <span className="px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 font-semibold">
+            <span className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 font-semibold">
               {complianceData.workingDays} Active Working Days
             </span>
             <span className="text-slate-400">(Weekends & Holidays Excluded)</span>
@@ -148,14 +148,14 @@ export const AnalyticsPage: React.FC = () => {
 
       {loading ? (
         <div className="flex items-center justify-center min-h-[40vh]">
-          <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-md animate-spin" />
         </div>
       ) : (
         <>
           {/* Visual Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Bar Chart: Expected vs Actual */}
-            <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs">
+            <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs">
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
                 Submissions Comparison (Actual vs Expected Days)
               </h3>
@@ -183,7 +183,7 @@ export const AnalyticsPage: React.FC = () => {
             </div>
 
             {/* Compliance Breakdown Card */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs flex flex-col justify-between">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs flex flex-col justify-between">
               <div>
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-2">
                   Compliance Summary
@@ -204,7 +204,7 @@ export const AnalyticsPage: React.FC = () => {
                       : 100;
                   return (
                     <div>
-                      <span className="text-5xl font-black text-indigo-600 dark:text-indigo-400">
+                      <span className="text-5xl font-black text-blue-600 dark:text-blue-400">
                         {avg}%
                       </span>
                       <p className="text-xs font-semibold text-slate-500 mt-2">
@@ -215,14 +215,14 @@ export const AnalyticsPage: React.FC = () => {
                 })()}
               </div>
 
-              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-[11px] text-slate-500">
+              <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-[11px] text-slate-500">
                 Axiom: Missing submissions are accounted strictly against configured work schedules and are not interpreted as zero productivity.
               </div>
             </div>
           </div>
 
           {/* Detailed Compliance Table */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden shadow-xs">
             <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                 Detailed Employee Compliance Audit
@@ -260,7 +260,7 @@ export const AnalyticsPage: React.FC = () => {
                       <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
                         {emp.expectedSubmissions}
                       </td>
-                      <td className="px-6 py-4 font-bold text-indigo-600 dark:text-indigo-400">
+                      <td className="px-6 py-4 font-bold text-blue-600 dark:text-blue-400">
                         {emp.actualSubmissions}
                       </td>
                       <td className="px-6 py-4 text-slate-600 dark:text-slate-400">

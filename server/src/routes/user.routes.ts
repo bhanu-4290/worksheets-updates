@@ -4,6 +4,7 @@ import {
   getUserById,
   createUser,
   updateUser,
+  updateProfile,
   toggleUserStatus,
   importUsersCsv,
   exportUsersCsv,
@@ -18,9 +19,10 @@ router.use(authenticate);
 
 router.get("/", getUsers);
 router.get("/export-csv", exportUsersCsv);
+router.put("/profile", updateProfile);
 router.get("/:id", getUserById);
 router.post("/", requireRoles(Role.SUPER_ADMIN), createUser);
-router.put("/:id", requireRoles(Role.SUPER_ADMIN), updateUser);
+router.put("/:id", updateUser);
 router.patch("/:id/status", requireRoles(Role.SUPER_ADMIN), toggleUserStatus);
 router.post("/import-csv", requireRoles(Role.SUPER_ADMIN), importUsersCsv);
 

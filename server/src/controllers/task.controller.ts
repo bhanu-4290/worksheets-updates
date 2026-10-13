@@ -8,10 +8,10 @@ import { logAuditEvent } from "../utils/audit.js";
 const createTaskSchema = z.object({
   title: z.string().min(2),
   description: z.string().min(2),
-  projectId: z.string().uuid(),
-  departmentId: z.string().uuid(),
+  projectId: z.string().optional().nullable(),
+  departmentId: z.string().optional().nullable(),
   assignedTeamLeadId: z.string().uuid().optional().nullable(),
-  assignedUserIds: z.array(z.string().uuid()).min(1),
+  assignedUserIds: z.array(z.string().uuid()).default([]),
   priority: z.nativeEnum(TaskPriority).default(TaskPriority.MEDIUM),
   startDate: z.string().optional(),
   dueDate: z.string().optional(),
@@ -42,17 +42,29 @@ export async function getTasks(req: Request, res: Response, next: NextFunction):
     if (isSuperAdmin(user)) {
       if (departmentId) where.departmentId = String(departmentId);
     } else if (isManager(user)) {
-      const allowedDepts = [user.departmentId, ...user.managedDepartmentIds].filter(Boolean);
-      where.departmentId = { in: allowedDepts };
-      if (departmentId && allowedDepts.includes(String(departmentId))) {
+      const allowedDepts = [user.departmentId, ...user.managedDepartmentIds].filter(Boolean) as string[];
+      if (departmentId) {
         where.departmentId = String(departmentId);
+      } else if (allowedDepts.length > 0) {
+        where.OR = [
+          { departmentId: { in: allowedDepts } },
+          { createdById: user.id },
+          { assignments: { some: { userId: user.id } } },
+          { assignments: { some: { user: { reportingManagerId: user.id } } } },
+          { teamLead: { reportingManagerId: user.id } },
+        ];
       }
     } else if (isTeamLead(user)) {
-      where.OR = [
+      const orClauses: any[] = [
         { assignedTeamLeadId: user.id },
+        { createdById: user.id },
         { assignments: { some: { userId: user.id } } },
-        { departmentId: user.departmentId || "" },
+        { assignments: { some: { user: { reportingManagerId: user.id } } } },
       ];
+      if (user.departmentId) {
+        orClauses.push({ departmentId: user.departmentId });
+      }
+      where.OR = orClauses;
     } else {
       // Executive sees tasks assigned to them
       where.assignments = { some: { userId: user.id } };
@@ -91,11 +103,11 @@ export async function getTasks(req: Request, res: Response, next: NextFunction):
       include: {
         project: { select: { id: true, name: true, code: true } },
         department: { select: { id: true, name: true, code: true } },
-        teamLead: { select: { id: true, fullName: true, email: true } },
-        createdBy: { select: { id: true, fullName: true, email: true } },
+        teamLead: { select: { id: true, fullName: true, email: true, role: true, jobTitle: true } },
+        createdBy: { select: { id: true, fullName: true, email: true, role: true, jobTitle: true } },
         assignments: {
           include: {
-            user: { select: { id: true, fullName: true, email: true, employeeId: true } },
+            user: { select: { id: true, fullName: true, email: true, employeeId: true, role: true, jobTitle: true } },
           },
         },
         dailyWorkEntries: {
@@ -155,11 +167,11 @@ export async function getTaskById(req: Request, res: Response, next: NextFunctio
       include: {
         project: true,
         department: true,
-        teamLead: { select: { id: true, fullName: true, email: true, jobTitle: true } },
-        createdBy: { select: { id: true, fullName: true, email: true, jobTitle: true } },
+        teamLead: { select: { id: true, fullName: true, email: true, role: true, jobTitle: true } },
+        createdBy: { select: { id: true, fullName: true, email: true, role: true, jobTitle: true } },
         assignments: {
           include: {
-            user: { select: { id: true, fullName: true, email: true, employeeId: true, jobTitle: true } },
+            user: { select: { id: true, fullName: true, email: true, employeeId: true, role: true, jobTitle: true } },
           },
         },
         comments: {
@@ -197,22 +209,8 @@ export async function getTaskById(req: Request, res: Response, next: NextFunctio
     }
 
     // Authorization Scope Check
-    if (isSuperAdmin(user)) {
-      // Allowed
-    } else if (isManager(user)) {
-      const allowedDepts = [user.departmentId, ...user.managedDepartmentIds].filter(Boolean);
-      if (!allowedDepts.includes(task.departmentId)) {
-        res.status(403).json({ success: false, error: "Forbidden", message: "Cannot access task outside your department" });
-        return;
-      }
-    } else if (isTeamLead(user)) {
-      const isLeadOrCreator = task.assignedTeamLeadId === user.id || task.createdById === user.id;
-      const isAssigned = task.assignments.some((a) => a.userId === user.id);
-      const isSameDept = task.departmentId === user.departmentId;
-      if (!isLeadOrCreator && !isAssigned && !isSameDept) {
-        res.status(403).json({ success: false, error: "Forbidden", message: "Cannot access this task" });
-        return;
-      }
+    if (isSuperAdmin(user) || isManager(user) || isTeamLead(user)) {
+      // Allowed for management/team leads
     } else {
       // Executive
       const isAssigned = task.assignments.some((a) => a.userId === user.id);
@@ -248,18 +246,104 @@ export async function createTask(req: Request, res: Response, next: NextFunction
       return;
     }
 
-    // Manager scope check
-    if (isManager(user)) {
-      const allowedDepts = [user.departmentId, ...user.managedDepartmentIds];
-      if (!allowedDepts.includes(data.departmentId)) {
-        res.status(403).json({ success: false, error: "Forbidden", message: "Cannot create tasks for other departments" });
+    // Resolve projectId and departmentId fallback if needed
+    let resolvedProjectId = data.projectId || "";
+    let resolvedDepartmentId = data.departmentId || user.departmentId || "";
+
+    if (resolvedProjectId) {
+      const proj = await prisma.project.findUnique({ where: { id: resolvedProjectId } });
+      if (proj && !resolvedDepartmentId) {
+        resolvedDepartmentId = proj.departmentId;
+      }
+    }
+
+    if (!resolvedDepartmentId) {
+      const firstDept = await prisma.department.findFirst({ orderBy: { name: "asc" } });
+      if (firstDept) resolvedDepartmentId = firstDept.id;
+    }
+
+    if (!resolvedProjectId) {
+      const firstProj = await prisma.project.findFirst({
+        where: resolvedDepartmentId ? { departmentId: resolvedDepartmentId } : {},
+        orderBy: { name: "asc" },
+      }) || await prisma.project.findFirst({ orderBy: { name: "asc" } });
+      if (firstProj) {
+        resolvedProjectId = firstProj.id;
+        if (!resolvedDepartmentId) resolvedDepartmentId = firstProj.departmentId;
+      }
+    }
+
+    if (!resolvedProjectId || !resolvedDepartmentId) {
+      res.status(400).json({
+        success: false,
+        error: "Bad Request",
+        message: "Please select a valid Department and Project for this task.",
+      });
+      return;
+    }
+
+    // Combine assignedUserIds and assignedTeamLeadId as needed
+    const assigneeIdSet = new Set<string>(data.assignedUserIds);
+    let resolvedTeamLeadId: string | null = data.assignedTeamLeadId || (isTeamLead(user) ? user.id : null);
+
+    // If Manager selected a Team Lead in assignedTeamLeadId and left assignedUserIds empty, assign to that Team Lead
+    if (resolvedTeamLeadId && assigneeIdSet.size === 0) {
+      assigneeIdSet.add(resolvedTeamLeadId);
+    }
+
+    if (assigneeIdSet.size === 0) {
+      res.status(400).json({
+        success: false,
+        error: "Validation Error",
+        message: isTeamLead(user)
+          ? "Please select at least one Executive to assign this task to."
+          : "Please select at least one Team Lead or Executive to assign this task to.",
+      });
+      return;
+    }
+
+    // Validate Role-Based Assignment Rules:
+    // - Manager can assign tasks to TEAM_LEAD and EXECUTIVE
+    // - Team Lead can assign tasks to EXECUTIVE only
+    const targetUsers = await prisma.user.findMany({
+      where: { id: { in: Array.from(assigneeIdSet) } },
+      select: { id: true, fullName: true, role: true },
+    });
+
+    if (isTeamLead(user)) {
+      const invalidUsers = targetUsers.filter((u) => u.role !== Role.EXECUTIVE && u.id !== user.id);
+      if (invalidUsers.length > 0) {
+        res.status(403).json({
+          success: false,
+          error: "Forbidden",
+          message: "Team Leads can only assign tasks to Executives.",
+        });
         return;
+      }
+      resolvedTeamLeadId = user.id;
+    } else if (isManager(user)) {
+      const invalidUsers = targetUsers.filter(
+        (u) => u.role !== Role.TEAM_LEAD && u.role !== Role.EXECUTIVE && u.role !== Role.MANAGER
+      );
+      if (invalidUsers.length > 0) {
+        res.status(403).json({
+          success: false,
+          error: "Forbidden",
+          message: "Managers can assign tasks to Managers, Team Leads, and Executives.",
+        });
+        return;
+      }
+      // If Manager picked a Team Lead in assignedUserIds and didn't set assignedTeamLeadId, auto-populate assignedTeamLeadId
+      if (!resolvedTeamLeadId) {
+        const firstTl = targetUsers.find((u) => u.role === Role.TEAM_LEAD);
+        if (firstTl) resolvedTeamLeadId = firstTl.id;
       }
     }
 
     // Generate unique task code TSK-<number>
     const count = await prisma.task.count();
     const taskCode = `TSK-${100 + count + 1}`;
+    const finalAssignedUserIds = Array.from(assigneeIdSet);
 
     const task = await prisma.$transaction(async (tx) => {
       const created = await tx.task.create({
@@ -267,9 +351,9 @@ export async function createTask(req: Request, res: Response, next: NextFunction
           taskCode,
           title: data.title,
           description: data.description,
-          projectId: data.projectId,
-          departmentId: data.departmentId,
-          assignedTeamLeadId: data.assignedTeamLeadId || (isTeamLead(user) ? user.id : null),
+          projectId: resolvedProjectId,
+          departmentId: resolvedDepartmentId,
+          assignedTeamLeadId: resolvedTeamLeadId,
           createdById: user.id,
           priority: data.priority,
           status: TaskStatus.TO_DO,
@@ -279,34 +363,40 @@ export async function createTask(req: Request, res: Response, next: NextFunction
         },
       });
 
-      if (data.assignedUserIds.length > 0) {
+      if (finalAssignedUserIds.length > 0) {
         await tx.taskAssignment.createMany({
-          data: data.assignedUserIds.map((userId) => ({
+          data: finalAssignedUserIds.map((userId) => ({
             taskId: created.id,
             userId,
           })),
         });
 
-        // Notifications for assignees
+        // Also notify assignedTeamLeadId if not already in finalAssignedUserIds
+        const notifyUserIds = new Set<string>(finalAssignedUserIds);
+        if (resolvedTeamLeadId && resolvedTeamLeadId !== user.id) {
+          notifyUserIds.add(resolvedTeamLeadId);
+        }
+
         await tx.notification.createMany({
-          data: data.assignedUserIds.map((userId) => ({
+          data: Array.from(notifyUserIds).map((userId) => ({
             recipientId: userId,
             senderId: user.id,
             eventType: "TASK_ASSIGNED",
-            title: `New Task: ${created.title}`,
-            message: `You were assigned to task ${created.taskCode}: "${created.title}".`,
+            title: `New Task Assigned: ${created.title}`,
+            message: `${user.fullName} (${user.role.replace("_", " ")}) assigned you to task ${created.taskCode}: "${created.title}".`,
             link: `/tasks/${created.id}`,
           })),
         });
       }
 
+      const assigneeNames = targetUsers.map((u) => `${u.fullName} (${u.role.replace("_", " ")})`).join(", ");
       await tx.taskHistory.create({
         data: {
           taskId: created.id,
           userId: user.id,
           action: "TASK_CREATED",
           newValue: TaskStatus.TO_DO,
-          details: `Task created by ${user.fullName}`,
+          details: `Task created by ${user.fullName} and assigned to ${assigneeNames}`,
         },
       });
 
@@ -318,13 +408,13 @@ export async function createTask(req: Request, res: Response, next: NextFunction
       action: "TASK_CREATED",
       resourceType: "TASK",
       resourceId: task.id,
-      details: { taskCode: task.taskCode, title: task.title },
+      details: { taskCode: task.taskCode, title: task.title, assignedUserIds: finalAssignedUserIds },
       ipAddress: req.ip,
     });
 
     res.status(201).json({
       success: true,
-      message: "Task created successfully",
+      message: "Task created and assigned successfully",
       data: task,
     });
   } catch (err) {
@@ -364,12 +454,49 @@ export async function updateTask(req: Request, res: Response, next: NextFunction
       }
     }
 
-    if (isManager(user)) {
-      const allowedDepts = [user.departmentId, ...user.managedDepartmentIds];
-      if (!allowedDepts.includes(task.departmentId)) {
-        res.status(403).json({ success: false, error: "Forbidden", message: "Cannot edit tasks in other departments" });
-        return;
+    // Validate Role-Based Assignment Rules when updating assignees
+    let resolvedTeamLeadId = data.assignedTeamLeadId;
+    let targetAssigneeSummary = "";
+
+    if (data.assignedUserIds) {
+      const targetUsers = await prisma.user.findMany({
+        where: { id: { in: data.assignedUserIds } },
+        select: { id: true, fullName: true, role: true },
+      });
+
+      if (isTeamLead(user)) {
+        const invalidUsers = targetUsers.filter((u) => u.role !== Role.EXECUTIVE && u.id !== user.id);
+        if (invalidUsers.length > 0) {
+          res.status(403).json({
+            success: false,
+            error: "Forbidden",
+            message: "Team Leads can only assign or delegate tasks to Executives.",
+          });
+          return;
+        }
+        // Keep the Team Lead as the task's assignedTeamLeadId when delegating to an Executive
+        if (!task.assignedTeamLeadId) {
+          resolvedTeamLeadId = user.id;
+        }
+      } else if (isManager(user)) {
+        const invalidUsers = targetUsers.filter(
+          (u) => u.role !== Role.TEAM_LEAD && u.role !== Role.EXECUTIVE
+        );
+        if (invalidUsers.length > 0) {
+          res.status(403).json({
+            success: false,
+            error: "Forbidden",
+            message: "Managers can only assign tasks to Team Leads and Executives.",
+          });
+          return;
+        }
+        if (resolvedTeamLeadId === undefined) {
+          const firstTl = targetUsers.find((u) => u.role === Role.TEAM_LEAD);
+          if (firstTl) resolvedTeamLeadId = firstTl.id;
+        }
       }
+
+      targetAssigneeSummary = targetUsers.map((u) => `${u.fullName} (${u.role.replace("_", " ")})`).join(", ");
     }
 
     await prisma.$transaction(async (tx) => {
@@ -384,30 +511,42 @@ export async function updateTask(req: Request, res: Response, next: NextFunction
           dueDate: data.dueDate !== undefined ? (data.dueDate ? new Date(data.dueDate) : null) : undefined,
           estimatedHours: data.estimatedHours !== undefined ? data.estimatedHours : undefined,
           progressPercentage: data.progressPercentage !== undefined ? data.progressPercentage : undefined,
-          assignedTeamLeadId: data.assignedTeamLeadId !== undefined ? data.assignedTeamLeadId : undefined,
+          assignedTeamLeadId: resolvedTeamLeadId !== undefined ? resolvedTeamLeadId : undefined,
         },
       });
 
       if (data.assignedUserIds) {
         // Replace assignments
         await tx.taskAssignment.deleteMany({ where: { taskId: id } });
-        await tx.taskAssignment.createMany({
-          data: data.assignedUserIds.map((userId) => ({
-            taskId: id,
-            userId,
-          })),
-        });
+        if (data.assignedUserIds.length > 0) {
+          await tx.taskAssignment.createMany({
+            data: data.assignedUserIds.map((userId) => ({
+              taskId: id,
+              userId,
+            })),
+          });
 
-        // Notify new assignees
-        await tx.notification.createMany({
-          data: data.assignedUserIds.map((userId) => ({
-            recipientId: userId,
-            senderId: user.id,
-            eventType: "TASK_REASSIGNED",
-            title: `Task Assignment Updated: ${task.title}`,
-            message: `Task assignment has been updated by ${user.fullName}.`,
-            link: `/tasks/${id}`,
-          })),
+          // Notify new assignees
+          await tx.notification.createMany({
+            data: data.assignedUserIds.map((userId) => ({
+              recipientId: userId,
+              senderId: user.id,
+              eventType: "TASK_REASSIGNED",
+              title: `Task Assigned: ${task.title}`,
+              message: `${user.fullName} (${user.role.replace("_", " ")}) assigned you to task ${task.taskCode}: "${task.title}".`,
+              link: `/tasks/${id}`,
+            })),
+          });
+        }
+
+        await tx.taskHistory.create({
+          data: {
+            taskId: id,
+            userId: user.id,
+            action: isTeamLead(user) ? "TASK_DELEGATED_TO_EXECUTIVE" : "TASK_ASSIGNED",
+            newValue: targetAssigneeSummary,
+            details: `${user.fullName} (${user.role.replace("_", " ")}) assigned task to: ${targetAssigneeSummary || "Unassigned"}`,
+          },
         });
       }
 

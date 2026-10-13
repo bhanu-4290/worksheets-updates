@@ -10,7 +10,6 @@ import {
   CheckCheck,
   Check,
   Clock,
-  Sparkles,
   RefreshCw,
 } from "lucide-react";
 
@@ -132,9 +131,9 @@ export const ChatPage: React.FC = () => {
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case "SUPER_ADMIN":
-        return "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300";
+        return "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300";
       case "MANAGER":
-        return "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300";
+        return "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300";
       case "TEAM_LEAD":
         return "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300";
       case "EXECUTIVE":
@@ -145,11 +144,11 @@ export const ChatPage: React.FC = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-8.5rem)] flex flex-col bg-white dark:bg-slate-900 rounded-xl shadow-xs border border-slate-200 dark:border-slate-800 overflow-hidden">
+    <div className="h-[calc(100vh-8.5rem)] flex flex-col bg-white dark:bg-slate-900 rounded-lg shadow-xs border border-slate-200 dark:border-slate-800 overflow-hidden">
       {/* Top Header */}
       <div className="px-6 py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-indigo-600/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-blue-600/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center">
             <MessageSquare className="w-4 h-4" />
           </div>
           <div>
@@ -186,7 +185,7 @@ export const ChatPage: React.FC = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search colleagues..."
-                className="w-full pl-9 pr-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                className="w-full pl-9 pr-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -206,16 +205,16 @@ export const ChatPage: React.FC = () => {
                     onClick={() => setSelectedContact(contact)}
                     className={`w-full text-left p-3 flex items-start gap-3 transition-colors ${
                       isSelected
-                        ? "bg-indigo-50/80 dark:bg-indigo-950/40 border-r-2 border-indigo-600"
+                        ? "bg-blue-50/80 dark:bg-blue-950/40 border-r-2 border-blue-600"
                         : "hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
                     }`}
                   >
                     <div className="relative shrink-0">
-                      <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                      <div className="w-9 h-9 rounded-md bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
                         {contact.fullName.charAt(0)}
                       </div>
                       {contact.unreadCount > 0 && (
-                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-xs">
+                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 text-white text-[9px] font-bold rounded-md flex items-center justify-center shadow-xs">
                           {contact.unreadCount}
                         </span>
                       )}
@@ -271,7 +270,7 @@ export const ChatPage: React.FC = () => {
               {/* Contact Active Top Bar */}
               <div className="px-6 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/20 dark:bg-slate-900">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-700 text-white flex items-center justify-center font-bold text-xs">
+                  <div className="w-9 h-9 rounded-md bg-blue-700 text-white flex items-center justify-center font-bold text-xs">
                     {selectedContact.fullName.charAt(0)}
                   </div>
                   <div>
@@ -294,7 +293,7 @@ export const ChatPage: React.FC = () => {
                 </div>
                 <div className="text-right hidden sm:block">
                   <span className="inline-flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="w-2 h-2 rounded-md bg-emerald-500" />
                     Active on WorkTrack
                   </span>
                 </div>
@@ -304,12 +303,12 @@ export const ChatPage: React.FC = () => {
               <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/10 dark:bg-slate-950/20">
                 {loadingMessages ? (
                   <div className="flex items-center justify-center h-full">
-                    <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-md animate-spin" />
                   </div>
                 ) : messages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-center text-slate-400 p-8">
-                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-3">
-                      <Sparkles className="w-6 h-6" />
+                    <div className="w-12 h-12 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3">
+                      <MessageSquare className="w-6 h-6" />
                     </div>
                     <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
                       Start of conversation with {selectedContact.fullName}
@@ -327,14 +326,14 @@ export const ChatPage: React.FC = () => {
                         className={`flex flex-col ${isSelf ? "items-end" : "items-start"}`}
                       >
                         <div
-                          className={`max-w-[75%] sm:max-w-[65%] rounded-2xl px-4 py-2.5 text-xs shadow-xs ${
+                          className={`max-w-[75%] sm:max-w-[65%] rounded-lg px-4 py-2.5 text-xs shadow-xs ${
                             isSelf
-                              ? "bg-indigo-600 text-white rounded-br-xs"
+                              ? "bg-blue-600 text-white rounded-br-xs"
                               : "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-bl-xs"
                           }`}
                         >
                           {!isSelf && (
-                            <div className="font-semibold text-[10px] text-indigo-600 dark:text-indigo-400 mb-0.5">
+                            <div className="font-semibold text-[10px] text-blue-600 dark:text-blue-400 mb-0.5">
                               {msg.sender.fullName}
                             </div>
                           )}
@@ -343,7 +342,7 @@ export const ChatPage: React.FC = () => {
                           </p>
                           <div
                             className={`flex items-center justify-end gap-1 mt-1 text-[9px] ${
-                              isSelf ? "text-indigo-200" : "text-slate-400"
+                              isSelf ? "text-blue-200" : "text-slate-400"
                             }`}
                           >
                             <span>
@@ -378,12 +377,12 @@ export const ChatPage: React.FC = () => {
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     placeholder={`Message ${selectedContact.fullName}... (Press Enter to send)`}
-                    className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                    className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                   />
                   <button
                     type="submit"
                     disabled={!inputText.trim() || sending}
-                    className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs"
+                    className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs"
                   >
                     <Send className="w-3.5 h-3.5" />
                     <span>Send</span>

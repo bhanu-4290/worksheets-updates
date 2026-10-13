@@ -100,7 +100,7 @@ export const AdminTeamsPage: React.FC = () => {
 
         <button
           onClick={() => setShowCreateModal(true)}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-sm transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition-colors"
         >
           <Plus className="w-4 h-4" /> Create Team
         </button>
@@ -108,17 +108,17 @@ export const AdminTeamsPage: React.FC = () => {
 
       {loading ? (
         <div className="flex items-center justify-center min-h-[40vh]">
-          <div className="w-8 h-8 border-3 border-purple-600 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-md animate-spin" />
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {teams.map((t) => (
             <div
               key={t.id}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4"
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs space-y-4"
             >
               <div className="flex items-center justify-between">
-                <span className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded">
+                <span className="font-mono text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded">
                   {t.code}
                 </span>
                 <span className="text-xs text-slate-400">
@@ -129,7 +129,7 @@ export const AdminTeamsPage: React.FC = () => {
               <div>
                 <h3 className="font-bold text-base text-slate-900 dark:text-white">{t.name}</h3>
                 <p className="text-xs text-slate-500 mt-1">
-                  Lead: <strong className="text-indigo-600 dark:text-indigo-400">{t.teamLead?.fullName || "Unassigned"}</strong>
+                  Lead: <strong className="text-blue-600 dark:text-blue-400">{t.teamLead?.fullName || "Unassigned"}</strong>
                 </p>
               </div>
 
@@ -140,7 +140,7 @@ export const AdminTeamsPage: React.FC = () => {
                     setSelectedTeam(t);
                     setShowMembersModal(true);
                   }}
-                  className="px-3 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-semibold hover:bg-indigo-100"
+                  className="px-3 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-semibold hover:bg-blue-100"
                 >
                   Manage Roster
                 </button>
@@ -165,7 +165,7 @@ export const AdminTeamsPage: React.FC = () => {
               placeholder="e.g. Mobile Apps Core"
               value={teamForm.name}
               onChange={(e) => setTeamForm({ ...teamForm, name: e.target.value })}
-              className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+              className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
             />
           </div>
 
@@ -177,7 +177,7 @@ export const AdminTeamsPage: React.FC = () => {
               placeholder="e.g. ENG-MOB"
               value={teamForm.code}
               onChange={(e) => setTeamForm({ ...teamForm, code: e.target.value.toUpperCase() })}
-              className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs uppercase"
+              className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs uppercase"
             />
           </div>
 
@@ -187,7 +187,7 @@ export const AdminTeamsPage: React.FC = () => {
               required
               value={teamForm.departmentId}
               onChange={(e) => setTeamForm({ ...teamForm, departmentId: e.target.value })}
-              className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+              className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
             >
               <option value="">-- Select Department --</option>
               {departments.map((d) => (
@@ -203,7 +203,7 @@ export const AdminTeamsPage: React.FC = () => {
             <select
               value={teamForm.teamLeadId}
               onChange={(e) => setTeamForm({ ...teamForm, teamLeadId: e.target.value })}
-              className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+              className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
             >
               <option value="">-- Select Team Lead --</option>
               {leads.map((l) => (
@@ -218,13 +218,13 @@ export const AdminTeamsPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowCreateModal(false)}
-              className="px-4 py-2 rounded-xl border text-xs"
+              className="px-4 py-2 rounded-lg border text-xs"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold"
+              className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold"
             >
               Create Team
             </button>
@@ -243,7 +243,7 @@ export const AdminTeamsPage: React.FC = () => {
             <select
               value={selectedAddUserId}
               onChange={(e) => setSelectedAddUserId(e.target.value)}
-              className="flex-1 px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+              className="flex-1 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
             >
               <option value="">-- Add Employee to Team --</option>
               {allUsers.map((u) => (
@@ -254,7 +254,7 @@ export const AdminTeamsPage: React.FC = () => {
             </select>
             <button
               onClick={handleAddMember}
-              className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold"
+              className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold"
             >
               Add
             </button>

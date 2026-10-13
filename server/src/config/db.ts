@@ -88,6 +88,10 @@ export async function initDatabase(): Promise<void> {
 
         -- Ensure dateOfBirth column exists on users table
         ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "dateOfBirth" TIMESTAMP(3);
+
+        -- Ensure attachment columns exist on announcements table
+        ALTER TABLE "announcements" ADD COLUMN IF NOT EXISTS "attachmentUrl" TEXT;
+        ALTER TABLE "announcements" ADD COLUMN IF NOT EXISTS "attachmentName" TEXT;
       `);
       console.log("[DB] PostgreSQL schema is ready (with Chat, Announcements & Date of Birth).");
     } catch (err) {

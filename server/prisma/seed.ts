@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import { initDatabase, prisma } from "../src/config/db.js";
 
 export async function runSeed() {
-  console.log("==> Running WorkTrack Custom Team Database Seed...");
+  console.log("==> Running MATRIX Official Database Seed (28 Real Employees, No L1 Data)...");
   await initDatabase();
 
   const passwordHash = await bcrypt.hash("Matrix@4290", 10);
@@ -11,8 +11,8 @@ export async function runSeed() {
   await prisma.companySetting.deleteMany();
   await prisma.companySetting.create({
     data: {
-      companyName: "WorkTrack Enterprise",
-      timezone: "UTC",
+      companyName: "MATRIX",
+      timezone: "Asia/Kolkata",
       workDays: "Monday,Tuesday,Wednesday,Thursday,Friday",
       submissionDeadlineTime: "19:00",
       gracePeriodHours: 2,
@@ -25,15 +25,16 @@ export async function runSeed() {
   await prisma.holiday.createMany({
     data: [
       { name: "New Year's Day", date: new Date("2026-01-01"), isRecurring: true },
-      { name: "Labor Day", date: new Date("2026-05-01"), isRecurring: true },
-      { name: "Independence Day", date: new Date("2026-07-04"), isRecurring: true },
-      { name: "Thanksgiving Day", date: new Date("2026-11-26"), isRecurring: false },
+      { name: "Republic Day", date: new Date("2026-01-26"), isRecurring: true },
+      { name: "May Day", date: new Date("2026-05-01"), isRecurring: true },
+      { name: "Independence Day", date: new Date("2026-08-15"), isRecurring: true },
+      { name: "Gandhi Jayanti", date: new Date("2026-10-02"), isRecurring: true },
       { name: "Christmas Day", date: new Date("2026-12-25"), isRecurring: true },
     ],
   });
 
-  // 3. Clean all existing operational, transactional, and user data
-  console.log("==> Cleaning all previous data...");
+  // 3. Clean all previous transactional data
+  console.log("==> Removing all previous transactional and employee records...");
   await prisma.chatMessage.deleteMany().catch(() => {});
   await prisma.announcement.deleteMany().catch(() => {});
   await prisma.notification.deleteMany().catch(() => {});
@@ -54,315 +55,569 @@ export async function runSeed() {
   await prisma.team.deleteMany().catch(() => {});
   await prisma.department.deleteMany().catch(() => {});
 
-  // 4. Create Department
-  console.log("==> Creating Department: Engineering & Technology...");
-  const deptEng = await prisma.department.create({
+  // 4. Create Departments
+  console.log("==> Creating MATRIX Departments...");
+  const deptExecutive = await prisma.department.create({
     data: {
-      name: "Engineering & Technology",
-      code: "ENG",
-      description: "Core software engineering, architecture, and technology operations",
+      name: "MATRIX Executive & Operations",
+      code: "MTX-EXEC",
+      description: "MATRIX Executive Management & Platform Operations",
     },
   });
 
-  // 5. Create Team
-  console.log("==> Creating Team: Core Engineering Team...");
-  const teamCore = await prisma.team.create({
+  const deptDCInfra = await prisma.department.create({
     data: {
-      name: "Core Engineering Team",
-      code: "CORE-ENG",
-      departmentId: deptEng.id,
+      name: "DC Infra, EMS & Systems",
+      code: "DC-INFRA",
+      description: "Data Center Infrastructure, EMS, MIT, Servers, Storage & Network",
     },
   });
 
-  // 6. Create Users
-  // Admin: Rahul
-  console.log("==> Creating Admin: Rahul...");
-  const rahulAdmin = await prisma.user.create({
+  const deptAnalytics = await prisma.department.create({
     data: {
-      employeeId: "EMP001",
-      email: "rahul@worktrack.company",
+      name: "Analytics, VMS & CCTV 360",
+      code: "VMS-CCTV",
+      description: "Video Management Systems, Analytics, and CCTV 360 Co-ordination",
+    },
+  });
+
+  const deptDCOpsTech = await prisma.department.create({
+    data: {
+      name: "DC Operations & Tech Support",
+      code: "DC-TECH",
+      description: "DC Manager 3 and CCTV 360 Technical Support",
+    },
+  });
+
+  const deptDCOpsVMS = await prisma.department.create({
+    data: {
+      name: "DC Operations & VMS",
+      code: "DC-VMS",
+      description: "DC Manager 3 and Video Management Operations",
+    },
+  });
+
+  const deptDCOpsEMS = await prisma.department.create({
+    data: {
+      name: "DC Operations & EMS",
+      code: "DC-EMS",
+      description: "DC Manager 3 and Enterprise Management Systems",
+    },
+  });
+
+  const deptDCOpsNet = await prisma.department.create({
+    data: {
+      name: "DC Operations & Network",
+      code: "DC-NET",
+      description: "DC Manager 3 and Network Infrastructure Operations",
+    },
+  });
+
+  // 5. TIER 1: Super Admin (YELLOW)
+  console.log("==> Creating Super Admin (Sri Aditya - Yellow)...");
+  const sriAdityaAdmin = await prisma.user.create({
+    data: {
+      employeeId: "M-000925",
+      fullName: "Sri Aditya Canuparthi",
+      email: "sriaditya.c@matrixst.in",
       passwordHash,
-      fullName: "Rahul",
-      jobTitle: "Super Administrator & Director",
+      jobTitle: "Super Administrator & Managing Director",
       role: "SUPER_ADMIN",
-      departmentId: deptEng.id,
+      departmentId: deptExecutive.id,
+      isActive: true,
+      joiningDate: new Date("2023-01-01"),
+    },
+  });
+
+  // 6. TIER 2: Department Managers (ORANGE) reporting to Sri Aditya
+  console.log("==> Creating Department Managers (Orange)...");
+
+  // Manager: Rahul Kiran Darnasi
+  const rahulMgr = await prisma.user.create({
+    data: {
+      employeeId: "M-000844",
+      fullName: "Rahul Kiran Darnasi",
+      email: "rahul.d@matrixst.in",
+      passwordHash,
+      jobTitle: "Manager (DC infra / EMS / MIT / DC krishna)",
+      role: "MANAGER",
+      departmentId: deptDCInfra.id,
+      managerId: sriAdityaAdmin.id,
       isActive: true,
       joiningDate: new Date("2024-01-01"),
     },
   });
 
-  // Manager: Phani
-  console.log("==> Creating Manager: Phani...");
-  const phaniManager = await prisma.user.create({
+  // Manager: Madhu Bhushan
+  const madhuBhushanMgr = await prisma.user.create({
     data: {
-      employeeId: "EMP002",
-      email: "phani@worktrack.company",
+      employeeId: "M-000103",
+      fullName: "K.Madhu Bhushana Rao",
+      email: "madhu.k@matrixst.in",
       passwordHash,
-      fullName: "Phani",
-      jobTitle: "Engineering Manager",
+      jobTitle: "Manager (Analytics / VMS & CCTV 360)",
       role: "MANAGER",
-      departmentId: deptEng.id,
-      managerId: rahulAdmin.id,
+      departmentId: deptAnalytics.id,
+      managerId: sriAdityaAdmin.id,
       isActive: true,
-      joiningDate: new Date("2024-03-15"),
+      joiningDate: new Date("2024-01-01"),
     },
   });
 
-  // Assign Phani as Manager of the Department
-  await prisma.department.update({
-    where: { id: deptEng.id },
-    data: { managerId: phaniManager.id },
+  // Manager: Akhil Babu
+  const akhilMgr = await prisma.user.create({
+    data: {
+      employeeId: "M-000233",
+      fullName: "Uppada Akhil Babu",
+      email: "akhil.b@matrixst.in",
+      passwordHash,
+      jobTitle: "Manager (DC Manager -3 & CCTV 360 Tech)",
+      role: "MANAGER",
+      departmentId: deptDCOpsTech.id,
+      managerId: sriAdityaAdmin.id,
+      isActive: true,
+      joiningDate: new Date("2024-01-01"),
+    },
   });
 
-  // Team Lead: Tharun
-  console.log("==> Creating Team Lead: Tharun...");
-  const tharunLead = await prisma.user.create({
+  // Manager: Madhusudhan
+  const madhusudhanMgr = await prisma.user.create({
     data: {
-      employeeId: "EMP003",
-      email: "tharun@worktrack.company",
+      employeeId: "M-000815",
+      fullName: "Lankapalli Madhusudhanarao",
+      email: "madhusudhanarao.l@matrixst.in",
       passwordHash,
-      fullName: "Tharun",
-      jobTitle: "Team Lead & Technical Architect",
+      jobTitle: "Manager (DC Manager -3 & VMS)",
+      role: "MANAGER",
+      departmentId: deptDCOpsVMS.id,
+      managerId: sriAdityaAdmin.id,
+      isActive: true,
+      joiningDate: new Date("2024-01-01"),
+    },
+  });
+
+  // Manager: Phaneeshwarnadh
+  const phaniMgr = await prisma.user.create({
+    data: {
+      employeeId: "M-000899",
+      fullName: "A V Phaneeswaranadh",
+      email: "phaneeswaranadh.a@matrixst.in",
+      passwordHash,
+      jobTitle: "Manager (DC Manager -3 & EMS)",
+      role: "MANAGER",
+      departmentId: deptDCOpsEMS.id,
+      managerId: sriAdityaAdmin.id,
+      isActive: true,
+      joiningDate: new Date("2024-01-01"),
+    },
+  });
+
+  // Manager: Jagan Mohan
+  const jaganMgr = await prisma.user.create({
+    data: {
+      employeeId: "M-000903",
+      fullName: "Dk Jagan Mohan",
+      email: "jagan@matrixst.in",
+      passwordHash,
+      jobTitle: "Manager (DC Manager -3 & Network)",
+      role: "MANAGER",
+      departmentId: deptDCOpsNet.id,
+      managerId: sriAdityaAdmin.id,
+      isActive: true,
+      joiningDate: new Date("2024-01-01"),
+    },
+  });
+
+  // Sub-Managers under Rahul (Orange):
+  // Rajesh (Servers / Storage)
+  const rajeshMgr = await prisma.user.create({
+    data: {
+      employeeId: "M-000763",
+      fullName: "Mattaparthi Rajesh",
+      email: "rajesh.m@matrixst.in",
+      passwordHash,
+      jobTitle: "Manager (Servers / Storage)",
+      role: "MANAGER",
+      departmentId: deptDCInfra.id,
+      managerId: rahulMgr.id,
+      isActive: true,
+      joiningDate: new Date("2024-02-01"),
+    },
+  });
+
+  // Venkateshwarlu (Network)
+  const venkateshwarluMgr = await prisma.user.create({
+    data: {
+      employeeId: "M-000898",
+      fullName: "G Venkateswarlu",
+      email: "venkateswarlu.g@matrixst.in",
+      passwordHash,
+      jobTitle: "Manager (Network)",
+      role: "MANAGER",
+      departmentId: deptDCInfra.id,
+      managerId: rahulMgr.id,
+      isActive: true,
+      joiningDate: new Date("2024-02-01"),
+    },
+  });
+
+  // Link Managers to Departments
+  await prisma.department.update({ where: { id: deptExecutive.id }, data: { managerId: sriAdityaAdmin.id } });
+  await prisma.department.update({ where: { id: deptDCInfra.id }, data: { managerId: rahulMgr.id } });
+  await prisma.department.update({ where: { id: deptAnalytics.id }, data: { managerId: madhuBhushanMgr.id } });
+  await prisma.department.update({ where: { id: deptDCOpsTech.id }, data: { managerId: akhilMgr.id } });
+  await prisma.department.update({ where: { id: deptDCOpsVMS.id }, data: { managerId: madhusudhanMgr.id } });
+  await prisma.department.update({ where: { id: deptDCOpsEMS.id }, data: { managerId: phaniMgr.id } });
+  await prisma.department.update({ where: { id: deptDCOpsNet.id }, data: { managerId: jaganMgr.id } });
+
+  // 7. TIER 3: The 19 DC Team Leads & Specialists (Green)
+  console.log("==> Creating 19 DC Team Leads & Specialists (Green)...");
+
+  // Under Rahul: Surya (EMS)
+  await prisma.user.create({
+    data: {
+      employeeId: "M-000829",
+      fullName: "Gondu Appalasuryanarayana",
+      email: "suryanarayana.g@matrixst.in",
+      passwordHash,
+      jobTitle: "Surya (EMS Lead)",
       role: "TEAM_LEAD",
-      departmentId: deptEng.id,
-      managerId: phaniManager.id,
-      isActive: true,
-      joiningDate: new Date("2024-06-01"),
-    },
-  });
-
-  // Assign Tharun as Lead of Core Engineering Team
-  await prisma.team.update({
-    where: { id: teamCore.id },
-    data: { teamLeadId: tharunLead.id },
-  });
-
-  // Executive: Bhanu
-  console.log("==> Creating Executive: Bhanu...");
-  const bhanuExec = await prisma.user.create({
-    data: {
-      employeeId: "EMP004",
-      email: "bhanu@worktrack.company",
-      passwordHash,
-      fullName: "Bhanu",
-      jobTitle: "Senior Software Engineer",
-      role: "EXECUTIVE",
-      departmentId: deptEng.id,
-      managerId: phaniManager.id,
-      teamLeadId: tharunLead.id,
+      departmentId: deptDCInfra.id,
+      managerId: rahulMgr.id,
       isActive: true,
       joiningDate: new Date("2025-01-10"),
     },
   });
 
-  // Executive: Naveen
-  console.log("==> Creating Executive: Naveen...");
-  const naveenExec = await prisma.user.create({
+  // Under Rajesh: Gopi & Manoj
+  await prisma.user.create({
     data: {
-      employeeId: "EMP005",
-      email: "naveen@worktrack.company",
+      employeeId: "M-000805",
+      fullName: "Kakani Gopinath",
+      email: "gopinath.k@matrixst.in",
       passwordHash,
-      fullName: "Naveen",
-      jobTitle: "Full Stack Software Engineer",
+      jobTitle: "Storage Specialist (Gopi)",
       role: "EXECUTIVE",
-      departmentId: deptEng.id,
-      managerId: phaniManager.id,
-      teamLeadId: tharunLead.id,
+      departmentId: deptDCInfra.id,
+      managerId: rajeshMgr.id,
       isActive: true,
-      joiningDate: new Date("2025-02-01"),
+      joiningDate: new Date("2025-01-10"),
     },
   });
 
-  // 7. Team Memberships
-  await prisma.teamMembership.createMany({
-    data: [
-      { teamId: teamCore.id, userId: tharunLead.id },
-      { teamId: teamCore.id, userId: bhanuExec.id },
-      { teamId: teamCore.id, userId: naveenExec.id },
-    ],
-  });
-
-  // 8. Create Project
-  console.log("==> Creating Project: WorkTrack Platform...");
-  const project1 = await prisma.project.create({
+  await prisma.user.create({
     data: {
-      name: "WorkTrack Platform",
-      code: "WT-CORE",
-      description: "Employee work management & daily tracking platform",
-      departmentId: deptEng.id,
-      status: "ACTIVE",
+      employeeId: "M-000849",
+      fullName: "Guttula Devi Naga Manoj",
+      email: "nagamanoj.g@gmail.com",
+      passwordHash,
+      jobTitle: "Server Specialist (Manoj)",
+      role: "EXECUTIVE",
+      departmentId: deptDCInfra.id,
+      managerId: rajeshMgr.id,
+      isActive: true,
+      joiningDate: new Date("2025-01-10"),
     },
   });
 
-  // 9. Create Sample Tasks
-  console.log("==> Assigning Tasks...");
-  const task1 = await prisma.task.create({
+  // Under Venkateshwarlu: Surrendra, Prasanna, Rasi
+  await prisma.user.create({
     data: {
-      taskCode: "TSK-001",
-      title: "Implement Core Feature APIs & Validations",
-      description: "Build robust REST endpoints for daily activity reporting and validation logic.",
-      projectId: project1.id,
-      departmentId: deptEng.id,
-      createdById: tharunLead.id,
-      assignedTeamLeadId: tharunLead.id,
-      priority: "HIGH",
-      status: "IN_PROGRESS",
-      startDate: new Date("2026-10-01"),
-      dueDate: new Date("2026-10-20"),
-      estimatedHours: 40,
-      progressPercentage: 45,
+      employeeId: "M-000708",
+      fullName: "Thunuguntla Naga Venkata Surendra",
+      email: "surendratnv@gmail.com",
+      passwordHash,
+      jobTitle: "Network Engineer (Surrendra)",
+      role: "TEAM_LEAD",
+      departmentId: deptDCInfra.id,
+      managerId: venkateshwarluMgr.id,
+      isActive: true,
+      joiningDate: new Date("2025-01-10"),
     },
   });
 
-  await prisma.taskAssignment.create({
+  await prisma.user.create({
     data: {
-      taskId: task1.id,
-      userId: bhanuExec.id,
+      employeeId: "M-000589",
+      fullName: "Tanneeru Lakshmi Prasanna Kumar",
+      email: "prasannakumartanneeru@gmail.com",
+      passwordHash,
+      jobTitle: "DC Operations (Prasanna)",
+      role: "EXECUTIVE",
+      departmentId: deptDCInfra.id,
+      managerId: venkateshwarluMgr.id,
+      isActive: true,
+      joiningDate: new Date("2025-01-10"),
     },
   });
 
-  const task2 = await prisma.task.create({
+  await prisma.user.create({
     data: {
-      taskCode: "TSK-002",
-      title: "Interactive Kanban Board & UI Components",
-      description: "Develop responsive task management board with drag-and-drop status workflows.",
-      projectId: project1.id,
-      departmentId: deptEng.id,
-      createdById: tharunLead.id,
-      assignedTeamLeadId: tharunLead.id,
-      priority: "MEDIUM",
-      status: "TO_DO",
-      startDate: new Date("2026-10-05"),
-      dueDate: new Date("2026-10-25"),
-      estimatedHours: 35,
-      progressPercentage: 10,
+      employeeId: "M-000831",
+      fullName: "Gangula Rasi",
+      email: "gangularasi4@gmail.com",
+      passwordHash,
+      jobTitle: "DC Operations (Rasi)",
+      role: "EXECUTIVE",
+      departmentId: deptDCInfra.id,
+      managerId: venkateshwarluMgr.id,
+      isActive: true,
+      joiningDate: new Date("2025-01-10"),
     },
   });
 
-  await prisma.taskAssignment.create({
+  // Under Akhil: Kavya & Dharanidhar
+  await prisma.user.create({
     data: {
-      taskId: task2.id,
-      userId: naveenExec.id,
+      employeeId: "M-000862",
+      fullName: "Chikkam Kavya Asha Swaroopa",
+      email: "chikkamkavya64@gmail.com",
+      passwordHash,
+      jobTitle: "DC Operations Lead (Kavya)",
+      role: "TEAM_LEAD",
+      departmentId: deptDCOpsTech.id,
+      managerId: akhilMgr.id,
+      isActive: true,
+      joiningDate: new Date("2025-01-10"),
     },
   });
 
-  // 10. Sample Daily Report (From Bhanu, ready for Tharun to review)
-  console.log("==> Creating sample Daily Report for Bhanu...");
-  const todayStr = new Date().toISOString().split("T")[0];
-  const reportBhanu = await prisma.dailyReport.create({
+  await prisma.user.create({
     data: {
-      userId: bhanuExec.id,
-      reportingDate: new Date(todayStr),
-      status: "SUBMITTED",
-      submittedAt: new Date(),
-      entries: {
-        create: [
-          {
-            activityTitle: "REST API Endpoint Implementation",
-            description: "Developed and verified endpoints for daily activity logging and status tracking.",
-            taskId: task1.id,
-            startTime: "09:30",
-            endTime: "13:30",
-            hoursSpent: 4.0,
-            progressPercentage: 50,
-            status: "IN_PROGRESS",
-            deliverables: "Merged PR #14 with unit tests passing.",
-            blockers: null,
-            supportRequired: null,
-            nextDayPlan: "Complete integration tests and connect review workflow.",
-          },
-          {
-            activityTitle: "Code Review & Technical Documentation",
-            description: "Participated in PR discussions and documented request/response payloads in OpenAPI.",
-            startTime: "14:30",
-            endTime: "18:00",
-            hoursSpent: 3.5,
-            progressPercentage: 100,
-            status: "COMPLETED",
-            deliverables: "Updated Swagger definitions.",
-            blockers: null,
-            supportRequired: null,
-            nextDayPlan: "Begin UI integration.",
-          },
-        ],
+      employeeId: "M-000431",
+      fullName: "Pendyala Dharanidhar",
+      email: "dharanidhar.p@matrixst.in",
+      passwordHash,
+      jobTitle: "DC Operations Lead (Dharanidhar)",
+      role: "TEAM_LEAD",
+      departmentId: deptDCOpsTech.id,
+      managerId: akhilMgr.id,
+      isActive: true,
+      joiningDate: new Date("2025-01-10"),
+    },
+  });
+
+  // Under Madhu sudhan: Sangeetha, Bhavya, Veeranjaneyulu, Mohan, DRK Raju
+  await prisma.user.create({
+    data: {
+      employeeId: "M-000846",
+      fullName: "Nadimpalli Soma Sangeetha",
+      email: "somaviharika@gmail.com",
+      passwordHash,
+      jobTitle: "DC Operations Lead (Sangeetha)",
+      role: "TEAM_LEAD",
+      departmentId: deptDCOpsVMS.id,
+      managerId: madhusudhanMgr.id,
+      isActive: true,
+      joiningDate: new Date("2025-01-10"),
+    },
+  });
+
+  await prisma.user.create({
+    data: {
+      employeeId: "M-000842",
+      fullName: "Mamidala Bhavya Naga Sri Sai Krupa Veeramani",
+      email: "bhavyamamidala10@gmail.com",
+      passwordHash,
+      jobTitle: "DC Operations Lead (Bhavya)",
+      role: "TEAM_LEAD",
+      departmentId: deptDCOpsVMS.id,
+      managerId: madhusudhanMgr.id,
+      isActive: true,
+      joiningDate: new Date("2025-01-10"),
+    },
+  });
+
+  await prisma.user.create({
+    data: {
+      employeeId: "M-000857",
+      fullName: "Jetti Veeranjaneyulu",
+      email: "veeranjaneyulu81584@gmail.com",
+      passwordHash,
+      jobTitle: "DC Specialist (Veeranjaneyulu)",
+      role: "EXECUTIVE",
+      departmentId: deptDCOpsVMS.id,
+      managerId: madhusudhanMgr.id,
+      isActive: true,
+      joiningDate: new Date("2025-01-10"),
+    },
+  });
+
+  await prisma.user.create({
+    data: {
+      employeeId: "M-000645",
+      fullName: "Danaboina Mohankrishna",
+      email: "mohankrishnadanaboina09@gmail.com",
+      passwordHash,
+      jobTitle: "DC Specialist (Mohan)",
+      role: "EXECUTIVE",
+      departmentId: deptDCOpsVMS.id,
+      managerId: madhusudhanMgr.id,
+      isActive: true,
+      joiningDate: new Date("2025-01-10"),
+    },
+  });
+
+  await prisma.user.create({
+    data: {
+      employeeId: "M-000839",
+      fullName: "Datla Ramakrishnam Raju",
+      email: "drkraju.1990@gmail.com",
+      passwordHash,
+      jobTitle: "DC Specialist (DRK Raju)",
+      role: "EXECUTIVE",
+      departmentId: deptDCOpsVMS.id,
+      managerId: madhusudhanMgr.id,
+      isActive: true,
+      joiningDate: new Date("2025-01-10"),
+    },
+  });
+
+  // Under Phaneeshwarnadh: Naveen, Tharun, Bhanu
+  await prisma.user.create({
+    data: {
+      employeeId: "M-000764",
+      fullName: "Jannu Raja Naveen",
+      email: "jannurajanaveen@gmail.com",
+      passwordHash,
+      jobTitle: "DC Operations Lead (Naveen)",
+      role: "TEAM_LEAD",
+      departmentId: deptDCOpsEMS.id,
+      managerId: phaniMgr.id,
+      isActive: true,
+      joiningDate: new Date("2025-01-10"),
+    },
+  });
+
+  await prisma.user.create({
+    data: {
+      employeeId: "M-000620",
+      fullName: "Koppolu Thanru Tej",
+      email: "tharun.k@matrixst.in",
+      passwordHash,
+      jobTitle: "DC Operations Lead (Tharun)",
+      role: "TEAM_LEAD",
+      departmentId: deptDCOpsEMS.id,
+      managerId: phaniMgr.id,
+      isActive: true,
+      joiningDate: new Date("2025-01-10"),
+    },
+  });
+
+  await prisma.user.create({
+    data: {
+      employeeId: "M-000894",
+      fullName: "G Bhanu Kiran",
+      email: "gbhanu2811@gmail.com",
+      passwordHash,
+      jobTitle: "DC Operations Lead (Bhanu)",
+      role: "TEAM_LEAD",
+      departmentId: deptDCOpsEMS.id,
+      managerId: phaniMgr.id,
+      isActive: true,
+      joiningDate: new Date("2025-01-10"),
+    },
+  });
+
+  // Under Jagan: Lokesh, Bhagawan, Pawan
+  await prisma.user.create({
+    data: {
+      employeeId: "M-000880",
+      fullName: "Baji Lokesh",
+      email: "lokeshbaji85@gmail.com",
+      passwordHash,
+      jobTitle: "DC Network Lead (Lokesh)",
+      role: "TEAM_LEAD",
+      departmentId: deptDCOpsNet.id,
+      managerId: jaganMgr.id,
+      isActive: true,
+      joiningDate: new Date("2025-01-10"),
+    },
+  });
+
+  await prisma.user.create({
+    data: {
+      employeeId: "M-000658",
+      fullName: "Kruttiventi Bhagavan",
+      email: "bhagavanbittu@gmail.com",
+      passwordHash,
+      jobTitle: "DC Network Lead (Bhagawan)",
+      role: "TEAM_LEAD",
+      departmentId: deptDCOpsNet.id,
+      managerId: jaganMgr.id,
+      isActive: true,
+      joiningDate: new Date("2025-01-10"),
+    },
+  });
+
+  await prisma.user.create({
+    data: {
+      employeeId: "M-000697",
+      fullName: "N.Venkata Sai Pavan Kumar Reddy",
+      email: "saipavan.r@matrixst.in",
+      passwordHash,
+      jobTitle: "DC Network Specialist (Pawan)",
+      role: "EXECUTIVE",
+      departmentId: deptDCOpsNet.id,
+      managerId: jaganMgr.id,
+      isActive: true,
+      joiningDate: new Date("2025-01-10"),
+    },
+  });
+
+  // 8. Projects
+  console.log("==> Creating Operational Projects...");
+  const projects = [
+    { name: "Data Center Infrastructure & EMS Systems", code: "DC-01", deptId: deptDCInfra.id },
+    { name: "Video Management & CCTV 360 Co-ordination", code: "VMS-01", deptId: deptAnalytics.id },
+    { name: "DC Manager 3 & Technical Support Operations", code: "TECH-01", deptId: deptDCOpsTech.id },
+    { name: "Video Surveillance Operations & DC VMS", code: "VMS-02", deptId: deptDCOpsVMS.id },
+    { name: "Enterprise Monitoring & Facilities EMS", code: "EMS-01", deptId: deptDCOpsEMS.id },
+    { name: "DC Network Systems & Connectivity Operations", code: "NET-01", deptId: deptDCOpsNet.id },
+  ];
+  for (const p of projects) {
+    await prisma.project.create({
+      data: {
+        name: p.name,
+        code: p.code,
+        description: `Project execution for ${p.name}`,
+        departmentId: p.deptId,
+        status: "ACTIVE",
       },
-    },
-  });
+    });
+  }
 
-  // Notification for Tharun that Bhanu submitted a report
-  await prisma.notification.create({
-    data: {
-      recipientId: tharunLead.id,
-      senderId: bhanuExec.id,
-      eventType: "DAILY_REPORT_SUBMITTED",
-      title: "Daily Report Submitted",
-      message: "Bhanu submitted their daily work report for today.",
-      link: `/reports/${reportBhanu.id}`,
-    },
-  });
-
-  // 11. Initial Announcements
-  console.log("==> Creating initial Announcements...");
+  // 9. Initial Welcome Announcement
+  console.log("==> Creating Welcome Announcement...");
   await prisma.announcement.create({
     data: {
-      title: "Welcome to WorkTrack Platform!",
-      content: "All team members are now active. Please use the platform to record daily work reports, track tasks, and communicate via direct chat.",
+      title: "Welcome to MATRIX WorkTrack Portal",
+      content: "All 28 verified employee accounts are now active. Employees can edit their profile details and date of birth in My Account. Daily task sheets are blank till 15-10-2026. For support, contact gbhanu2811@gmail.com or 7337504290.",
       priority: "HIGH",
       targetScope: "ALL",
       isPinned: true,
-      authorId: rahulAdmin.id,
+      authorId: sriAdityaAdmin.id,
     },
   });
 
-  // 12. Initial Direct Chat Messages
-  console.log("==> Creating sample Direct Chat Messages...");
-  await prisma.chatMessage.createMany({
-    data: [
-      {
-        senderId: tharunLead.id,
-        receiverId: bhanuExec.id,
-        content: "Hi Bhanu, welcome to the platform! Check out TSK-001 on your task board.",
-        isRead: true,
-        createdAt: new Date(Date.now() - 3600000 * 2),
-      },
-      {
-        senderId: bhanuExec.id,
-        receiverId: tharunLead.id,
-        content: "Thanks Tharun! I have submitted today's report for review as well.",
-        isRead: true,
-        createdAt: new Date(Date.now() - 3600000),
-      },
-      {
-        senderId: tharunLead.id,
-        receiverId: naveenExec.id,
-        content: "Hi Naveen! Let me know if you need any clarification on the Kanban board task.",
-        isRead: false,
-        createdAt: new Date(Date.now() - 1800000),
-      },
-    ],
-  });
-
-  // 13. Audit Log
+  // 10. Audit Log
   await prisma.auditLog.create({
     data: {
-      userId: rahulAdmin.id,
-      action: "TEAM_INITIALIZED",
+      userId: sriAdityaAdmin.id,
+      action: "HIERARCHY_INITIALIZED",
       resourceType: "ORGANIZATION",
       detailsJson: JSON.stringify({
-        note: "Configured custom team: Rahul (Admin), Phani (Manager), Tharun (Team Lead), Bhanu & Naveen (Executives)",
+        organization: "MATRIX",
+        superAdmin: "Sri Aditya Canuparthi",
+        totalEmployees: 28,
+        l1Removed: true,
+        calendarBlankTill: "2026-10-15",
       }),
     },
   });
 
-  console.log("==> Seed completed successfully!");
-  console.log("=================================================");
-  console.log("Your New Team is Live (Password: 'Matrix@4290'):");
-  console.log("  👑 Admin:        rahul@worktrack.company   (or username: 'rahul')");
-  console.log("  👔 Manager:      phani@worktrack.company   (or username: 'phani')");
-  console.log("  🎯 Team Leader:  tharun@worktrack.company  (or username: 'tharun')");
-  console.log("  💻 Executive 1:  bhanu@worktrack.company   (or username: 'bhanu')");
-  console.log("  💻 Executive 2:  naveen@worktrack.company  (or username: 'naveen')");
-  console.log("=================================================");
+  const totalUsers = await prisma.user.count();
+  console.log(`==> Seed finished successfully! Total users created: ${totalUsers} (All 28 MATRIX employees, 0 L1 accounts)`);
 }
 
 if (process.argv[1]?.includes("seed.ts") || process.argv[1]?.includes("seed.js")) {

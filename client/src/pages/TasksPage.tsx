@@ -3,20 +3,19 @@ import { api } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { Badge } from "../components/Badge";
 import { Modal } from "../components/Modal";
-import { Task, TaskPriority, TaskStatus, Project, Department, User } from "../types";
+import { Task, TaskPriority, TaskStatus, Project, Department } from "../types";
 import { Link } from "react-router-dom";
 import {
   Plus,
   Search,
-  Filter,
   LayoutGrid,
   List,
-  Clock,
-  AlertTriangle,
-  CheckCircle2,
   Calendar,
   Eye,
-  MessageSquare,
+  UserPlus,
+  Users,
+  ShieldCheck,
+  Check,
 } from "lucide-react";
 
 export const TasksPage: React.FC = () => {
@@ -34,13 +33,14 @@ export const TasksPage: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [usersList, setUsersList] = useState<User[]>([]);
+  const [usersList, setUsersList] = useState<any[]>([]);
 
   const [newTask, setNewTask] = useState({
     title: "",
     description: "",
     projectId: "",
     departmentId: "",
+    assignedTeamLeadId: "",
     assignedUserIds: [] as string[],
     priority: "MEDIUM" as TaskPriority,
     startDate: "",
@@ -49,6 +49,16 @@ export const TasksPage: React.FC = () => {
   });
 
   const [createLoading, setCreateLoading] = useState(false);
+
+  // Quick Assign / Delegate Modal State
+  const [assignModalTask, setAssignModalTask] = useState<Task | null>(null);
+  const [assignSelectedUserIds, setAssignSelectedUserIds] = useState<string[]>([]);
+  const [assignSelectedTlId, setAssignSelectedTlId] = useState<string>("");
+  const [assignLoading, setAssignLoading] = useState(false);
+
+  const isManagerOrAdmin = user?.role === "MANAGER" || user?.role === "SUPER_ADMIN";
+  const isTeamLead = user?.role === "TEAM_LEAD";
+  const canManageAssignments = isManagerOrAdmin || isTeamLead;
 
   useEffect(() => {
     loadTasks();
@@ -77,30 +87,110 @@ export const TasksPage: React.FC = () => {
       const [pRes, dRes, uRes]: any = await Promise.all([
         api.get("/projects"),
         api.get("/departments"),
-        api.get("/users"),
+        api.get("/users?status=active&flow=true"),
       ]);
-      if (pRes.success) setProjects(pRes.data || []);
-      if (dRes.success) setDepartments(dRes.data || []);
-      if (uRes.success) setUsersList(uRes.data || []);
+      const pList = pRes.success ? pRes.data || [] : [];
+      const dList = dRes.success ? dRes.data || [] : [];
+      const uList = uRes.success ? uRes.data || [] : [];
+
+      setProjects(pList);
+      setDepartments(dList);
+      setUsersList(uList);
+
+      setNewTask((prev) => ({
+        ...prev,
+        departmentId: prev.departmentId || user?.departmentId || (dList[0]?.id ?? ""),
+        projectId: prev.projectId || (pList[0]?.id ?? ""),
+      }));
     } catch {
       // Ignored
     }
   };
 
+  // Filtered role lists for assignment
+  const teamLeadsList = usersList
+    .filter((u) => u.role === "TEAM_LEAD")
+    .sort((a, b) => {
+      const aDirect = a.reportingManagerId === user?.id || a.managerId === user?.id ? -1 : 1;
+      const bDirect = b.reportingManagerId === user?.id || b.managerId === user?.id ? -1 : 1;
+      return aDirect - bDirect;
+    });
+
+  const executivesList = usersList
+    .filter((u) => u.role === "EXECUTIVE")
+    .sort((a, b) => {
+      const aDirect =
+        a.reportingManagerId === user?.id ||
+        a.teamLeadId === user?.id ||
+        a.managerId === user?.id
+          ? -1
+          : 1;
+      const bDirect =
+        b.reportingManagerId === user?.id ||
+        b.teamLeadId === user?.id ||
+        b.managerId === user?.id
+          ? -1
+          : 1;
+      return aDirect - bDirect;
+    });
+
+  const toggleCreateAssignee = (userId: string, role?: string) => {
+    setNewTask((prev) => {
+      const exists = prev.assignedUserIds.includes(userId);
+      const updatedIds = exists
+        ? prev.assignedUserIds.filter((id) => id !== userId)
+        : [...prev.assignedUserIds, userId];
+
+      let updatedTlId = prev.assignedTeamLeadId;
+      if (role === "TEAM_LEAD") {
+        if (!exists && !updatedTlId) {
+          updatedTlId = userId;
+        } else if (exists && updatedTlId === userId) {
+          updatedTlId = "";
+        }
+      }
+
+      return {
+        ...prev,
+        assignedUserIds: updatedIds,
+        assignedTeamLeadId: updatedTlId,
+      };
+    });
+  };
+
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (newTask.assignedUserIds.length === 0 && !newTask.assignedTeamLeadId) {
+      alert(
+        isTeamLead
+          ? "Please select at least one Executive to assign this task to."
+          : "Please select at least one Team Lead or Executive to assign this task to."
+      );
+      return;
+    }
+
     setCreateLoading(true);
     try {
+      const finalAssignees = Array.from(
+        new Set([
+          ...newTask.assignedUserIds,
+          ...(newTask.assignedTeamLeadId ? [newTask.assignedTeamLeadId] : []),
+        ])
+      );
+
       await api.post("/tasks", {
         ...newTask,
+        assignedTeamLeadId: newTask.assignedTeamLeadId || (isTeamLead ? user?.id : null),
+        assignedUserIds: finalAssignees,
         estimatedHours: newTask.estimatedHours ? parseFloat(newTask.estimatedHours) : undefined,
       });
       setShowCreateModal(false);
       setNewTask({
         title: "",
         description: "",
-        projectId: "",
-        departmentId: "",
+        projectId: projects[0]?.id || "",
+        departmentId: user?.departmentId || departments[0]?.id || "",
+        assignedTeamLeadId: "",
         assignedUserIds: [],
         priority: "MEDIUM",
         startDate: "",
@@ -112,6 +202,69 @@ export const TasksPage: React.FC = () => {
       alert(err.message || "Failed to create task");
     } finally {
       setCreateLoading(false);
+    }
+  };
+
+  const openAssignModal = (task: Task) => {
+    setAssignModalTask(task);
+    const currentIds = (task.assignees || []).map((a) => a.id);
+    // If a Team Lead opens the modal to delegate to an Executive, pre-select only Executive assignees so the TL can cleanly pick Executives
+    if (isTeamLead) {
+      const execIds = (task.assignees || [])
+        .filter((a: any) => a.role === "EXECUTIVE")
+        .map((a) => a.id);
+      setAssignSelectedUserIds(execIds);
+      setAssignSelectedTlId(user?.id || "");
+    } else {
+      setAssignSelectedUserIds(currentIds);
+      setAssignSelectedTlId((task as any).teamLead?.id || task.assignedTeamLeadId || "");
+    }
+  };
+
+  const toggleModalAssignee = (userId: string, role?: string) => {
+    setAssignSelectedUserIds((prev) => {
+      const exists = prev.includes(userId);
+      const next = exists ? prev.filter((id) => id !== userId) : [...prev, userId];
+      if (role === "TEAM_LEAD") {
+        if (!exists && !assignSelectedTlId) setAssignSelectedTlId(userId);
+        if (exists && assignSelectedTlId === userId) setAssignSelectedTlId("");
+      }
+      return next;
+    });
+  };
+
+  const handleSaveAssignment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!assignModalTask) return;
+
+    const finalIds = Array.from(
+      new Set([
+        ...assignSelectedUserIds,
+        ...(isManagerOrAdmin && assignSelectedTlId ? [assignSelectedTlId] : []),
+      ])
+    );
+
+    if (finalIds.length === 0) {
+      alert(
+        isTeamLead
+          ? "Please select at least one Executive to assign this task to."
+          : "Please select at least one Team Lead or Executive."
+      );
+      return;
+    }
+
+    setAssignLoading(true);
+    try {
+      await api.put(`/tasks/${assignModalTask.id}`, {
+        assignedUserIds: finalIds,
+        assignedTeamLeadId: isTeamLead ? user?.id : assignSelectedTlId || null,
+      });
+      setAssignModalTask(null);
+      loadTasks();
+    } catch (err: any) {
+      alert(err.message || "Failed to update task assignment");
+    } finally {
+      setAssignLoading(false);
     }
   };
 
@@ -152,18 +305,22 @@ export const TasksPage: React.FC = () => {
             Task Management Board
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Independent task module. Work hours are derived strictly from recorded work entries.
+            {isManagerOrAdmin
+              ? "Manager Power: Create & assign tasks to Team Leads (TL) and Executives."
+              : isTeamLead
+              ? "Team Lead Power: Assign & delegate tasks directly to Executives."
+              : "Track and update tasks assigned to you."}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           {/* View toggle */}
-          <div className="flex items-center p-1 bg-slate-200/70 dark:bg-slate-800 rounded-xl">
+          <div className="flex items-center p-1 bg-slate-200/70 dark:bg-slate-800 rounded-lg">
             <button
               onClick={() => setViewMode("kanban")}
               className={`p-1.5 rounded-lg text-xs transition-colors ${
                 viewMode === "kanban"
-                  ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                  ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm"
                   : "text-slate-600 dark:text-slate-400"
               }`}
               title="Kanban Board View"
@@ -174,7 +331,7 @@ export const TasksPage: React.FC = () => {
               onClick={() => setViewMode("table")}
               className={`p-1.5 rounded-lg text-xs transition-colors ${
                 viewMode === "table"
-                  ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                  ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm"
                   : "text-slate-600 dark:text-slate-400"
               }`}
               title="Table View"
@@ -183,19 +340,61 @@ export const TasksPage: React.FC = () => {
             </button>
           </div>
 
-          {user?.role !== "EXECUTIVE" && (
+          {canManageAssignments && (
             <button
               onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-sm transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
             >
-              <Plus className="w-4 h-4" /> Create Task
+              <Plus className="w-4 h-4" />{" "}
+              {isTeamLead ? "Create & Assign to Executive" : "Create & Assign Task"}
             </button>
           )}
         </div>
       </div>
 
+      {/* Role Hierarchy Assignment Banner */}
+      {canManageAssignments && (
+        <div
+          className={`rounded-lg px-4 py-3 border flex flex-wrap items-center justify-between gap-3 text-xs ${
+            isManagerOrAdmin
+              ? "bg-amber-50/70 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/60 text-amber-900 dark:text-amber-200"
+              : "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/60 text-emerald-900 dark:text-emerald-200"
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
+            <ShieldCheck className="w-4 h-4 shrink-0" />
+            <span>
+              {isManagerOrAdmin ? (
+                <>
+                  <strong>Manager Assignment Authority:</strong> You can assign tasks to{" "}
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 font-bold text-[10px] mx-0.5">
+                    TEAM LEADS (TL)
+                  </span>{" "}
+                  and{" "}
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-800 dark:text-blue-300 font-bold text-[10px] mx-0.5">
+                    EXECUTIVES
+                  </span>
+                  .
+                </>
+              ) : (
+                <>
+                  <strong>Team Lead Assignment Authority:</strong> You can assign or delegate tasks directly to{" "}
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-800 dark:text-blue-300 font-bold text-[10px] mx-0.5">
+                    EXECUTIVES
+                  </span>
+                  .
+                </>
+              )}
+            </span>
+          </div>
+          <span className="text-[11px] opacity-80">
+            Click <strong>"Assign"</strong> on any task card below to assign or delegate.
+          </span>
+        </div>
+      )}
+
       {/* Filter Bar */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative">
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -204,7 +403,7 @@ export const TasksPage: React.FC = () => {
               placeholder="Search tasks..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -242,7 +441,7 @@ export const TasksPage: React.FC = () => {
 
       {loading ? (
         <div className="flex items-center justify-center min-h-[40vh]">
-          <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-md animate-spin" />
         </div>
       ) : viewMode === "kanban" ? (
         /* ======================================================== */
@@ -254,13 +453,13 @@ export const TasksPage: React.FC = () => {
             return (
               <div
                 key={col.status}
-                className="bg-slate-100/70 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800 rounded-xl p-3.5 flex flex-col min-h-[500px]"
+                className="bg-slate-100/70 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800 rounded-lg p-3.5 flex flex-col min-h-[500px]"
               >
                 <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800 mb-3">
                   <span className="font-bold text-xs text-slate-700 dark:text-slate-300">
                     {col.label}
                   </span>
-                  <span className="px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-400">
+                  <span className="px-2 py-0.5 rounded-md bg-slate-200 dark:bg-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-400">
                     {colTasks.length}
                   </span>
                 </div>
@@ -269,17 +468,17 @@ export const TasksPage: React.FC = () => {
                   {colTasks.map((task) => (
                     <div
                       key={task.id}
-                      className="bg-white dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 rounded-xl p-3.5 shadow-sm hover:shadow-md transition-shadow space-y-2.5 text-xs"
+                      className="bg-white dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 rounded-lg p-3.5 shadow-sm hover:shadow-md transition-shadow space-y-2.5 text-xs"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-mono text-[10px] font-bold text-indigo-600 dark:text-indigo-400">
+                        <span className="font-mono text-[10px] font-bold text-blue-600 dark:text-blue-400">
                           {task.taskCode}
                         </span>
                         <Badge variant={task.priority} size="sm" />
                       </div>
 
                       <h4 className="font-bold text-slate-900 dark:text-white leading-tight">
-                        <Link to={`/tasks/${task.id}`} className="hover:text-indigo-600">
+                        <Link to={`/tasks/${task.id}`} className="hover:text-blue-600">
                           {task.title}
                         </Link>
                       </h4>
@@ -287,6 +486,36 @@ export const TasksPage: React.FC = () => {
                       <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2">
                         {task.description}
                       </p>
+
+                      {/* Assignees & Supervising TL Display */}
+                      <div className="pt-1.5 border-t border-slate-100 dark:border-slate-700/70 space-y-1.5">
+                        {task.teamLead && (
+                          <div className="flex items-center justify-between text-[10px]">
+                            <span className="text-slate-400">TL:</span>
+                            <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-semibold">
+                              {task.teamLead.fullName}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex flex-wrap gap-1">
+                          {task.assignees && task.assignees.length > 0 ? (
+                            task.assignees.map((a: any) => (
+                              <span
+                                key={a.id}
+                                className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                                  a.role === "TEAM_LEAD"
+                                    ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30"
+                                    : "bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/30"
+                                }`}
+                              >
+                                {a.fullName} ({a.role === "TEAM_LEAD" ? "TL" : "Exec"})
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-[10px] text-slate-400 italic">Unassigned</span>
+                          )}
+                        </div>
+                      </div>
 
                       <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700 text-[10px] text-slate-500">
                         <span>{task.project?.code}</span>
@@ -307,11 +536,26 @@ export const TasksPage: React.FC = () => {
                         <span>
                           Actual: {task.actualHours ? `${task.actualHours}h` : "Unreported"}
                         </span>
-                        <span>Est: {task.estimatedHours ? `${task.estimatedHours}h` : "—"}</span>
+                        <span>Est: {task.estimatedHours ? `${task.estimatedHours}h` : "N/A"}</span>
                       </div>
 
-                      {/* Quick Move Selector */}
-                      <div className="pt-1">
+                      {/* Quick Actions: Assign/Delegate + Status Move */}
+                      <div className="pt-1 space-y-1.5">
+                        {canManageAssignments && (
+                          <button
+                            type="button"
+                            onClick={() => openAssignModal(task)}
+                            className={`w-full py-1.5 px-2.5 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                              isTeamLead
+                                ? "bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/50 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                                : "bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/50 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                            }`}
+                          >
+                            <UserPlus className="w-3 h-3" />
+                            {isTeamLead ? "Assign to Executive" : "Assign to TL / Executive"}
+                          </button>
+                        )}
+
                         <select
                           value={task.status}
                           onChange={(e) =>
@@ -337,7 +581,7 @@ export const TasksPage: React.FC = () => {
         /* ======================================================== */
         /* TABLE VIEW */
         /* ======================================================== */
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 uppercase tracking-wider text-[10px]">
@@ -345,7 +589,7 @@ export const TasksPage: React.FC = () => {
                   <th className="px-6 py-3.5 font-bold">Code</th>
                   <th className="px-6 py-3.5 font-bold">Task Title</th>
                   <th className="px-6 py-3.5 font-bold">Project</th>
-                  <th className="px-6 py-3.5 font-bold">Assignees</th>
+                  <th className="px-6 py-3.5 font-bold">Assignees (TL / Exec)</th>
                   <th className="px-6 py-3.5 font-bold">Priority</th>
                   <th className="px-6 py-3.5 font-bold">Status</th>
                   <th className="px-6 py-3.5 font-bold">Due Date</th>
@@ -356,7 +600,7 @@ export const TasksPage: React.FC = () => {
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {filteredTasks.map((task) => (
                   <tr key={task.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-                    <td className="px-6 py-4 font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                    <td className="px-6 py-4 font-mono font-bold text-blue-600 dark:text-blue-400">
                       {task.taskCode}
                     </td>
                     <td className="px-6 py-4">
@@ -370,8 +614,25 @@ export const TasksPage: React.FC = () => {
                     <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
                       {task.project?.name}
                     </td>
-                    <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
-                      {task.assignees?.map((a) => a.fullName).join(", ") || "Unassigned"}
+                    <td className="px-6 py-4">
+                      <div className="flex flex-wrap gap-1">
+                        {task.assignees && task.assignees.length > 0 ? (
+                          task.assignees.map((a: any) => (
+                            <span
+                              key={a.id}
+                              className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                                a.role === "TEAM_LEAD"
+                                  ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                                  : "bg-blue-500/15 text-blue-700 dark:text-blue-300"
+                              }`}
+                            >
+                              {a.fullName} ({a.role === "TEAM_LEAD" ? "TL" : "Exec"})
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-slate-400">Unassigned</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <Badge variant={task.priority} size="sm" />
@@ -385,20 +646,31 @@ export const TasksPage: React.FC = () => {
                           {task.dueDate.split("T")[0]}
                         </span>
                       ) : (
-                        "—"
+                        "N/A"
                       )}
                     </td>
                     <td className="px-6 py-4 font-mono text-[11px]">
                       {task.actualHours ? `${task.actualHours}h` : "Unreported"} /{" "}
-                      {task.estimatedHours ? `${task.estimatedHours}h` : "—"}
+                      {task.estimatedHours ? `${task.estimatedHours}h` : "N/A"}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <Link
-                        to={`/tasks/${task.id}`}
-                        className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-semibold hover:bg-indigo-100 transition-colors"
-                      >
-                        <Eye className="w-3.5 h-3.5" /> Details
-                      </Link>
+                      <div className="inline-flex items-center gap-1.5">
+                        {canManageAssignments && (
+                          <button
+                            type="button"
+                            onClick={() => openAssignModal(task)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-semibold hover:bg-emerald-100 transition-colors cursor-pointer"
+                          >
+                            <UserPlus className="w-3.5 h-3.5" /> Assign
+                          </button>
+                        )}
+                        <Link
+                          to={`/tasks/${task.id}`}
+                          className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-semibold hover:bg-blue-100 transition-colors"
+                        >
+                          <Eye className="w-3.5 h-3.5" /> Details
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -408,11 +680,18 @@ export const TasksPage: React.FC = () => {
         </div>
       )}
 
-      {/* Create Task Modal */}
+      {/* ======================================================== */}
+      {/* CREATE TASK MODAL */}
+      {/* ======================================================== */}
       <Modal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        title="Create New Organizational Task"
+        title={
+          isTeamLead
+            ? "Create & Assign Task to Executive"
+            : "Create & Assign Organizational Task"
+        }
+        maxWidth="2xl"
       >
         <form onSubmit={handleCreateTask} className="space-y-4">
           <div>
@@ -422,10 +701,10 @@ export const TasksPage: React.FC = () => {
             <input
               type="text"
               required
-              placeholder="e.g. Implement SSO OAuth2 Authentication"
+              placeholder="e.g. Complete Weekly Client Campaign Audit"
               value={newTask.title}
               onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-              className="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -439,22 +718,21 @@ export const TasksPage: React.FC = () => {
               placeholder="Detailed description and acceptance criteria..."
               value={newTask.description}
               onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-              className="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Department *
+                Department
               </label>
               <select
-                required
                 value={newTask.departmentId}
                 onChange={(e) => setNewTask({ ...newTask, departmentId: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">Select Department</option>
+                <option value="">Auto-select Department</option>
                 {departments.map((d) => (
                   <option key={d.id} value={d.id}>
                     {d.name}
@@ -465,15 +743,14 @@ export const TasksPage: React.FC = () => {
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Project *
+                Project
               </label>
               <select
-                required
                 value={newTask.projectId}
                 onChange={(e) => setNewTask({ ...newTask, projectId: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">Select Project</option>
+                <option value="">Auto-select Project</option>
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name}
@@ -481,9 +758,7 @@ export const TasksPage: React.FC = () => {
                 ))}
               </select>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Priority
@@ -491,7 +766,7 @@ export const TasksPage: React.FC = () => {
               <select
                 value={newTask.priority}
                 onChange={(e) => setNewTask({ ...newTask, priority: e.target.value as TaskPriority })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
@@ -499,26 +774,137 @@ export const TasksPage: React.FC = () => {
                 <option value="URGENT">Urgent</option>
               </select>
             </div>
+          </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Assign Employee *
+          {/* ======================================================== */}
+          {/* ROLE-BASED ASSIGNMENT SECTION */}
+          {/* ======================================================== */}
+          <div className="rounded-lg border border-slate-200 dark:border-slate-800 p-4 bg-slate-50/60 dark:bg-slate-800/40 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <span className="text-xs font-bold text-slate-900 dark:text-white">
+                  {isTeamLead
+                    ? "Assign to Executive(s) *"
+                    : "Assign Task to Team Lead (TL) & Executive(s) *"}
+                </span>
+              </div>
+              <span className="text-[10px] font-semibold text-blue-600 dark:text-blue-400">
+                {newTask.assignedUserIds.length} Selected
+              </span>
+            </div>
+
+            {/* MANAGER / SUPER_ADMIN: Can assign to TEAM_LEADs */}
+            {isManagerOrAdmin && (
+              <div className="space-y-2">
+                <label className="block text-[11px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+                  1. Team Leads (TL) - Click to Assign
+                </label>
+                {teamLeadsList.length === 0 ? (
+                  <p className="text-[11px] text-slate-400 italic">No active Team Leads found.</p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-32 overflow-y-auto pr-1">
+                    {teamLeadsList.map((tl) => {
+                      const selected =
+                        newTask.assignedUserIds.includes(tl.id) ||
+                        newTask.assignedTeamLeadId === tl.id;
+                      return (
+                        <button
+                          key={tl.id}
+                          type="button"
+                          onClick={() => toggleCreateAssignee(tl.id, "TEAM_LEAD")}
+                          className={`flex items-center justify-between p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                            selected
+                              ? "bg-emerald-500/15 border-emerald-500 text-emerald-900 dark:text-emerald-200 shadow-xs"
+                              : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-emerald-400"
+                          }`}
+                        >
+                          <div className="min-w-0 pr-2">
+                            <div className="font-bold text-xs truncate">{tl.fullName}</div>
+                            <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                              {tl.jobTitle || "Team Lead"}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold text-[9px]">
+                              TL
+                            </span>
+                            <div
+                              className={`w-4 h-4 rounded-md flex items-center justify-center border ${
+                                selected
+                                  ? "bg-emerald-600 border-emerald-600 text-white"
+                                  : "border-slate-300 dark:border-slate-600"
+                              }`}
+                            >
+                              {selected && <Check className="w-3 h-3" />}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* MANAGER / TEAM_LEAD / SUPER_ADMIN: Can assign to EXECUTIVEs */}
+            <div className="space-y-2">
+              <label className="block text-[11px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">
+                {isManagerOrAdmin
+                  ? "2. Executives - Click to Assign"
+                  : "Select Executive(s) - Click to Assign"}
               </label>
-              <select
-                required
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val) setNewTask({ ...newTask, assignedUserIds: [val] });
-                }}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">Select Employee</option>
-                {usersList.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.fullName} ({u.jobTitle})
-                  </option>
-                ))}
-              </select>
+              {executivesList.length === 0 ? (
+                <p className="text-[11px] text-slate-400 italic">No active Executives found.</p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-44 overflow-y-auto pr-1">
+                  {executivesList.map((exec) => {
+                    const selected = newTask.assignedUserIds.includes(exec.id);
+                    const isMySubordinate =
+                      exec.reportingManagerId === user?.id || exec.teamLeadId === user?.id;
+                    return (
+                      <button
+                        key={exec.id}
+                        type="button"
+                        onClick={() => toggleCreateAssignee(exec.id, "EXECUTIVE")}
+                        className={`flex items-center justify-between p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                          selected
+                            ? "bg-blue-500/15 border-blue-500 text-blue-900 dark:text-blue-200 shadow-xs"
+                            : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-blue-400"
+                        }`}
+                      >
+                        <div className="min-w-0 pr-2">
+                          <div className="font-bold text-xs truncate flex items-center gap-1.5">
+                            <span>{exec.fullName}</span>
+                            {isMySubordinate && (
+                              <span className="px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-600 dark:text-blue-300 text-[9px] font-bold">
+                                My Team
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                            {exec.jobTitle || "Executive"}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold text-[9px]">
+                            EXEC
+                          </span>
+                          <div
+                            className={`w-4 h-4 rounded-md flex items-center justify-center border ${
+                              selected
+                                ? "bg-blue-600 border-blue-600 text-white"
+                                : "border-slate-300 dark:border-slate-600"
+                            }`}
+                          >
+                            {selected && <Check className="w-3 h-3" />}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
@@ -531,7 +917,7 @@ export const TasksPage: React.FC = () => {
                 type="date"
                 value={newTask.startDate}
                 onChange={(e) => setNewTask({ ...newTask, startDate: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
               />
             </div>
             <div>
@@ -542,7 +928,7 @@ export const TasksPage: React.FC = () => {
                 type="date"
                 value={newTask.dueDate}
                 onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
               />
             </div>
             <div>
@@ -555,7 +941,7 @@ export const TasksPage: React.FC = () => {
                 placeholder="e.g. 16"
                 value={newTask.estimatedHours}
                 onChange={(e) => setNewTask({ ...newTask, estimatedHours: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
               />
             </div>
           </div>
@@ -564,20 +950,134 @@ export const TasksPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowCreateModal(false)}
-              className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-semibold"
+              className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={createLoading}
-              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-md disabled:opacity-50"
+              className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-md disabled:opacity-50 cursor-pointer"
             >
-              {createLoading ? "Creating..." : "Create Task"}
+              {createLoading ? "Creating & Assigning..." : "Create & Assign Task"}
             </button>
           </div>
         </form>
       </Modal>
+
+      {/* ======================================================== */}
+      {/* QUICK ASSIGN / DELEGATE TASK MODAL */}
+      {/* ======================================================== */}
+      <Modal
+        isOpen={!!assignModalTask}
+        onClose={() => setAssignModalTask(null)}
+        title={
+          isTeamLead
+            ? `Delegate Task to Executive - ${assignModalTask?.taskCode || ""}`
+            : `Assign Task to TL / Executive - ${assignModalTask?.taskCode || ""}`
+        }
+        maxWidth="xl"
+      >
+        {assignModalTask && (
+          <form onSubmit={handleSaveAssignment} className="space-y-4">
+            <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <div className="text-xs font-bold text-slate-900 dark:text-white">
+                {assignModalTask.title}
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+                {assignModalTask.description}
+              </p>
+            </div>
+
+            {isManagerOrAdmin && (
+              <div className="space-y-2">
+                <label className="block text-[11px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+                  Assign Team Lead (TL)
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-36 overflow-y-auto">
+                  {teamLeadsList.map((tl) => {
+                    const selected =
+                      assignSelectedUserIds.includes(tl.id) || assignSelectedTlId === tl.id;
+                    return (
+                      <button
+                        key={tl.id}
+                        type="button"
+                        onClick={() => toggleModalAssignee(tl.id, "TEAM_LEAD")}
+                        className={`flex items-center justify-between p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                          selected
+                            ? "bg-emerald-500/15 border-emerald-500 text-emerald-900 dark:text-emerald-200"
+                            : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+                        }`}
+                      >
+                        <div className="min-w-0 pr-2">
+                          <div className="font-bold text-xs truncate">{tl.fullName}</div>
+                          <div className="text-[10px] text-slate-500 truncate">{tl.jobTitle}</div>
+                        </div>
+                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold text-[9px]">
+                          {selected ? "Selected TL" : "TL"}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <label className="block text-[11px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">
+                {isTeamLead ? "Select Executive(s) to Assign *" : "Assign Executive(s)"}
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                {executivesList.map((exec) => {
+                  const selected = assignSelectedUserIds.includes(exec.id);
+                  return (
+                    <button
+                      key={exec.id}
+                      type="button"
+                      onClick={() => toggleModalAssignee(exec.id, "EXECUTIVE")}
+                      className={`flex items-center justify-between p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                        selected
+                          ? "bg-blue-500/15 border-blue-500 text-blue-900 dark:text-blue-200"
+                          : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+                      }`}
+                    >
+                      <div className="min-w-0 pr-2">
+                        <div className="font-bold text-xs truncate">{exec.fullName}</div>
+                        <div className="text-[10px] text-slate-500 truncate">{exec.jobTitle}</div>
+                      </div>
+                      <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold text-[9px]">
+                        {selected ? "Selected EXEC" : "EXEC"}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setAssignModalTask(null)}
+                className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={assignLoading}
+                className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-md disabled:opacity-50 cursor-pointer"
+              >
+                {assignLoading
+                  ? "Saving..."
+                  : isTeamLead
+                  ? "Assign to Executive"
+                  : "Save Assignment"}
+              </button>
+            </div>
+          </form>
+        )}
+      </Modal>
     </div>
   );
 };
+

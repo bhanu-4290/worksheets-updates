@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../services/api";
 import { StatCard } from "../components/StatCard";
-import { Badge } from "../components/Badge";
 import { EmployeeFlowModal } from "../components/EmployeeFlowModal";
+import { DailyReportPage } from "./DailyReportPage";
 import { Link } from "react-router-dom";
 import {
   FileText,
@@ -12,24 +12,21 @@ import {
   AlertTriangle,
   Users,
   Building2,
-  TrendingUp,
   FolderKanban,
   ArrowRight,
   ShieldAlert,
-  Send,
-  Calendar,
-  Eye,
-  CheckCircle2,
   Megaphone,
+  Calendar,
+  Layers,
 } from "lucide-react";
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [tasks, setTasks] = useState<any[]>([]);
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [showEmployeeFlow, setShowEmployeeFlow] = useState(false);
+  const [adminTab, setAdminTab] = useState<"admin" | "report">("admin");
 
   useEffect(() => {
     loadDashboard();
@@ -38,19 +35,23 @@ export const DashboardPage: React.FC = () => {
   const loadDashboard = async () => {
     setLoading(true);
     try {
-      const [res, taskRes, annRes]: [any, any, any] = await Promise.all([
-        api.get("/analytics/dashboard"),
-        api.get("/tasks"),
-        api.get("/announcements").catch(() => ({ data: [] })),
-      ]);
-      if (res.success) {
-        setData(res.data);
-      }
-      if (taskRes.success) {
-        setTasks(taskRes.data || []);
-      }
-      if (annRes.success) {
-        setAnnouncements(annRes.data || []);
+      if (user?.role === "SUPER_ADMIN") {
+        const [res, annRes]: [any, any] = await Promise.all([
+          api.get("/analytics/dashboard"),
+          api.get("/announcements").catch(() => ({ data: [] })),
+        ]);
+        if (res.success) {
+          setData(res.data);
+        }
+        if (annRes.success) {
+          setAnnouncements(annRes.data || []);
+        }
+      } else {
+        // Non-admin users load announcements for top banner
+        const annRes: any = await api.get("/announcements").catch(() => ({ data: [] }));
+        if (annRes.success) {
+          setAnnouncements(annRes.data || []);
+        }
       }
     } catch (err) {
       console.error("Failed to load dashboard:", err);
@@ -59,21 +60,16 @@ export const DashboardPage: React.FC = () => {
     }
   };
 
-  if (loading || !data) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
   const AnnouncementsBanner = () => {
     if (announcements.length === 0) return null;
     const top = announcements[0];
     return (
-      <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-        <div className="flex items-start gap-3">
-          <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
+      <Link
+        to={`/announcements?id=${top.id}`}
+        className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 hover:border-amber-400 dark:hover:border-amber-600 rounded-lg p-3 sm:p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-xs transition-colors cursor-pointer"
+      >
+        <div className="flex items-start gap-2.5">
+          <div className="p-1.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
             <Megaphone className="w-4 h-4" />
           </div>
           <div>
@@ -81,518 +77,36 @@ export const DashboardPage: React.FC = () => {
               <span className="text-xs font-bold text-slate-900 dark:text-white">
                 {top.title}
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-200/60 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300">
+              <span className="text-[10px] px-2 py-0.5 rounded-md font-bold bg-amber-200/60 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300">
                 {top.priority}
               </span>
               {top.isPinned && (
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">
+                <span className="text-[10px] px-2 py-0.5 rounded-md font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
                   PINNED
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 line-clamp-1">
+            <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 line-clamp-1">
               {top.content}
             </p>
           </div>
         </div>
-        <Link
-          to="/announcements"
-          className="text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline shrink-0 flex items-center gap-1"
-        >
-          View notices ({announcements.length}) <ArrowRight className="w-3.5 h-3.5" />
-        </Link>
-      </div>
+        <span className="text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline shrink-0 flex items-center gap-1">
+          Open announcement ({announcements.length}) <ArrowRight className="w-3.5 h-3.5" />
+        </span>
+      </Link>
     );
   };
 
   // ==========================================
-  // EXECUTIVE DASHBOARD
+  // FOR ALL NON-ADMIN USERS:
+  // Render Daily Work Report & Task Sheet Calendar directly in place of the empty dashboard
   // ==========================================
-  if (user?.role === "EXECUTIVE") {
+  if (user?.role !== "SUPER_ADMIN") {
     return (
-      <div className="space-y-6">
+      <div className="space-y-3 sm:space-y-3.5">
         <AnnouncementsBanner />
-
-        {/* Welcome Banner */}
-        <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-xl p-6 text-white shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-indigo-200">
-                Executive Workspace
-              </span>
-              <h1 className="text-2xl font-bold tracking-tight mt-1">
-                Welcome, {user.fullName}
-              </h1>
-              <p className="text-sm text-indigo-100 mt-1">
-                {user.jobTitle} • {user.department?.name || "Department"}
-              </p>
-            </div>
-            <Link
-              to="/reports/new"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white text-indigo-700 font-semibold text-xs shadow-xs hover:bg-indigo-50 transition-colors shrink-0"
-            >
-              <Send className="w-4 h-4" />
-              {data.todayReportStatus === "NOT_STARTED"
-                ? "Submit Today's Daily Report"
-                : "Edit Today's Daily Report"}
-            </Link>
-          </div>
-        </div>
-
-        {/* Today Report Status Alert */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="p-2.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400">
-              <Calendar className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                Today's Daily Report Status
-              </div>
-              <div className="flex items-center gap-2.5 mt-1">
-                <span className="text-base font-bold text-slate-900 dark:text-white">
-                  {new Date().toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric", year: "numeric" })}
-                </span>
-                <Badge variant={data.todayReportStatus} label={data.todayReportStatus.replace("_", " ")} size="sm" />
-              </div>
-            </div>
-          </div>
-          <Link
-            to={data.todayReport ? `/reports/${data.todayReport.id}` : "/reports/new"}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
-          >
-            <Eye className="w-4 h-4" /> View Report Details
-          </Link>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard
-            title="Assigned Tasks"
-            value={data.assignedTasks}
-            icon={CheckSquare}
-            color="indigo"
-            to="/tasks"
-            actionLabel="View Task Board"
-          />
-          <StatCard
-            title="Tasks In Progress"
-            value={data.inProgressTasks}
-            icon={Clock}
-            color="blue"
-            to="/tasks"
-            actionLabel="Active Work"
-          />
-          <StatCard
-            title="Tasks Completed"
-            value={data.completedTasks}
-            icon={CheckCircle2}
-            color="emerald"
-            to="/tasks"
-            actionLabel="Completed History"
-          />
-          <StatCard
-            title="Overdue Tasks"
-            value={data.overdueTasks}
-            icon={AlertTriangle}
-            color={data.overdueTasks > 0 ? "rose" : "slate"}
-            to="/tasks"
-            actionLabel="Check Deadlines"
-          />
-        </div>
-
-        {/* Two Columns: Recent Reports & Current Tasks */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Reports */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs">
-            <div className="flex items-center justify-between mb-3 pb-3 border-b border-slate-100 dark:border-slate-800">
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                Recent Daily Reports
-              </h2>
-              <Link to="/reports" className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
-                View All
-              </Link>
-            </div>
-            {data.recentReports?.length === 0 ? (
-              <p className="text-xs text-slate-400 py-6 text-center">No reports filed yet.</p>
-            ) : (
-              <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                {data.recentReports.map((r: any) => (
-                  <div key={r.id} className="py-3 flex items-center justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                          {r.reportingDate}
-                        </span>
-                        <Badge variant={r.status} size="sm" />
-                      </div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">
-                        {r.entriesCount} activities • {r.hoursSpent ? `${r.hoursSpent} hrs` : "Hours Unreported"}
-                      </div>
-                      {r.latestReview?.comments && (
-                        <div className="text-[11px] text-indigo-600 dark:text-indigo-400 mt-1 italic">
-                          Feedback: "{r.latestReview.comments}"
-                        </div>
-                      )}
-                    </div>
-                    <Link
-                      to={`/reports/${r.id}`}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                    >
-                      <ArrowRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Current Tasks */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs">
-            <div className="flex items-center justify-between mb-3 pb-3 border-b border-slate-100 dark:border-slate-800">
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                Assigned Tasks
-              </h2>
-              <Link to="/tasks" className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
-                Open Task Board
-              </Link>
-            </div>
-            {tasks.length === 0 ? (
-              <p className="text-xs text-slate-400 py-6 text-center">No tasks assigned.</p>
-            ) : (
-              <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                {tasks.slice(0, 5).map((t: any) => (
-                  <div key={t.id} className="py-3 flex items-center justify-between gap-4">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono font-semibold text-indigo-600 dark:text-indigo-400">
-                          {t.taskCode}
-                        </span>
-                        <Badge variant={t.priority} size="sm" />
-                        <Badge variant={t.status} size="sm" />
-                      </div>
-                      <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate mt-1">
-                        {t.title}
-                      </h4>
-                    </div>
-                    <Link
-                      to={`/tasks/${t.id}`}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                    >
-                      <ArrowRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ==========================================
-  // TEAM LEAD DASHBOARD
-  // ==========================================
-  if (user?.role === "TEAM_LEAD") {
-    return (
-      <div className="space-y-6">
-        <AnnouncementsBanner />
-
-        {/* Welcome Banner */}
-        <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-xl p-6 text-white shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-indigo-200">
-                Team Lead Workspace
-              </span>
-              <h1 className="text-2xl font-bold tracking-tight mt-1">
-                Team Oversight & Execution
-              </h1>
-              <p className="text-sm text-indigo-100 mt-1">
-                Subordinates supervision, daily report approvals, and team task tracking
-              </p>
-            </div>
-            <Link
-              to="/reviews"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white text-indigo-700 font-semibold text-xs shadow-xs hover:bg-indigo-50 transition-colors shrink-0"
-            >
-              Review Submissions ({data.pendingReviews})
-            </Link>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard
-            title="Team Size"
-            value={data.teamSize}
-            subtitle="Subordinate members"
-            icon={Users}
-            color="indigo"
-            onClick={() => setShowEmployeeFlow(true)}
-            actionLabel="View Flow"
-          />
-          <StatCard
-            title="Today's Submissions"
-            value={`${data.todaySubmissions}/${data.teamSize}`}
-            subtitle={`${data.pendingSubmissions} pending submission`}
-            icon={FileText}
-            color="blue"
-            to="/reviews"
-            actionLabel="Inspect"
-          />
-          <StatCard
-            title="Reports Awaiting Review"
-            value={data.pendingReviews}
-            subtitle="Require lead acknowledgement"
-            icon={Clock}
-            color={data.pendingReviews > 0 ? "amber" : "emerald"}
-            to="/reviews"
-            actionLabel="Review Queue"
-          />
-          <StatCard
-            title="Returned for Correction"
-            value={data.revisionsReturned}
-            subtitle="Awaiting resubmission"
-            icon={AlertTriangle}
-            color={data.revisionsReturned > 0 ? "rose" : "slate"}
-            to="/reviews"
-            actionLabel="View Returned"
-          />
-        </div>
-
-        {/* Team Tasks Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <StatCard
-            title="Team Tasks Assigned"
-            value={data.teamTasks}
-            icon={CheckSquare}
-            color="indigo"
-            to="/tasks"
-            actionLabel="Open Task Board"
-          />
-          <StatCard
-            title="Overdue Tasks"
-            value={data.overdueTasks}
-            icon={AlertTriangle}
-            color={data.overdueTasks > 0 ? "rose" : "slate"}
-            to="/tasks"
-            actionLabel="Check Overdue"
-          />
-          <StatCard
-            title="Blocked Tasks"
-            value={data.blockedTasks}
-            subtitle="May require Manager escalation"
-            icon={AlertTriangle}
-            color={data.blockedTasks > 0 ? "amber" : "slate"}
-            to="/tasks"
-            actionLabel="Resolve"
-          />
-        </div>
-
-        {/* Quick Links */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Link
-            to="/reviews"
-            className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-indigo-500 transition-colors flex items-center justify-between"
-          >
-            <div>
-              <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
-                Report Review Queue
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Acknowledge or request revisions
-              </p>
-            </div>
-            <ArrowRight className="w-5 h-5 text-indigo-500" />
-          </Link>
-
-          <Link
-            to="/tasks"
-            className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-indigo-500 transition-colors flex items-center justify-between"
-          >
-            <div>
-              <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
-                Task & Project Board
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Assign and monitor daily deliverables
-              </p>
-            </div>
-            <ArrowRight className="w-5 h-5 text-indigo-500" />
-          </Link>
-
-          <Link
-            to="/team"
-            className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-indigo-500 transition-colors flex items-center justify-between"
-          >
-            <div>
-              <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
-                Team Member Overview
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Inspect workload and attendance
-              </p>
-            </div>
-            <ArrowRight className="w-5 h-5 text-indigo-500" />
-          </Link>
-        </div>
-
-        <EmployeeFlowModal
-          isOpen={showEmployeeFlow}
-          onClose={() => setShowEmployeeFlow(false)}
-        />
-      </div>
-    );
-  }
-
-  // ==========================================
-  // MANAGER DASHBOARD
-  // ==========================================
-  if (user?.role === "MANAGER") {
-    return (
-      <div className="space-y-6">
-        <AnnouncementsBanner />
-
-        {/* Welcome Banner */}
-        <div className="bg-gradient-to-r from-slate-900 to-indigo-950 border border-slate-800 rounded-xl p-6 text-white shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-indigo-300">
-                Department Management
-              </span>
-              <h1 className="text-2xl font-bold tracking-tight mt-1">
-                {user.department?.name || "Department"} Executive Console
-              </h1>
-              <p className="text-sm text-indigo-200/80 mt-1">
-                Monitor reporting compliance, track projects, and oversee team execution
-              </p>
-            </div>
-            <button
-              onClick={() => setShowEmployeeFlow(true)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-xs transition-colors shrink-0 cursor-pointer"
-            >
-              <Users className="w-4 h-4" />
-              View Employee Flow
-            </button>
-          </div>
-        </div>
-
-        {/* Metrics Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard
-            title="Department Size"
-            value={data.departmentEmployeeCount}
-            subtitle={`${data.teamsCount} teams in department`}
-            icon={Building2}
-            color="blue"
-            onClick={() => setShowEmployeeFlow(true)}
-            actionLabel="Employee Flow"
-          />
-          <StatCard
-            title="Today's Compliance"
-            value={`${data.compliancePercentage}%`}
-            subtitle={`${data.todaySubmissions} of ${data.departmentEmployeeCount} submitted`}
-            icon={TrendingUp}
-            color={data.compliancePercentage >= 80 ? "emerald" : "amber"}
-            to="/reviews"
-            actionLabel="Check Reports"
-          />
-          <StatCard
-            title="Pending Reviews"
-            value={data.pendingReviews}
-            subtitle="Under team lead evaluation"
-            icon={Clock}
-            color="indigo"
-            to="/reviews"
-            actionLabel="Review Queue"
-          />
-          <StatCard
-            title="Critical Blockers"
-            value={data.criticalBlockers}
-            subtitle="Requires management action"
-            icon={AlertTriangle}
-            color={data.criticalBlockers > 0 ? "rose" : "slate"}
-            to="/tasks"
-            actionLabel="Inspect Tasks"
-          />
-        </div>
-
-        {/* Department Tasks & Projects */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <StatCard
-            title="Total Department Tasks"
-            value={data.deptTasksCount}
-            subtitle="Active across teams"
-            icon={CheckSquare}
-            color="indigo"
-            to="/tasks"
-            actionLabel="Open Task Board"
-          />
-          <StatCard
-            title="Overdue Tasks"
-            value={data.deptOverdueTasks}
-            subtitle="Needs managerial reassignment"
-            icon={AlertTriangle}
-            color={data.deptOverdueTasks > 0 ? "rose" : "emerald"}
-            to="/tasks"
-            actionLabel="Review Overdue"
-          />
-        </div>
-
-        {/* Manager Quick Navigation */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Link
-            to="/reviews"
-            className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-indigo-500 transition-colors flex items-center justify-between"
-          >
-            <div>
-              <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
-                Review Submissions
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Inspect & approve daily team reports
-              </p>
-            </div>
-            <ArrowRight className="w-5 h-5 text-indigo-500" />
-          </Link>
-
-          <Link
-            to="/projects"
-            className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-indigo-500 transition-colors flex items-center justify-between"
-          >
-            <div>
-              <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
-                Department Projects
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Manage active project deliverables
-              </p>
-            </div>
-            <ArrowRight className="w-5 h-5 text-indigo-500" />
-          </Link>
-
-          <Link
-            to="/team"
-            className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-indigo-500 transition-colors flex items-center justify-between"
-          >
-            <div>
-              <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
-                Teams & Team Leads
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Monitor team leads and team allocations
-              </p>
-            </div>
-            <ArrowRight className="w-5 h-5 text-indigo-500" />
-          </Link>
-        </div>
-
-        <EmployeeFlowModal
-          isOpen={showEmployeeFlow}
-          onClose={() => setShowEmployeeFlow(false)}
-        />
+        <DailyReportPage />
       </div>
     );
   }
@@ -600,167 +114,208 @@ export const DashboardPage: React.FC = () => {
   // ==========================================
   // SUPER ADMIN DASHBOARD
   // ==========================================
+  if (loading || !data) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-md animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-3.5 sm:space-y-4">
       <AnnouncementsBanner />
 
-      {/* Super Admin Welcome Banner */}
-      <div className="bg-gradient-to-r from-purple-900 to-indigo-900 border border-purple-800/60 rounded-xl p-6 text-white shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-purple-200">
-              Organization Super Admin
-            </span>
-            <h1 className="text-2xl font-bold tracking-tight mt-1">
-              WorkTrack Administration Console
-            </h1>
-            <p className="text-sm text-purple-100 mt-1">
-              Company-wide governance, user permissions, audit tracking, and organization structure
-            </p>
-          </div>
-          <div className="flex items-center gap-2.5 shrink-0">
-            <button
-              onClick={() => setShowEmployeeFlow(true)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-purple-700/80 hover:bg-purple-600 text-white border border-purple-400/30 font-semibold text-xs shadow-xs transition-colors cursor-pointer"
-            >
-              <Users className="w-4 h-4" />
-              Employee Flow Chart
-            </button>
-            <Link
-              to="/admin/users"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white text-purple-900 font-semibold text-xs shadow-xs hover:bg-purple-50 transition-colors"
-            >
-              Manage Accounts & Roles
-            </Link>
-          </div>
+      {/* Admin Tab Switcher */}
+      <div className="flex items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-2.5">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setAdminTab("admin")}
+            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-bold transition-colors cursor-pointer ${
+              adminTab === "admin"
+                ? "bg-blue-600 text-white shadow-xs"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>Organization Administration Console</span>
+          </button>
+          <button
+            onClick={() => setAdminTab("report")}
+            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-bold transition-colors cursor-pointer ${
+              adminTab === "report"
+                ? "bg-blue-600 text-white shadow-xs"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
+            }`}
+          >
+            <Calendar className="w-3.5 h-3.5" />
+            <span>My Daily Report &amp; Task Calendar</span>
+          </button>
         </div>
       </div>
 
-      {/* Organization KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Total Active Employees"
-          value={data.totalEmployees}
-          icon={Users}
-          color="purple"
-          onClick={() => setShowEmployeeFlow(true)}
-          actionLabel="View Employee Flow"
-        />
-        <StatCard
-          title="Departments"
-          value={data.totalDepartments}
-          icon={Building2}
-          color="blue"
-          to="/admin/departments"
-          actionLabel="Manage Departments"
-        />
-        <StatCard
-          title="Teams"
-          value={data.totalTeams}
-          icon={Users}
-          color="indigo"
-          to="/admin/teams"
-          actionLabel="Manage Teams"
-        />
-        <StatCard
-          title="Active Projects"
-          value={data.totalProjects}
-          icon={FolderKanban}
-          color="emerald"
-          to="/projects"
-          actionLabel="View Projects"
-        />
-      </div>
-
-      {/* Operational Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Today's Submissions"
-          value={data.todaySubmissions}
-          icon={FileText}
-          color="emerald"
-          to="/reviews"
-          actionLabel="View Submissions"
-        />
-        <StatCard
-          title="Pending Reviews"
-          value={data.pendingReviews}
-          icon={Clock}
-          color="amber"
-          to="/reviews"
-          actionLabel="Open Review Queue"
-        />
-        <StatCard
-          title="Active Escalations"
-          value={data.activeEscalations}
-          icon={AlertTriangle}
-          color={data.activeEscalations > 0 ? "rose" : "slate"}
-          to="/escalations"
-          actionLabel="View Escalations"
-        />
-        <StatCard
-          title="Active Tasks"
-          value={data.activeTasks}
-          icon={CheckSquare}
-          color="indigo"
-          to="/tasks"
-          actionLabel="Open Task Board"
-        />
-      </div>
-
-      {/* Admin Quick Action Hub */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Link
-          to="/admin/users"
-          className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-purple-500 transition-colors flex items-center justify-between"
-        >
-          <div>
-            <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
-              User Directory & CSV Import
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Add users, modify roles, or bulk import CSV
-            </p>
+      {adminTab === "report" ? (
+        <DailyReportPage />
+      ) : (
+        <>
+          {/* Super Admin Welcome Banner */}
+          <div className="bg-slate-900 border border-blue-800/60 rounded-lg p-5 text-white shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <span className="text-xs font-semibold uppercase tracking-wider text-blue-200">
+                  Organization Super Admin
+                </span>
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight mt-0.5">
+                  WorkTrack Administration Console
+                </h1>
+                <p className="text-xs text-blue-100 mt-1">
+                  Company-wide governance, user permissions, audit tracking, and organization structure
+                </p>
+              </div>
+              <div className="flex items-center gap-2.5 shrink-0">
+                <button
+                  onClick={() => setShowEmployeeFlow(true)}
+                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-blue-700/80 hover:bg-blue-600 text-white border border-blue-400/30 font-semibold text-xs shadow-xs transition-colors cursor-pointer"
+                >
+                  <Users className="w-4 h-4" />
+                  Employee Flow Chart
+                </button>
+                <Link
+                  to="/admin/users"
+                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white text-blue-900 font-semibold text-xs shadow-xs hover:bg-blue-50 transition-colors"
+                >
+                  Manage Accounts &amp; Roles
+                </Link>
+              </div>
+            </div>
           </div>
-          <ArrowRight className="w-5 h-5 text-purple-500" />
-        </Link>
 
-        <Link
-          to="/settings"
-          className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-purple-500 transition-colors flex items-center justify-between"
-        >
-          <div>
-            <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
-              Working Days & Holiday Calendar
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Configure reporting deadline & grace period
-            </p>
+          {/* Organization KPIs */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <StatCard
+              title="Total Active Employees"
+              value={data.totalEmployees}
+              icon={Users}
+              color="amber"
+              onClick={() => setShowEmployeeFlow(true)}
+              actionLabel="View Employee Flow"
+            />
+            <StatCard
+              title="Departments"
+              value={data.totalDepartments}
+              icon={Building2}
+              color="blue"
+              to="/admin/departments"
+              actionLabel="Manage Departments"
+            />
+            <StatCard
+              title="Teams"
+              value={data.totalTeams}
+              icon={Users}
+              color="blue"
+              to="/admin/teams"
+              actionLabel="Manage Teams"
+            />
+            <StatCard
+              title="Active Projects"
+              value={data.totalProjects}
+              icon={FolderKanban}
+              color="emerald"
+              to="/projects"
+              actionLabel="View Projects"
+            />
           </div>
-          <ArrowRight className="w-5 h-5 text-purple-500" />
-        </Link>
 
-        <Link
-          to="/admin/audit-logs"
-          className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-purple-500 transition-colors flex items-center justify-between"
-        >
-          <div>
-            <h3 className="font-semibold text-sm text-slate-900 dark:text-white">
-              Security Audit Logs
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Inspect administrative events & login history
-            </p>
+          {/* Operational Metrics */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <StatCard
+              title="Today's Submissions"
+              value={data.todaySubmissions}
+              icon={FileText}
+              color="emerald"
+              to="/reviews"
+              actionLabel="View Submissions"
+            />
+            <StatCard
+              title="Pending Reviews"
+              value={data.pendingReviews}
+              icon={Clock}
+              color="amber"
+              to="/reviews"
+              actionLabel="Open Review Queue"
+            />
+            <StatCard
+              title="Active Escalations"
+              value={data.activeEscalations}
+              icon={AlertTriangle}
+              color={data.activeEscalations > 0 ? "rose" : "slate"}
+              to="/escalations"
+              actionLabel="View Escalations"
+            />
+            <StatCard
+              title="Active Tasks"
+              value={data.activeTasks}
+              icon={CheckSquare}
+              color="blue"
+              to="/tasks"
+              actionLabel="Open Task Board"
+            />
           </div>
-          <ShieldAlert className="w-5 h-5 text-purple-500" />
-        </Link>
-      </div>
 
-      <EmployeeFlowModal
-        isOpen={showEmployeeFlow}
-        onClose={() => setShowEmployeeFlow(false)}
-      />
+          {/* Admin Quick Action Hub */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+            <Link
+              to="/admin/users"
+              className="p-4.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-blue-500 transition-colors flex items-center justify-between"
+            >
+              <div>
+                <h3 className="font-semibold text-xs sm:text-sm text-slate-900 dark:text-white">
+                  User Directory &amp; CSV Import
+                </h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Add users, modify roles, or bulk import CSV
+                </p>
+              </div>
+              <ArrowRight className="w-4 h-4 text-blue-500 shrink-0" />
+            </Link>
+
+            <Link
+              to="/settings"
+              className="p-4.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-blue-500 transition-colors flex items-center justify-between"
+            >
+              <div>
+                <h3 className="font-semibold text-xs sm:text-sm text-slate-900 dark:text-white">
+                  Working Days &amp; Holiday Calendar
+                </h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Configure reporting deadline &amp; grace period
+                </p>
+              </div>
+              <ArrowRight className="w-4 h-4 text-blue-500 shrink-0" />
+            </Link>
+
+            <Link
+              to="/admin/audit-logs"
+              className="p-4.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-blue-500 transition-colors flex items-center justify-between"
+            >
+              <div>
+                <h3 className="font-semibold text-xs sm:text-sm text-slate-900 dark:text-white">
+                  Security Audit Logs
+                </h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Inspect administrative events &amp; login history
+                </p>
+              </div>
+              <ShieldAlert className="w-4 h-4 text-blue-500 shrink-0" />
+            </Link>
+          </div>
+
+          <EmployeeFlowModal
+            isOpen={showEmployeeFlow}
+            onClose={() => setShowEmployeeFlow(false)}
+          />
+        </>
+      )}
     </div>
   );
 };
-

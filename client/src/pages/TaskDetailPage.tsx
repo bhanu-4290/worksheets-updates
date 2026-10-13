@@ -3,19 +3,16 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { api } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { Badge } from "../components/Badge";
-import { Task, TaskStatus } from "../types";
+import { Modal } from "../components/Modal";
+import { TaskStatus } from "../types";
 import {
   ArrowLeft,
-  Calendar,
-  Clock,
-  User,
-  FolderKanban,
-  Building2,
-  CheckCircle2,
   MessageSquare,
   History,
   Send,
   AlertCircle,
+  UserPlus,
+  Check,
 } from "lucide-react";
 
 export const TaskDetailPage: React.FC = () => {
@@ -30,8 +27,22 @@ export const TaskDetailPage: React.FC = () => {
   const [commentText, setCommentText] = useState("");
   const [commentLoading, setCommentLoading] = useState(false);
 
+  // Assignment modal state
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [usersList, setUsersList] = useState<any[]>([]);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [selectedTlId, setSelectedTlId] = useState<string>("");
+  const [assignSaving, setAssignSaving] = useState(false);
+
+  const isManagerOrAdmin = user?.role === "MANAGER" || user?.role === "SUPER_ADMIN";
+  const isTeamLead = user?.role === "TEAM_LEAD";
+  const canManageAssignments = isManagerOrAdmin || isTeamLead;
+
   useEffect(() => {
     loadTask();
+    if (user?.role !== "EXECUTIVE") {
+      loadUsers();
+    }
   }, [id]);
 
   const loadTask = async () => {
@@ -43,6 +54,75 @@ export const TaskDetailPage: React.FC = () => {
       setError(err.message || "Failed to load task details");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadUsers = async () => {
+    try {
+      const res: any = await api.get("/users?status=active&flow=true");
+      if (res.success) setUsersList(res.data || []);
+    } catch {
+      // Ignored
+    }
+  };
+
+  const openAssignModal = () => {
+    if (!task) return;
+    if (isTeamLead) {
+      const execIds = (task.assignees || [])
+        .filter((a: any) => a.role === "EXECUTIVE")
+        .map((a: any) => a.id);
+      setSelectedUserIds(execIds);
+      setSelectedTlId(user?.id || "");
+    } else {
+      setSelectedUserIds((task.assignees || []).map((a: any) => a.id));
+      setSelectedTlId(task.teamLead?.id || task.assignedTeamLeadId || "");
+    }
+    setShowAssignModal(true);
+  };
+
+  const toggleUserSelection = (userId: string, role?: string) => {
+    setSelectedUserIds((prev) => {
+      const exists = prev.includes(userId);
+      const next = exists ? prev.filter((uid) => uid !== userId) : [...prev, userId];
+      if (role === "TEAM_LEAD") {
+        if (!exists && !selectedTlId) setSelectedTlId(userId);
+        if (exists && selectedTlId === userId) setSelectedTlId("");
+      }
+      return next;
+    });
+  };
+
+  const handleSaveAssignment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const finalIds = Array.from(
+      new Set([
+        ...selectedUserIds,
+        ...(isManagerOrAdmin && selectedTlId ? [selectedTlId] : []),
+      ])
+    );
+
+    if (finalIds.length === 0) {
+      alert(
+        isTeamLead
+          ? "Please select at least one Executive."
+          : "Please select at least one Team Lead or Executive."
+      );
+      return;
+    }
+
+    setAssignSaving(true);
+    try {
+      await api.put(`/tasks/${id}`, {
+        assignedUserIds: finalIds,
+        assignedTeamLeadId: isTeamLead ? user?.id : selectedTlId || null,
+      });
+      setShowAssignModal(false);
+      loadTask();
+    } catch (err: any) {
+      alert(err.message || "Failed to update task assignment");
+    } finally {
+      setAssignSaving(false);
     }
   };
 
@@ -71,20 +151,23 @@ export const TaskDetailPage: React.FC = () => {
     }
   };
 
+  const teamLeadsList = usersList.filter((u) => u.role === "TEAM_LEAD");
+  const executivesList = usersList.filter((u) => u.role === "EXECUTIVE");
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-md animate-spin" />
       </div>
     );
   }
 
   if (error || !task) {
     return (
-      <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl p-6 text-center text-xs text-rose-800 dark:text-rose-300">
+      <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-lg p-6 text-center text-xs text-rose-800 dark:text-rose-300">
         <AlertCircle className="w-8 h-8 mx-auto mb-2" />
         <p className="font-semibold">{error || "Task not found"}</p>
-        <Link to="/tasks" className="inline-block mt-3 text-indigo-600 underline">
+        <Link to="/tasks" className="inline-block mt-3 text-blue-600 underline">
           Back to Tasks
         </Link>
       </div>
@@ -104,7 +187,7 @@ export const TaskDetailPage: React.FC = () => {
           </button>
           <div>
             <div className="flex items-center gap-2.5">
-              <span className="font-mono font-bold text-sm text-indigo-600 dark:text-indigo-400">
+              <span className="font-mono font-bold text-sm text-blue-600 dark:text-blue-400">
                 {task.taskCode}
               </span>
               <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
@@ -119,13 +202,23 @@ export const TaskDetailPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Status Dropdown */}
+        {/* Status Dropdown & Assign Action */}
         <div className="flex items-center gap-2">
+          {canManageAssignments && (
+            <button
+              type="button"
+              onClick={openAssignModal}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              {isTeamLead ? "Assign to Executive" : "Assign to TL / Executive"}
+            </button>
+          )}
           <span className="text-xs font-semibold text-slate-500">Status:</span>
           <select
             value={task.status}
             onChange={(e) => handleStatusChange(e.target.value as TaskStatus)}
-            className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="TO_DO">To Do</option>
             <option value="IN_PROGRESS">In Progress</option>
@@ -142,7 +235,7 @@ export const TaskDetailPage: React.FC = () => {
         {/* Left Column (2 Cols): Details & Comments */}
         <div className="lg:col-span-2 space-y-6">
           {/* Description */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs space-y-4">
             <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
               Description & Requirements
             </h2>
@@ -157,12 +250,12 @@ export const TaskDetailPage: React.FC = () => {
           </div>
 
           {/* Linked Daily Work Logs */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
                 Linked Daily Work Logs ({task.dailyWorkEntries?.length || 0})
               </h2>
-              <span className="text-[11px] font-mono text-indigo-600 dark:text-indigo-400">
+              <span className="text-[11px] font-mono text-blue-600 dark:text-blue-400">
                 Total Derived Hours: {task.actualHours ? `${task.actualHours} hrs` : "Unreported"}
               </span>
             </div>
@@ -192,9 +285,9 @@ export const TaskDetailPage: React.FC = () => {
           </div>
 
           {/* Comments Thread */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs space-y-4">
             <div className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-indigo-500" />
+              <MessageSquare className="w-4 h-4 text-blue-500" />
               <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
                 Task Discussion & Updates ({task.comments?.length || 0})
               </h2>
@@ -205,7 +298,7 @@ export const TaskDetailPage: React.FC = () => {
                 <p className="text-xs text-slate-400 py-2">No comments yet. Start the thread.</p>
               ) : (
                 task.comments?.map((c: any) => (
-                  <div key={c.id} className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 text-xs space-y-1">
+                  <div key={c.id} className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/40 text-xs space-y-1">
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-slate-900 dark:text-white">
                         {c.user.fullName}
@@ -227,12 +320,12 @@ export const TaskDetailPage: React.FC = () => {
                 placeholder="Write a comment or status update..."
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
-                className="flex-1 px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="flex-1 px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button
                 type="submit"
                 disabled={commentLoading}
-                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
               >
                 <Send className="w-3.5 h-3.5" /> Post
               </button>
@@ -242,28 +335,43 @@ export const TaskDetailPage: React.FC = () => {
 
         {/* Right Column: Meta Information & Audit History */}
         <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4 text-xs">
-            <h3 className="font-semibold text-slate-900 dark:text-white text-sm border-b border-slate-100 dark:border-slate-800 pb-2">
-              Task Details
-            </h3>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs space-y-4 text-xs">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+              <h3 className="font-semibold text-slate-900 dark:text-white text-sm">
+                Task Details
+              </h3>
+              {canManageAssignments && (
+                <button
+                  type="button"
+                  onClick={openAssignModal}
+                  className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                >
+                  {isTeamLead ? "+ Assign Executive" : "+ Edit Assignees"}
+                </button>
+              )}
+            </div>
 
             <div>
               <span className="text-slate-400 block text-[11px]">Assigned Employees</span>
-              <div className="mt-1 flex flex-wrap gap-1.5">
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
                 {task.assignees?.map((a: any) => (
                   <span
                     key={a.id}
-                    className="px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-medium"
+                    className={`px-2 py-0.5 rounded-lg font-semibold text-[11px] ${
+                      a.role === "TEAM_LEAD"
+                        ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30"
+                        : "bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/30"
+                    }`}
                   >
-                    {a.fullName}
+                    {a.fullName} ({a.role === "TEAM_LEAD" ? "TL" : "Executive"})
                   </span>
                 ))}
               </div>
             </div>
 
             <div>
-              <span className="text-slate-400 block text-[11px]">Assigned Team Lead</span>
-              <p className="font-medium text-slate-800 dark:text-slate-200 mt-0.5">
+              <span className="text-slate-400 block text-[11px]">Assigned Team Lead (TL)</span>
+              <p className="font-semibold text-emerald-700 dark:text-emerald-400 mt-0.5">
                 {task.teamLead?.fullName || "Unassigned"}
               </p>
             </div>
@@ -272,13 +380,13 @@ export const TaskDetailPage: React.FC = () => {
               <div>
                 <span className="text-slate-400 block text-[11px]">Start Date</span>
                 <p className="font-medium text-slate-800 dark:text-slate-200 mt-0.5">
-                  {task.startDate ? task.startDate.split("T")[0] : "—"}
+                  {task.startDate ? task.startDate.split("T")[0] : "N/A"}
                 </p>
               </div>
               <div>
                 <span className="text-slate-400 block text-[11px]">Due Date</span>
                 <p className="font-medium text-slate-800 dark:text-slate-200 mt-0.5">
-                  {task.dueDate ? task.dueDate.split("T")[0] : "—"}
+                  {task.dueDate ? task.dueDate.split("T")[0] : "N/A"}
                 </p>
               </div>
             </div>
@@ -287,12 +395,12 @@ export const TaskDetailPage: React.FC = () => {
               <div>
                 <span className="text-slate-400 block text-[11px]">Estimated Hours</span>
                 <p className="font-medium text-slate-800 dark:text-slate-200 mt-0.5">
-                  {task.estimatedHours ? `${task.estimatedHours}h` : "—"}
+                  {task.estimatedHours ? `${task.estimatedHours}h` : "N/A"}
                 </p>
               </div>
               <div>
                 <span className="text-slate-400 block text-[11px]">Actual Logged Hours</span>
-                <p className="font-bold text-indigo-600 dark:text-indigo-400 mt-0.5">
+                <p className="font-bold text-blue-600 dark:text-blue-400 mt-0.5">
                   {task.actualHours ? `${task.actualHours}h` : "Unreported"}
                 </p>
               </div>
@@ -305,9 +413,9 @@ export const TaskDetailPage: React.FC = () => {
                   {task.progressPercentage}%
                 </span>
               </div>
-              <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+              <div className="w-full h-2 rounded-md bg-slate-100 dark:bg-slate-800 overflow-hidden">
                 <div
-                  className="h-full bg-indigo-600 rounded-full transition-all"
+                  className="h-full bg-blue-600 rounded-md transition-all"
                   style={{ width: `${task.progressPercentage}%` }}
                 />
               </div>
@@ -315,7 +423,7 @@ export const TaskDetailPage: React.FC = () => {
           </div>
 
           {/* Task History */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-3">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs space-y-3">
             <div className="flex items-center gap-2">
               <History className="w-4 h-4 text-slate-400" />
               <h3 className="text-xs font-semibold text-slate-900 dark:text-white">
@@ -338,6 +446,112 @@ export const TaskDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Assign / Delegate Modal */}
+      <Modal
+        isOpen={showAssignModal}
+        onClose={() => setShowAssignModal(false)}
+        title={
+          isTeamLead
+            ? `Delegate Task to Executive - ${task.taskCode}`
+            : `Assign Task to Team Lead / Executive - ${task.taskCode}`
+        }
+        maxWidth="xl"
+      >
+        <form onSubmit={handleSaveAssignment} className="space-y-4">
+          {isManagerOrAdmin && (
+            <div className="space-y-2">
+              <label className="block text-[11px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+                Team Leads (TL)
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-36 overflow-y-auto">
+                {teamLeadsList.map((tl) => {
+                  const selected = selectedUserIds.includes(tl.id) || selectedTlId === tl.id;
+                  return (
+                    <button
+                      key={tl.id}
+                      type="button"
+                      onClick={() => toggleUserSelection(tl.id, "TEAM_LEAD")}
+                      className={`flex items-center justify-between p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                        selected
+                          ? "bg-emerald-500/15 border-emerald-500 text-emerald-900 dark:text-emerald-200"
+                          : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+                      }`}
+                    >
+                      <div className="min-w-0 pr-2">
+                        <div className="font-bold text-xs truncate">{tl.fullName}</div>
+                        <div className="text-[10px] text-slate-500 truncate">{tl.jobTitle}</div>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold text-[9px]">
+                          TL
+                        </span>
+                        {selected && <Check className="w-3.5 h-3.5 text-emerald-600" />}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <label className="block text-[11px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">
+              {isTeamLead ? "Select Executive(s) *" : "Executives"}
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+              {executivesList.map((exec) => {
+                const selected = selectedUserIds.includes(exec.id);
+                return (
+                  <button
+                    key={exec.id}
+                    type="button"
+                    onClick={() => toggleUserSelection(exec.id, "EXECUTIVE")}
+                    className={`flex items-center justify-between p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                      selected
+                        ? "bg-blue-500/15 border-blue-500 text-blue-900 dark:text-blue-200"
+                        : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+                    }`}
+                  >
+                    <div className="min-w-0 pr-2">
+                      <div className="font-bold text-xs truncate">{exec.fullName}</div>
+                      <div className="text-[10px] text-slate-500 truncate">{exec.jobTitle}</div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold text-[9px]">
+                        EXEC
+                      </span>
+                      {selected && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={() => setShowAssignModal(false)}
+              className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={assignSaving}
+              className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-md disabled:opacity-50 cursor-pointer"
+            >
+              {assignSaving
+                ? "Saving..."
+                : isTeamLead
+                ? "Assign to Executive"
+                : "Save Assignment"}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };
+

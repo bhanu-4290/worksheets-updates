@@ -9,6 +9,8 @@ export interface AnnouncementItem {
   departmentId: string | null;
   teamId: string | null;
   isPinned: boolean;
+  attachmentUrl?: string | null;
+  attachmentName?: string | null;
   authorId: string;
   createdAt: string;
   updatedAt: string;
@@ -38,6 +40,8 @@ export interface CreateAnnouncementInput {
   departmentId?: string | null;
   teamId?: string | null;
   isPinned?: boolean;
+  attachmentUrl?: string | null;
+  attachmentName?: string | null;
 }
 
 export const announcementService = {

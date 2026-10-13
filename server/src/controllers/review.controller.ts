@@ -41,7 +41,9 @@ export async function getReviewQueue(req: Request, res: Response, next: NextFunc
       return;
     }
 
-    if (status && Object.values(ReportStatus).includes(status as ReportStatus)) {
+    if (status === "ALL") {
+      // Show all reports across all statuses
+    } else if (status && Object.values(ReportStatus).includes(status as ReportStatus)) {
       where.status = status as ReportStatus;
     } else {
       // Default to awaiting review

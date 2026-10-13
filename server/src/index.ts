@@ -17,8 +17,8 @@ async function bootstrap() {
     setInterval(checkAndTriggerBirthdays, 1000 * 60 * 60);
 
     const server = app.listen(PORT, () => {
-      logger.info(`🚀 WorkTrack API Server running on http://localhost:${PORT}`);
-      logger.info(`📖 OpenAPI Swagger Documentation: http://localhost:${PORT}/api-docs`);
+      logger.info(`WorkTrack API Server running on http://localhost:${PORT}`);
+      logger.info(`OpenAPI Swagger Documentation: http://localhost:${PORT}/api-docs`);
     });
 
     const shutdown = async () => {

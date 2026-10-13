@@ -66,7 +66,7 @@ export const AdminDepartmentsPage: React.FC = () => {
 
         <button
           onClick={() => setShowModal(true)}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-sm transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition-colors"
         >
           <Plus className="w-4 h-4" /> Create Department
         </button>
@@ -74,17 +74,17 @@ export const AdminDepartmentsPage: React.FC = () => {
 
       {loading ? (
         <div className="flex items-center justify-center min-h-[40vh]">
-          <div className="w-8 h-8 border-3 border-purple-600 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-md animate-spin" />
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {departments.map((dept) => (
             <div
               key={dept.id}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4"
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-xs space-y-4"
             >
               <div className="flex items-center justify-between">
-                <span className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded">
+                <span className="font-mono text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded">
                   {dept.code}
                 </span>
                 <span className="text-xs text-slate-400">
@@ -132,7 +132,7 @@ export const AdminDepartmentsPage: React.FC = () => {
               placeholder="e.g. Quality Engineering"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+              className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
             />
           </div>
 
@@ -144,7 +144,7 @@ export const AdminDepartmentsPage: React.FC = () => {
               placeholder="e.g. QE"
               value={formData.code}
               onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-              className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs uppercase"
+              className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs uppercase"
             />
           </div>
 
@@ -155,7 +155,7 @@ export const AdminDepartmentsPage: React.FC = () => {
               placeholder="Scope and purpose..."
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+              className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
             />
           </div>
 
@@ -164,7 +164,7 @@ export const AdminDepartmentsPage: React.FC = () => {
             <select
               value={formData.managerId}
               onChange={(e) => setFormData({ ...formData, managerId: e.target.value })}
-              className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
+              className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
             >
               <option value="">-- Select Manager --</option>
               {managers.map((m) => (
@@ -179,13 +179,13 @@ export const AdminDepartmentsPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowModal(false)}
-              className="px-4 py-2 rounded-xl border text-xs"
+              className="px-4 py-2 rounded-lg border text-xs"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold"
+              className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold"
             >
               Save Department
             </button>

@@ -430,17 +430,19 @@ model ChatMessage {
 }
 
 model Announcement {
-  id           String   @id @default(uuid())
-  title        String
-  content      String
-  priority     String   @default("NORMAL")
-  targetScope  String   @default("ALL")
-  departmentId String?
-  teamId       String?
-  isPinned     Boolean  @default(false)
-  authorId     String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String   @id @default(uuid())
+  title          String
+  content        String
+  priority       String   @default("NORMAL")
+  targetScope    String   @default("ALL")
+  departmentId   String?
+  teamId         String?
+  isPinned       Boolean  @default(false)
+  attachmentUrl  String?
+  attachmentName String?
+  authorId       String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   author     User        @relation("UserAnnouncements", fields: [authorId], references: [id], onDelete: Cascade)
   department Department? @relation(fields: [departmentId], references: [id], onDelete: Cascade)
