@@ -852,3 +852,192 @@ export async function getDailyReportsSummary(req: Request, res: Response, next: 
   }
 }
 
+export async function getDateSubmissionsAudit(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const user = req.user!;
+    const dateQuery = String(req.query.date || "").trim();
+    if (!dateQuery) {
+      res.status(400).json({ success: false, error: "BadRequest", message: "Target date parameter (date=YYYY-MM-DD) is required" });
+      return;
+    }
+
+    const localStart = new Date(dateQuery);
+    localStart.setHours(0, 0, 0, 0);
+    const localEnd = new Date(dateQuery);
+    localEnd.setHours(23, 59, 59, 999);
+
+    const utcStart = new Date(`${dateQuery}T00:00:00.000Z`);
+    const utcEnd = new Date(`${dateQuery}T23:59:59.999Z`);
+
+    const queryStart = new Date(Math.min(localStart.getTime(), utcStart.getTime()));
+    const queryEnd = new Date(Math.max(localEnd.getTime(), utcEnd.getTime()));
+
+    // 1. Determine eligible employees based on user role/scope
+    let userWhere: any = { isActive: true };
+    if (isSuperAdmin(user)) {
+      // Super Admin sees all active organization employees
+    } else if (isManager(user)) {
+      const allowedDepts = [user.departmentId, ...user.managedDepartmentIds].filter(Boolean);
+      userWhere.departmentId = { in: allowedDepts };
+    } else if (isTeamLead(user)) {
+      userWhere.OR = [
+        { teamLeadId: user.id },
+        { teamMemberships: { some: { teamId: { in: user.ledTeamIds } } } },
+        { id: user.id },
+      ];
+    } else {
+      userWhere.id = user.id;
+    }
+
+    const eligibleUsers = await prisma.user.findMany({
+      where: userWhere,
+      select: {
+        id: true,
+        fullName: true,
+        employeeId: true,
+        email: true,
+        jobTitle: true,
+        department: { select: { id: true, name: true, code: true } },
+        teamLead: { select: { id: true, fullName: true } },
+      },
+      orderBy: { fullName: "asc" },
+    });
+
+    const userIds = eligibleUsers.map((u) => u.id);
+
+    // 2. Query reports for these users within the date range
+    const reports = await prisma.dailyReport.findMany({
+      where: {
+        userId: { in: userIds },
+        reportingDate: {
+          gte: queryStart,
+          lte: queryEnd,
+        },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            employeeId: true,
+            email: true,
+            jobTitle: true,
+            department: { select: { id: true, name: true, code: true } },
+          },
+        },
+        entries: {
+          include: {
+            task: { select: { id: true, taskCode: true, title: true } },
+          },
+          orderBy: { createdAt: "asc" },
+        },
+        reviews: {
+          include: {
+            reviewer: { select: { id: true, fullName: true, email: true } },
+          },
+          orderBy: { createdAt: "desc" },
+        },
+      },
+    });
+
+    const reportByUserId = new Map<string, any>();
+    for (const rep of reports) {
+      reportByUserId.set(rep.userId, rep);
+    }
+
+    // 3. Separate into Submitted vs Missing
+    const submissions: any[] = [];
+    const missingEmployees: any[] = [];
+    let totalHoursLogged = 0;
+    let totalActivitiesLogged = 0;
+    const statusCounts: Record<string, number> = {
+      SUBMITTED: 0,
+      APPROVED: 0,
+      UNDER_REVIEW: 0,
+      DRAFT: 0,
+      REVISION_REQUESTED: 0,
+    };
+
+    for (const emp of eligibleUsers) {
+      const rep = reportByUserId.get(emp.id);
+      if (rep) {
+        statusCounts[rep.status] = (statusCounts[rep.status] || 0) + 1;
+        const repHours = rep.entries.reduce((sum: number, e: any) => (e.hoursSpent ? sum + e.hoursSpent : sum), 0);
+        totalHoursLogged += repHours;
+        totalActivitiesLogged += rep.entries.length;
+
+        submissions.push({
+          reportId: rep.id,
+          userId: emp.id,
+          fullName: emp.fullName,
+          employeeId: emp.employeeId,
+          email: emp.email,
+          jobTitle: emp.jobTitle,
+          department: emp.department?.name || "General",
+          departmentCode: emp.department?.code || "",
+          status: rep.status,
+          submittedAt: rep.submittedAt,
+          totalHours: Number(repHours.toFixed(1)),
+          entriesCount: rep.entries.length,
+          entries: rep.entries.map((e: any) => ({
+            id: e.id,
+            activityTitle: e.activityTitle,
+            description: e.description,
+            hoursSpent: e.hoursSpent,
+            startTime: e.startTime,
+            endTime: e.endTime,
+            progressPercentage: e.progressPercentage,
+            status: e.status,
+            deliverables: e.deliverables,
+            blockers: e.blockers,
+            supportRequired: e.supportRequired,
+            nextDayPlan: e.nextDayPlan,
+            taskCode: e.task?.taskCode || null,
+            taskTitle: e.task?.title || null,
+          })),
+          reviews: rep.reviews.map((rev: any) => ({
+            reviewerName: rev.reviewer?.fullName || "Supervisor",
+            status: rev.status,
+            comments: rev.comments,
+            reviewedAt: rev.createdAt,
+          })),
+        });
+      } else {
+        missingEmployees.push({
+          userId: emp.id,
+          fullName: emp.fullName,
+          employeeId: emp.employeeId,
+          email: emp.email,
+          jobTitle: emp.jobTitle,
+          department: emp.department?.name || "General",
+          departmentCode: emp.department?.code || "",
+          teamLeadName: emp.teamLead?.fullName || null,
+        });
+      }
+    }
+
+    const totalActiveEmployees = eligibleUsers.length;
+    const submittedCount = submissions.length;
+    const pendingCount = missingEmployees.length;
+    const submissionRate = totalActiveEmployees > 0 ? Math.round((submittedCount / totalActiveEmployees) * 100) : 0;
+
+    res.json({
+      success: true,
+      data: {
+        date: dateQuery,
+        totalActiveEmployees,
+        submittedCount,
+        pendingCount,
+        submissionRate,
+        totalHoursLogged: Number(totalHoursLogged.toFixed(1)),
+        totalActivitiesLogged,
+        statusCounts,
+        submissions,
+        missingEmployees,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+

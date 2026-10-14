@@ -27,9 +27,11 @@ import {
   Download,
   Sparkles,
   FileSpreadsheet,
+  ClipboardCheck,
 } from "lucide-react";
 import { EmployeeFlowModal } from "../components/EmployeeFlowModal";
 import { DailyReportsSummaryModal } from "../components/DailyReportsSummaryModal";
+import { DateSubmissionsAuditModal } from "../components/DateSubmissionsAuditModal";
 
 function toLocalYMD(date: Date): string {
   const y = date.getFullYear();
@@ -58,6 +60,7 @@ export const DailyReportPage: React.FC = () => {
   const [teamUsers, setTeamUsers] = useState<any[]>([]);
   const [showEmployeeFlow, setShowEmployeeFlow] = useState(false);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [showDateAuditModal, setShowDateAuditModal] = useState(false);
   const [downloadingCsv, setDownloadingCsv] = useState(false);
   const [previewReport, setPreviewReport] = useState<DailyReport | null>(null);
 
@@ -531,7 +534,19 @@ export const DailyReportPage: React.FC = () => {
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {canInspectOthers && (
+              <button
+                type="button"
+                onClick={() => setShowDateAuditModal(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors cursor-pointer shadow-2xs"
+                title={`One-click audit: see who submitted on ${reportingDate} and what they submitted`}
+              >
+                <ClipboardCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                <span>Who Submitted? ({reportingDate})</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() => setShowSummaryModal(true)}
@@ -575,16 +590,25 @@ export const DailyReportPage: React.FC = () => {
             <div className="flex items-center gap-2">
               <Info className="w-4 h-4 text-blue-600 shrink-0" />
               <span>
-                <strong>Admin Organization-Wide View Active:</strong> Viewing aggregated data across all team members. Use <strong>All Previous Sheets ({historyReports.length})</strong> or <strong>Executive Summary</strong> to review company-wide metrics, or select an individual employee from the dropdown above to inspect their monthly calendar.
+                <strong>Admin Organization-Wide View Active:</strong> Viewing aggregated data across all team members. Use <strong>All Previous Sheets ({historyReports.length})</strong> or <strong>Executive Summary</strong> to review company-wide metrics, or click <strong>Who Submitted? ({reportingDate})</strong> to audit all employee entries on this date.
               </span>
             </div>
-            <button
-              type="button"
-              onClick={() => setActiveTab("history")}
-              className="px-3 py-1 rounded bg-blue-600 text-white font-semibold text-xs hover:bg-blue-700 transition-colors shrink-0 cursor-pointer self-start sm:self-auto"
-            >
-              View All Sheets
-            </button>
+            <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setShowDateAuditModal(true)}
+                className="px-3 py-1 rounded bg-blue-600 text-white font-semibold text-xs hover:bg-blue-700 transition-colors cursor-pointer"
+              >
+                Who Submitted? ({reportingDate})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("history")}
+                className="px-3 py-1 rounded border border-blue-300 dark:border-blue-700 bg-white dark:bg-slate-900 text-blue-700 dark:text-blue-300 font-semibold text-xs hover:bg-blue-50 transition-colors cursor-pointer"
+              >
+                View All Sheets
+              </button>
+            </div>
           </div>
         )}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
@@ -658,6 +682,18 @@ export const DailyReportPage: React.FC = () => {
                 <Calendar className="w-3.5 h-3.5" />
                 Today ({todayStr})
               </button>
+
+              {canInspectOthers && (
+                <button
+                  type="button"
+                  onClick={() => setShowDateAuditModal(true)}
+                  className="px-3 py-1.5 rounded-md text-xs font-bold border transition-colors cursor-pointer flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 shadow-2xs"
+                  title={`Audit who submitted on ${reportingDate} and their activity entries`}
+                >
+                  <ClipboardCheck className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                  <span>Who Submitted? ({reportingDate})</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -1290,6 +1326,18 @@ export const DailyReportPage: React.FC = () => {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              {canInspectOthers && (
+                <button
+                  type="button"
+                  onClick={() => setShowDateAuditModal(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50/70 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 text-xs font-semibold hover:bg-blue-100 transition-colors cursor-pointer"
+                  title="Audit who submitted on a date and their detailed work entries"
+                >
+                  <ClipboardCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                  Date Audit ({reportingDate})
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={() => setShowSummaryModal(true)}
@@ -1517,6 +1565,15 @@ export const DailyReportPage: React.FC = () => {
             : teamUsers.find((u) => u.id === selectedUserId)?.fullName || "Employee"
         }
         onDownloadCsv={(uid) => handleDownloadCsv(uid)}
+      />
+
+      <DateSubmissionsAuditModal
+        isOpen={showDateAuditModal}
+        onClose={() => setShowDateAuditModal(false)}
+        targetDate={reportingDate}
+        onDateChange={(newD) => {
+          setReportingDate(newD);
+        }}
       />
     </div>
   );

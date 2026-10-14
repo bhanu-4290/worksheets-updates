@@ -25,7 +25,9 @@ import {
   AlertCircle,
   Activity,
   ArrowUpRight,
+  ClipboardCheck,
 } from "lucide-react";
+import { DateSubmissionsAuditModal } from "../components/DateSubmissionsAuditModal";
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
@@ -34,6 +36,7 @@ export const DashboardPage: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [showEmployeeFlow, setShowEmployeeFlow] = useState(false);
+  const [showDateAuditModal, setShowDateAuditModal] = useState(false);
   const [adminTab, setAdminTab] = useState<"admin" | "report">("admin");
 
   useEffect(() => {
@@ -222,7 +225,16 @@ export const DashboardPage: React.FC = () => {
               </p>
             </div>
 
-            <div className="flex items-center gap-2.5 shrink-0 self-start md:self-auto">
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start md:self-auto">
+              <button
+                type="button"
+                onClick={() => setShowDateAuditModal(true)}
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                title="One-click audit of who submitted today and their detailed activity entries"
+              >
+                <ClipboardCheck className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                <span>Who Submitted Today?</span>
+              </button>
               <button
                 onClick={() => setShowEmployeeFlow(true)}
                 className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
@@ -282,9 +294,13 @@ export const DashboardPage: React.FC = () => {
                   <span className="text-[11px] text-slate-500">
                     {missingSubmissionsToday === 0 ? "All 28 reports logged" : "Remind pending staff"}
                   </span>
-                  <Link to="/reports" className="font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 text-[11px]">
-                    Inspect <ArrowRight className="w-3 h-3" />
-                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setShowDateAuditModal(true)}
+                    className="font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 text-[11px] cursor-pointer"
+                  >
+                    Inspect Submissions <ArrowRight className="w-3 h-3" />
+                  </button>
                 </div>
               </div>
 
@@ -730,6 +746,11 @@ export const DashboardPage: React.FC = () => {
           <EmployeeFlowModal
             isOpen={showEmployeeFlow}
             onClose={() => setShowEmployeeFlow(false)}
+          />
+
+          <DateSubmissionsAuditModal
+            isOpen={showDateAuditModal}
+            onClose={() => setShowDateAuditModal(false)}
           />
         </>
       )}

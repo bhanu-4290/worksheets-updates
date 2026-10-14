@@ -7,6 +7,7 @@ import {
   resubmitReport,
   exportDailyReports,
   getDailyReportsSummary,
+  getDateSubmissionsAudit,
 } from "../controllers/daily-report.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 
@@ -18,6 +19,7 @@ router.get("/", getDailyReports);
 router.get("/today", getTodayReport);
 router.get("/export", exportDailyReports);
 router.get("/summary", getDailyReportsSummary);
+router.get("/date-audit", getDateSubmissionsAudit);
 router.get("/:id", getDailyReportById);
 router.post("/", saveDailyReport);
 router.post("/:id/resubmit", resubmitReport);
