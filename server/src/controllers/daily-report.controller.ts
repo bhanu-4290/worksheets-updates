@@ -39,8 +39,11 @@ export async function getDailyReports(req: Request, res: Response, next: NextFun
       if (departmentId) {
         where.user = { departmentId: String(departmentId) };
       }
-      if (employeeId) {
-        where.userId = String(employeeId);
+      if (employeeId && employeeId !== "ALL" && employeeId !== "all") {
+        where.OR = [
+          { userId: String(employeeId) },
+          { user: { employeeId: String(employeeId) } }
+        ];
       }
     } else if (isManager(user)) {
       const allowedDepts = [user.departmentId, ...user.managedDepartmentIds].filter(Boolean);
@@ -525,3 +528,327 @@ export async function resubmitReport(req: Request, res: Response, next: NextFunc
     next(err);
   }
 }
+
+export async function exportDailyReports(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const user = req.user!;
+    const { startDate, endDate, employeeId, departmentId, status } = req.query;
+
+    const where: any = {};
+
+    let targetUser: any = null;
+    if (employeeId && employeeId !== "ALL" && employeeId !== "all") {
+      targetUser = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { id: String(employeeId) },
+            { employeeId: String(employeeId) }
+          ]
+        },
+        include: { department: true }
+      });
+
+      if (!targetUser) {
+        res.status(404).json({ success: false, error: "NotFound", message: "Employee not found" });
+        return;
+      }
+
+      if (!isSuperAdmin(user) && user.id !== targetUser.id) {
+        const canAccess = await canAccessEmployee(user, targetUser.id);
+        if (!canAccess) {
+          res.status(403).json({ success: false, error: "Forbidden", message: "Access denied to employee reports" });
+          return;
+        }
+      }
+
+      where.userId = targetUser.id;
+    } else {
+      if (isSuperAdmin(user)) {
+        if (departmentId) where.user = { departmentId: String(departmentId) };
+      } else if (isManager(user)) {
+        const allowedDepts = [user.departmentId, ...user.managedDepartmentIds].filter(Boolean);
+        where.user = { departmentId: { in: allowedDepts } };
+      } else if (isTeamLead(user)) {
+        where.user = {
+          OR: [
+            { teamLeadId: user.id },
+            { teamMemberships: { some: { teamId: { in: user.ledTeamIds } } } },
+            { id: user.id },
+          ],
+        };
+      } else {
+        where.userId = user.id;
+      }
+    }
+
+    if (status && Object.values(ReportStatus).includes(status as ReportStatus)) {
+      where.status = status as ReportStatus;
+    }
+
+    if (startDate || endDate) {
+      where.reportingDate = {};
+      if (startDate) where.reportingDate.gte = new Date(String(startDate));
+      if (endDate) where.reportingDate.lte = new Date(String(endDate));
+    }
+
+    const reports = await prisma.dailyReport.findMany({
+      where,
+      include: {
+        user: { select: { fullName: true, employeeId: true, department: { select: { name: true } } } },
+        entries: {
+          include: {
+            task: { select: { taskCode: true, title: true } }
+          },
+          orderBy: { createdAt: "asc" }
+        },
+        reviews: {
+          include: { reviewer: { select: { fullName: true } } },
+          orderBy: { createdAt: "desc" },
+          take: 1
+        }
+      },
+      orderBy: [
+        { reportingDate: "desc" },
+        { createdAt: "desc" }
+      ]
+    });
+
+    const csvHeaders = "ReportingDate,EmployeeID,FullName,Department,ReportStatus,SubmittedAt,ActivityNumber,ActivityTitle,Description,HoursSpent,ProgressPercent,TaskCode,Deliverables,Blockers,SupportRequired,NextDayPlan,ReviewStatus,Reviewer,ReviewComments\n";
+
+    const rows: string[] = [];
+
+    for (const r of reports) {
+      const dateStr = r.reportingDate.toISOString().split("T")[0];
+      const submittedStr = r.submittedAt ? r.submittedAt.toISOString() : "Not Submitted";
+      const review = r.reviews[0];
+      const reviewStatus = review?.reviewStatus || "PENDING";
+      const reviewerName = review?.reviewer?.fullName || "None";
+      const reviewFeedback = (review?.comments || "").replace(/"/g, '""');
+
+      if (!r.entries || r.entries.length === 0) {
+        rows.push(
+          `"${dateStr}","${r.user.employeeId}","${r.user.fullName}","${r.user.department?.name || "None"}","${r.status}","${submittedStr}",0,"No entries","No activity logged",0,0,"","","","","","${reviewStatus}","${reviewerName}","${reviewFeedback}"`
+        );
+      } else {
+        r.entries.forEach((e, idx) => {
+          const actTitle = (e.activityTitle || "").replace(/"/g, '""');
+          const actDesc = (e.description || "").replace(/"/g, '""');
+          const hours = e.hoursSpent !== null && e.hoursSpent !== undefined ? e.hoursSpent : "Unlogged";
+          const prog = e.progressPercentage || 0;
+          const taskCode = (e.task?.taskCode || "").replace(/"/g, '""');
+          const deliv = (e.deliverables || "").replace(/"/g, '""');
+          const block = (e.blockers || "").replace(/"/g, '""');
+          const supp = (e.supportRequired || "").replace(/"/g, '""');
+          const nextPlan = (e.nextDayPlan || "").replace(/"/g, '""');
+
+          rows.push(
+            `"${dateStr}","${r.user.employeeId}","${r.user.fullName}","${r.user.department?.name || "None"}","${r.status}","${submittedStr}",${idx + 1},"${actTitle}","${actDesc}","${hours}",${prog},"${taskCode}","${deliv}","${block}","${supp}","${nextPlan}","${reviewStatus}","${reviewerName}","${reviewFeedback}"`
+          );
+        });
+      }
+    }
+
+    const safePersonName = targetUser ? targetUser.fullName.replace(/[^a-zA-Z0-9]/g, "_") : "All_Employees";
+    const dateRangeStr = startDate && endDate ? `${startDate}_to_${endDate}` : "all_records";
+    const filename = `syncspace_reports_${safePersonName}_${dateRangeStr}.csv`;
+
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.status(200).send(csvHeaders + rows.join("\n"));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getDailyReportsSummary(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const user = req.user!;
+    const { startDate, endDate, employeeId, departmentId } = req.query;
+
+    const where: any = {};
+
+    let targetUser: any = null;
+    if (employeeId && employeeId !== "ALL" && employeeId !== "all") {
+      targetUser = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { id: String(employeeId) },
+            { employeeId: String(employeeId) }
+          ]
+        },
+        include: { department: true }
+      });
+
+      if (!targetUser) {
+        res.status(404).json({ success: false, error: "NotFound", message: "Employee not found" });
+        return;
+      }
+
+      if (!isSuperAdmin(user) && user.id !== targetUser.id) {
+        const canAccess = await canAccessEmployee(user, targetUser.id);
+        if (!canAccess) {
+          res.status(403).json({ success: false, error: "Forbidden", message: "Access denied to employee reports" });
+          return;
+        }
+      }
+
+      where.userId = targetUser.id;
+    } else {
+      if (isSuperAdmin(user)) {
+        if (departmentId) where.user = { departmentId: String(departmentId) };
+      } else if (isManager(user)) {
+        const allowedDepts = [user.departmentId, ...user.managedDepartmentIds].filter(Boolean);
+        where.user = { departmentId: { in: allowedDepts } };
+      } else if (isTeamLead(user)) {
+        where.user = {
+          OR: [
+            { teamLeadId: user.id },
+            { teamMemberships: { some: { teamId: { in: user.ledTeamIds } } } },
+            { id: user.id },
+          ],
+        };
+      } else {
+        where.userId = user.id;
+      }
+    }
+
+    if (startDate || endDate) {
+      where.reportingDate = {};
+      if (startDate) where.reportingDate.gte = new Date(String(startDate));
+      if (endDate) where.reportingDate.lte = new Date(String(endDate));
+    }
+
+    const reports = await prisma.dailyReport.findMany({
+      where,
+      include: {
+        user: { select: { id: true, fullName: true, employeeId: true, department: { select: { name: true } } } },
+        entries: {
+          include: {
+            task: { select: { taskCode: true, title: true } }
+          }
+        },
+        reviews: {
+          include: { reviewer: { select: { fullName: true } } },
+          orderBy: { createdAt: "desc" },
+          take: 1
+        }
+      },
+      orderBy: { reportingDate: "desc" }
+    });
+
+    const totalReports = reports.length;
+    let submittedReports = 0;
+    let approvedReports = 0;
+    let revisionRequestedReports = 0;
+    let draftReports = 0;
+    let underReviewReports = 0;
+
+    let totalActivities = 0;
+    let completedActivities = 0;
+    let inProgressActivities = 0;
+    let totalHoursRecorded = 0;
+    let totalBlockers = 0;
+
+    const activityTitlesMap: Record<string, { count: number; totalHours: number }> = {};
+    const recentBlockers: Array<{ date: string; employeeName: string; title: string; blocker: string }> = [];
+
+    reports.forEach((r) => {
+      if (r.status === "APPROVED") approvedReports++;
+      else if (r.status === "SUBMITTED") submittedReports++;
+      else if (r.status === "REVISION_REQUESTED") revisionRequestedReports++;
+      else if (r.status === "DRAFT") draftReports++;
+      else if (r.status === "UNDER_REVIEW") underReviewReports++;
+
+      const dateStr = r.reportingDate.toISOString().split("T")[0];
+
+      r.entries.forEach((e) => {
+        totalActivities++;
+        if (e.progressPercentage >= 100 || e.status === "COMPLETED") {
+          completedActivities++;
+        } else {
+          inProgressActivities++;
+        }
+
+        if (e.hoursSpent && e.hoursSpent > 0) {
+          totalHoursRecorded += e.hoursSpent;
+        }
+
+        if (e.blockers && e.blockers.trim().length > 0) {
+          totalBlockers++;
+          if (recentBlockers.length < 10) {
+            recentBlockers.push({
+              date: dateStr,
+              employeeName: r.user.fullName,
+              title: e.activityTitle,
+              blocker: e.blockers
+            });
+          }
+        }
+
+        const normTitle = e.activityTitle.trim();
+        if (normTitle) {
+          if (!activityTitlesMap[normTitle]) {
+            activityTitlesMap[normTitle] = { count: 0, totalHours: 0 };
+          }
+          activityTitlesMap[normTitle].count++;
+          if (e.hoursSpent) activityTitlesMap[normTitle].totalHours += e.hoursSpent;
+        }
+      });
+    });
+
+    const topActivities = Object.entries(activityTitlesMap)
+      .map(([title, stats]) => ({ title, count: stats.count, totalHours: Math.round(stats.totalHours * 10) / 10 }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    const avgHoursPerReport = totalReports > 0 ? Math.round((totalHoursRecorded / totalReports) * 10) / 10 : 0;
+    const complianceRate = totalReports > 0 ? Math.round(((submittedReports + approvedReports) / totalReports) * 100) : 0;
+
+    const personLabel = targetUser ? `${targetUser.fullName} (${targetUser.employeeId})` : "Company-wide workforce";
+    const periodLabel = startDate && endDate ? `from ${startDate} to ${endDate}` : "across all recorded dates";
+    const executiveSummaryText = `${personLabel} has ${totalReports} task sheet(s) logged ${periodLabel}. Total recorded productive hours stand at ${totalHoursRecorded.toFixed(1)}h (averaging ${avgHoursPerReport}h/sheet) across ${totalActivities} distinct activity entries. ${completedActivities} activities are finalized (100%), while ${inProgressActivities} remain ongoing. Review status: ${approvedReports} approved, ${revisionRequestedReports} requiring revision, and ${submittedReports + underReviewReports} pending evaluation. ${totalBlockers > 0 ? `${totalBlockers} operational blocker(s) were flagged and documented.` : "Zero active blockers were encountered."}`;
+
+    res.json({
+      success: true,
+      data: {
+        scope: targetUser ? "SINGLE_PERSON" : "ALL_EMPLOYEES",
+        targetUser: targetUser ? {
+          id: targetUser.id,
+          fullName: targetUser.fullName,
+          employeeId: targetUser.employeeId,
+          jobTitle: targetUser.jobTitle,
+          email: targetUser.email,
+          department: targetUser.department ? { name: targetUser.department.name, code: targetUser.department.code } : null
+        } : null,
+        metrics: {
+          totalReports,
+          submittedReports,
+          approvedReports,
+          revisionRequestedReports,
+          draftReports,
+          underReviewReports,
+          totalActivities,
+          completedActivities,
+          inProgressActivities,
+          totalHoursRecorded: Math.round(totalHoursRecorded * 10) / 10,
+          avgHoursPerReport,
+          totalBlockers,
+          complianceRate
+        },
+        topActivities,
+        recentBlockers,
+        statusDistribution: {
+          APPROVED: approvedReports,
+          SUBMITTED: submittedReports,
+          UNDER_REVIEW: underReviewReports,
+          REVISION_REQUESTED: revisionRequestedReports,
+          DRAFT: draftReports
+        },
+        executiveSummaryText
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+

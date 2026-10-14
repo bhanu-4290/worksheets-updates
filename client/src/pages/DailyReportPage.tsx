@@ -24,8 +24,12 @@ import {
   GitBranch,
   X,
   ArrowRight,
+  Download,
+  Sparkles,
+  FileSpreadsheet,
 } from "lucide-react";
 import { EmployeeFlowModal } from "../components/EmployeeFlowModal";
+import { DailyReportsSummaryModal } from "../components/DailyReportsSummaryModal";
 
 function toLocalYMD(date: Date): string {
   const y = date.getFullYear();
@@ -53,6 +57,8 @@ export const DailyReportPage: React.FC = () => {
   const [selectedUserId, setSelectedUserId] = useState<string>(user?.id || "");
   const [teamUsers, setTeamUsers] = useState<any[]>([]);
   const [showEmployeeFlow, setShowEmployeeFlow] = useState(false);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [downloadingCsv, setDownloadingCsv] = useState(false);
   const [previewReport, setPreviewReport] = useState<DailyReport | null>(null);
 
   // Calendar Month State
@@ -96,6 +102,12 @@ export const DailyReportPage: React.FC = () => {
     user?.role === "SUPER_ADMIN" || user?.role === "MANAGER" || user?.role === "TEAM_LEAD";
   const isViewingSelf = !selectedUserId || selectedUserId === user?.id;
 
+  const selectedUserObj = useMemo(() => {
+    if (selectedUserId === "ALL") return { fullName: "All Employees (Organization-Wide)" };
+    if (selectedUserId === user?.id) return user;
+    return teamUsers.find((u) => u.id === selectedUserId) || user;
+  }, [selectedUserId, user, teamUsers]);
+
   useEffect(() => {
     if (user?.id && !selectedUserId) {
       setSelectedUserId(user.id);
@@ -130,6 +142,10 @@ export const DailyReportPage: React.FC = () => {
   };
 
   const loadExistingReportForDate = async (dateStr: string, targetUserId: string) => {
+    if (targetUserId === "ALL") {
+      setActiveReportForDate(null);
+      return;
+    }
     try {
       setLoading(true);
       const res: any = await api.get(
@@ -176,7 +192,7 @@ export const DailyReportPage: React.FC = () => {
 
   const loadHistoryReports = async (targetUserId?: string) => {
     try {
-      const uid = targetUserId || selectedUserId || user?.id || "";
+      const uid = targetUserId !== undefined ? targetUserId : (selectedUserId || user?.id || "");
       const params = new URLSearchParams();
       if (uid) params.set("employeeId", uid);
       if (statusFilter) params.set("status", statusFilter);
@@ -184,6 +200,55 @@ export const DailyReportPage: React.FC = () => {
       if (res.success) setHistoryReports(res.data || []);
     } catch {
       // Ignored
+    }
+  };
+
+  const handleDownloadCsv = async (targetUserId?: string, targetUserName?: string) => {
+    try {
+      setDownloadingCsv(true);
+      const uid = targetUserId !== undefined ? targetUserId : selectedUserId;
+      const params = new URLSearchParams();
+      if (uid) params.set("employeeId", uid);
+      if (statusFilter) params.set("status", statusFilter);
+
+      const token =
+        localStorage.getItem("syncspace_token") ||
+        localStorage.getItem("worktrack_token") ||
+        "";
+      const res = await fetch(`/api/v1/daily-reports/export?${params.toString()}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.message || `Download failed with status ${res.status}`);
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const targetUser = teamUsers.find((u) => u.id === uid);
+      const rawLabel =
+        targetUserName ||
+        (uid === "ALL"
+          ? "All-Employees"
+          : uid === user?.id
+          ? user?.fullName
+          : targetUser?.fullName || "Employee");
+      const userLabel = (rawLabel || "Employee").replace(/[^a-zA-Z0-9_-]/g, "_");
+      a.download = `SYNC_SPACE_Daily_Reports_${userLabel}_${toLocalYMD(new Date())}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err: any) {
+      console.error("Export CSV error:", err);
+      setMessage({ type: "error", text: err.message || "Failed to download daily reports CSV." });
+    } finally {
+      setDownloadingCsv(false);
     }
   };
 
@@ -412,8 +477,11 @@ export const DailyReportPage: React.FC = () => {
                 <select
                   value={selectedUserId}
                   onChange={(e) => setSelectedUserId(e.target.value)}
-                  className="bg-transparent text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none"
+                  className="bg-transparent text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
                 >
+                  {user?.role === "SUPER_ADMIN" && (
+                    <option value="ALL">🌐 All Employees (Organization-Wide)</option>
+                  )}
                   <option value={user?.id || ""}>My Task Sheet ({user?.fullName})</option>
                   {teamUsers
                     .filter((u) => u.id !== user?.id)
@@ -462,6 +530,39 @@ export const DailyReportPage: React.FC = () => {
               All Previous Sheets ({historyReports.length})
             </button>
           </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowSummaryModal(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-semibold hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors cursor-pointer shadow-2xs"
+              title="Generate AI-Assisted Executive Summary of Daily Reports"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+              <span className="hidden md:inline">Executive</span> Summary
+            </button>
+
+            <button
+              type="button"
+              disabled={downloadingCsv}
+              onClick={() => handleDownloadCsv()}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors cursor-pointer disabled:opacity-50 shadow-2xs"
+              title={
+                selectedUserId === "ALL"
+                  ? "Download all organization daily reports as CSV"
+                  : `Download ${selectedUserObj?.fullName}'s daily reports as CSV`
+              }
+            >
+              <Download className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>
+                {downloadingCsv
+                  ? "Exporting..."
+                  : selectedUserId === "ALL"
+                  ? "Export All (CSV)"
+                  : "Export CSV"}
+              </span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -469,6 +570,23 @@ export const DailyReportPage: React.FC = () => {
       {/* INTERACTIVE TASK SHEET CALENDAR & MISSED DAYS TRACKER */}
       {/* ======================================================== */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 sm:p-4.5 shadow-xs space-y-3.5">
+        {selectedUserId === "ALL" && (
+          <div className="p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs text-blue-900 dark:text-blue-200">
+            <div className="flex items-center gap-2">
+              <Info className="w-4 h-4 text-blue-600 shrink-0" />
+              <span>
+                <strong>Admin Organization-Wide View Active:</strong> Viewing aggregated data across all team members. Use <strong>All Previous Sheets ({historyReports.length})</strong> or <strong>Executive Summary</strong> to review company-wide metrics, or select an individual employee from the dropdown above to inspect their monthly calendar.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab("history")}
+              className="px-3 py-1 rounded bg-blue-600 text-white font-semibold text-xs hover:bg-blue-700 transition-colors shrink-0 cursor-pointer self-start sm:self-auto"
+            >
+              View All Sheets
+            </button>
+          </div>
+        )}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-md p-1">
@@ -1151,7 +1269,7 @@ export const DailyReportPage: React.FC = () => {
       {/* ======================================================== */}
       {activeTab === "history" && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4 text-slate-400" />
               <select
@@ -1160,7 +1278,7 @@ export const DailyReportPage: React.FC = () => {
                   setStatusFilter(e.target.value);
                   loadHistoryReports();
                 }}
-                className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300"
+                className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
               >
                 <option value="">All Statuses</option>
                 <option value="DRAFT">Draft</option>
@@ -1170,9 +1288,35 @@ export const DailyReportPage: React.FC = () => {
                 <option value="REVISION_REQUESTED">Revision Requested</option>
               </select>
             </div>
-            <span className="text-xs text-slate-400">
-              Found {historyReports.length} task sheets
-            </span>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowSummaryModal(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/70 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-xs font-semibold hover:bg-indigo-100 transition-colors cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                Executive Summary
+              </button>
+
+              <button
+                type="button"
+                disabled={downloadingCsv}
+                onClick={() => handleDownloadCsv()}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-semibold hover:bg-emerald-100 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <Download className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                {downloadingCsv
+                  ? "Exporting..."
+                  : selectedUserId === "ALL"
+                  ? "Download All (CSV)"
+                  : "Download CSV"}
+              </button>
+
+              <span className="text-xs text-slate-400 pl-1">
+                Found {historyReports.length} task sheets
+              </span>
+            </div>
           </div>
 
           {historyReports.length === 0 ? (
@@ -1317,16 +1461,30 @@ export const DailyReportPage: React.FC = () => {
                   </div>
 
                   {/* Actions footer */}
-                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
                     <button
                       type="button"
                       onClick={() => {
                         handleSelectCalendarDate(previewReport.reportingDate);
                         setActiveTab("form");
                       }}
-                      className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 font-semibold hover:underline"
+                      className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 font-semibold hover:underline cursor-pointer"
                     >
                       <Calendar className="w-3.5 h-3.5" /> Edit on Calendar
+                    </button>
+                    <button
+                      type="button"
+                      disabled={downloadingCsv}
+                      onClick={() =>
+                        handleDownloadCsv(
+                          previewReport.userId || previewReport.user?.id,
+                          previewReport.user?.fullName
+                        )
+                      }
+                      className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold hover:underline cursor-pointer"
+                      title={`Download ${previewReport.user?.fullName}'s full reports CSV`}
+                    >
+                      <Download className="w-3.5 h-3.5" /> Export {previewReport.user?.fullName?.split(" ")[0]}'s CSV
                     </button>
                     <Link
                       to={`/reports/${previewReport.id}`}
@@ -1345,6 +1503,20 @@ export const DailyReportPage: React.FC = () => {
       <EmployeeFlowModal
         isOpen={showEmployeeFlow}
         onClose={() => setShowEmployeeFlow(false)}
+      />
+
+      <DailyReportsSummaryModal
+        isOpen={showSummaryModal}
+        onClose={() => setShowSummaryModal(false)}
+        targetUserId={selectedUserId}
+        targetUserName={
+          selectedUserId === "ALL"
+            ? "All Employees (Organization-Wide)"
+            : selectedUserId === user?.id
+            ? user?.fullName
+            : teamUsers.find((u) => u.id === selectedUserId)?.fullName || "Employee"
+        }
+        onDownloadCsv={(uid) => handleDownloadCsv(uid)}
       />
     </div>
   );

@@ -5,6 +5,8 @@ import {
   getDailyReportById,
   saveDailyReport,
   resubmitReport,
+  exportDailyReports,
+  getDailyReportsSummary,
 } from "../controllers/daily-report.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 
@@ -14,6 +16,8 @@ router.use(authenticate);
 
 router.get("/", getDailyReports);
 router.get("/today", getTodayReport);
+router.get("/export", exportDailyReports);
+router.get("/summary", getDailyReportsSummary);
 router.get("/:id", getDailyReportById);
 router.post("/", saveDailyReport);
 router.post("/:id/resubmit", resubmitReport);
