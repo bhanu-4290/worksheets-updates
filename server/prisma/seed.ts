@@ -5,7 +5,7 @@ export async function runSeed() {
   console.log("==> Running MATRIX Official Database Seed (28 Real Employees, No L1 Data)...");
   await initDatabase();
 
-  const passwordHash = await bcrypt.hash("Matrix@4290", 10);
+  const passwordHash = await bcrypt.hash("Matrix@123", 10);
 
   // 1. Company Settings
   await prisma.companySetting.deleteMany();
@@ -565,27 +565,8 @@ export async function runSeed() {
     },
   });
 
-  // 8. Projects
-  console.log("==> Creating Operational Projects...");
-  const projects = [
-    { name: "Data Center Infrastructure & EMS Systems", code: "DC-01", deptId: deptDCInfra.id },
-    { name: "Video Management & CCTV 360 Co-ordination", code: "VMS-01", deptId: deptAnalytics.id },
-    { name: "DC Manager 3 & Technical Support Operations", code: "TECH-01", deptId: deptDCOpsTech.id },
-    { name: "Video Surveillance Operations & DC VMS", code: "VMS-02", deptId: deptDCOpsVMS.id },
-    { name: "Enterprise Monitoring & Facilities EMS", code: "EMS-01", deptId: deptDCOpsEMS.id },
-    { name: "DC Network Systems & Connectivity Operations", code: "NET-01", deptId: deptDCOpsNet.id },
-  ];
-  for (const p of projects) {
-    await prisma.project.create({
-      data: {
-        name: p.name,
-        code: p.code,
-        description: `Project execution for ${p.name}`,
-        departmentId: p.deptId,
-        status: "ACTIVE",
-      },
-    });
-  }
+  // 8. Projects (Removed - no projects seeded)
+  console.log("==> Skipping Project creation (Projects data removed)...");
 
   // 9. Initial Welcome Announcement
   console.log("==> Creating Welcome Announcement...");

@@ -25,6 +25,12 @@ export function getDbClient(): { prisma: PrismaClient; pglite: PGlite | null } {
     if (!fs.existsSync(pgDataDir)) {
       fs.mkdirSync(pgDataDir, { recursive: true });
     }
+    const pidFile = path.join(pgDataDir, "postmaster.pid");
+    if (fs.existsSync(pidFile)) {
+      try {
+        fs.unlinkSync(pidFile);
+      } catch {}
+    }
     pgliteInstance = new PGlite(pgDataDir);
     const adapter = new PrismaPGlite(pgliteInstance);
     prismaInstance = new PrismaClient({ adapter });
@@ -38,6 +44,7 @@ export async function initDatabase(): Promise<void> {
 
   if (pglite) {
     try {
+      await pglite.waitReady;
       // Check if users table exists
       const res = await pglite.query("SELECT 1 FROM information_schema.tables WHERE table_name = 'users';");
       if (res.rows.length === 0) {

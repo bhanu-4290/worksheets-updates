@@ -125,11 +125,11 @@ export function App() {
               <Route path="reports" element={<DailyReportPage />} />
               <Route path="reports/new" element={<DailyReportPage />} />
               <Route path="reports/:id" element={<DailyReportDetailPage />} />
-              <Route path="tasks" element={<TasksPage />} />
-              <Route path="tasks/:id" element={<TaskDetailPage />} />
+              <Route path="tasks" element={<Navigate to="/dashboard" replace />} />
+              <Route path="tasks/:id" element={<Navigate to="/dashboard" replace />} />
               <Route path="analytics" element={<AnalyticsPage />} />
               <Route path="directory" element={<DirectoryPage />} />
-              <Route path="projects" element={<ProjectsPage />} />
+              <Route path="projects" element={<Navigate to="/dashboard" replace />} />
               <Route path="chat" element={<ChatPage />} />
               <Route path="announcements" element={<AnnouncementsPage />} />
               <Route path="notifications" element={<NotificationsPage />} />

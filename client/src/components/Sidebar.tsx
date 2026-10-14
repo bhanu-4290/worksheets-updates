@@ -4,9 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import {
   LayoutDashboard,
   FileText,
-  CheckSquare,
   Users,
-  FolderKanban,
   Building2,
   Network,
   UserCog,
@@ -136,7 +134,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="space-y-0.5">
               {navItem("/dashboard", "Dashboard", LayoutDashboard)}
               {navItem("/reports", "Daily Reports", FileText)}
-              {navItem("/tasks", "Task Board", CheckSquare)}
             </div>
           </div>
 
@@ -182,7 +179,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="w-6 mx-auto mb-1.5 border-b border-slate-200 dark:border-slate-800" />
             )}
             <div className="space-y-0.5">
-              {navItem("/projects", "Projects", FolderKanban)}
               {navItem("/directory", "Directory", Users)}
               {navItem("/how-to-use", "How to Use", BookOpen)}
             </div>

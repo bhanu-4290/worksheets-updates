@@ -989,7 +989,7 @@ export const DailyReportPage: React.FC = () => {
             <div className="flex items-start gap-2.5 p-3 rounded-lg bg-blue-50/70 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 max-w-md text-xs text-blue-900 dark:text-blue-300">
               <Info className="w-4 h-4 shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
               <span>
-                <strong>Persistent Task History:</strong> Tasks updated yesterday or last week remain visible on the calendar and automatically sync progress to the Task Board.
+                <strong>Daily Task History:</strong> Work entries submitted on previous days remain permanently saved on the calendar and can be reviewed or updated anytime.
               </span>
             </div>
           </div>
@@ -1051,50 +1051,20 @@ export const DailyReportPage: React.FC = () => {
                   )}
                 </div>
 
-                {/* Title & Linked Task */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="md:col-span-2">
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Activity Title *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      disabled={!isViewingSelf}
-                      placeholder="e.g. Implement Role Scoping Middleware"
-                      value={entry.activityTitle}
-                      onChange={(e) => updateEntry(index, "activityTitle", e.target.value)}
-                      className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-70"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Link to Assigned Task (Syncs Progress)
-                    </label>
-                    <select
-                      disabled={!isViewingSelf}
-                      value={entry.taskId || ""}
-                      onChange={(e) => {
-                        const selectedTaskId = e.target.value || null;
-                        updateEntry(index, "taskId", selectedTaskId);
-                        if (selectedTaskId && !entry.activityTitle) {
-                          const foundTask = tasks.find((t) => t.id === selectedTaskId);
-                          if (foundTask) {
-                            updateEntry(index, "activityTitle", foundTask.title);
-                          }
-                        }
-                      }}
-                      className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-70"
-                    >
-                      <option value="">-- No specific task --</option>
-                      {tasks.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.taskCode}: {t.title} ({t.progressPercentage}%)
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                {/* Activity Title */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Activity Title *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    disabled={!isViewingSelf}
+                    placeholder="e.g. Implement DC Network Routing Configuration"
+                    value={entry.activityTitle}
+                    onChange={(e) => updateEntry(index, "activityTitle", e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-70"
+                  />
                 </div>
 
                 {/* Description */}

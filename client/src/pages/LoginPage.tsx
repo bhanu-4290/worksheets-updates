@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
-import { ShieldCheck, LogIn, AlertCircle, Users, BookOpen } from "lucide-react";
+import { ShieldCheck, LogIn, AlertCircle } from "lucide-react";
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("Matrix@4290");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,21 +22,6 @@ export const LoginPage: React.FC = () => {
       navigate("/dashboard");
     } catch (err: any) {
       setError(err.message || "Failed to sign in. Please verify your credentials.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDemoLogin = async (demoIdentifier: string) => {
-    setEmail(demoIdentifier);
-    setPassword("Matrix@4290");
-    setError(null);
-    setLoading(true);
-    try {
-      await login(demoIdentifier, "Matrix@4290");
-      navigate("/dashboard");
-    } catch (err: any) {
-      setError(err.message || "Demo login failed");
     } finally {
       setLoading(false);
     }
@@ -131,121 +116,6 @@ export const LoginPage: React.FC = () => {
                 .
               </p>
             </form>
-
-            {/* Quick Team Personas */}
-            <div className="mt-6 pt-5 border-t border-slate-700">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-300 mb-3">
-                <div className="flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5 text-blue-400" />
-                  <span>Quick Role Sign-In (Password: Matrix@4290)</span>
-                </div>
-                <Link
-                  to="/how-to-use"
-                  className="inline-flex items-center gap-1 text-[11px] text-blue-400 hover:underline"
-                >
-                  <BookOpen className="w-3 h-3" /> How to Use
-                </Link>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <button
-                  type="button"
-                  onClick={() => handleDemoLogin("sriaditya.c@matrixst.in")}
-                  className="p-2.5 rounded-md border border-yellow-500/60 bg-yellow-400/20 text-yellow-100 hover:bg-yellow-400/30 text-left transition-colors cursor-pointer"
-                >
-                  <div className="font-bold flex items-center justify-between">
-                    <span className="truncate">Sri Aditya</span>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-yellow-400 text-slate-950 font-bold shrink-0">
-                      ADMIN
-                    </span>
-                  </div>
-                  <div className="text-[10px] text-yellow-200/90 truncate mt-0.5">
-                    M-000925 • Super Admin
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleDemoLogin("rahul.d@matrixst.in")}
-                  className="p-2.5 rounded-md border border-orange-500/50 bg-orange-950/40 text-orange-100 hover:bg-orange-900/50 text-left transition-colors cursor-pointer"
-                >
-                  <div className="font-bold flex items-center justify-between">
-                    <span className="truncate">Rahul Kiran</span>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/30 text-orange-300 font-mono shrink-0">
-                      MANAGER
-                    </span>
-                  </div>
-                  <div className="text-[10px] text-orange-300/80 truncate mt-0.5">
-                    M-000844 • Manager
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleDemoLogin("phaneeswaranadh.a@matrixst.in")}
-                  className="p-2.5 rounded-md border border-orange-500/50 bg-orange-950/40 text-orange-100 hover:bg-orange-900/50 text-left transition-colors cursor-pointer"
-                >
-                  <div className="font-bold flex items-center justify-between">
-                    <span className="truncate">Phaneeshwarnadh</span>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/30 text-orange-300 font-mono shrink-0">
-                      MANAGER
-                    </span>
-                  </div>
-                  <div className="text-[10px] text-orange-300/80 truncate mt-0.5">
-                    M-000899 • Manager
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleDemoLogin("akhil.b@matrixst.in")}
-                  className="p-2.5 rounded-md border border-orange-500/50 bg-orange-950/40 text-orange-100 hover:bg-orange-900/50 text-left transition-colors cursor-pointer"
-                >
-                  <div className="font-bold flex items-center justify-between">
-                    <span className="truncate">Akhil Babu</span>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/30 text-orange-300 font-mono shrink-0">
-                      MANAGER
-                    </span>
-                  </div>
-                  <div className="text-[10px] text-orange-300/80 truncate mt-0.5">
-                    M-000233 • Manager
-                  </div>
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 text-xs mt-2">
-                <button
-                  type="button"
-                  onClick={() => handleDemoLogin("gbhanu2811@gmail.com")}
-                  className="p-2.5 rounded-md border border-emerald-500/40 bg-emerald-950/30 text-emerald-100 hover:bg-emerald-900/40 text-left transition-colors cursor-pointer"
-                >
-                  <div className="font-bold flex items-center justify-between">
-                    <span className="truncate">G Bhanu Kiran</span>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono shrink-0">
-                      LEAD / DC
-                    </span>
-                  </div>
-                  <div className="text-[10px] text-emerald-300/80 truncate mt-0.5">
-                    M-000894 • DC Lead
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleDemoLogin("jannurajanaveen@gmail.com")}
-                  className="p-2.5 rounded-md border border-emerald-500/40 bg-emerald-950/30 text-emerald-100 hover:bg-emerald-900/40 text-left transition-colors cursor-pointer"
-                >
-                  <div className="font-bold flex items-center justify-between">
-                    <span className="truncate">Jannu Raja Naveen</span>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono shrink-0">
-                      LEAD / DC
-                    </span>
-                  </div>
-                  <div className="text-[10px] text-emerald-300/80 truncate mt-0.5">
-                    M-000764 • DC Lead
-                  </div>
-                </button>
-              </div>
-            </div>
           </div>
 
           <div className="text-center mt-5 text-xs text-slate-400 flex flex-col items-center justify-center gap-1 font-medium">

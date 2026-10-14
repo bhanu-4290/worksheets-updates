@@ -6,12 +6,10 @@ import { DailyReportPage } from "./DailyReportPage";
 import { Link } from "react-router-dom";
 import {
   FileText,
-  CheckSquare,
   Clock,
   AlertTriangle,
   Users,
   Building2,
-  FolderKanban,
   ArrowRight,
   ShieldAlert,
   Megaphone,
@@ -150,8 +148,6 @@ export const DashboardPage: React.FC = () => {
     totalEmployees = 28,
     totalDepartments = 7,
     totalTeams = 6,
-    totalProjects = 0,
-    activeTasks = 0,
     todaySubmissions = 0,
     missingSubmissionsToday = Math.max(0, totalEmployees - todaySubmissions),
     submissionRate = totalEmployees > 0 ? Math.round((todaySubmissions / totalEmployees) * 100) : 0,
@@ -378,9 +374,9 @@ export const DashboardPage: React.FC = () => {
             </div>
           </div>
 
-          {/* 2. COMPACT STATS STRIP (Employees, Departments, Teams, Projects, Tasks) */}
+          {/* 2. COMPACT STATS STRIP (Employees, Departments, Teams, Reports) */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-3 shadow-xs">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 dark:divide-slate-800 gap-2 sm:gap-0">
+            <div className="grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 dark:divide-slate-800 gap-2 sm:gap-0">
               <Link to="/directory" className="px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-colors group">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
                   <Users className="w-3 h-3 text-slate-400" /> Active Roster
@@ -417,27 +413,15 @@ export const DashboardPage: React.FC = () => {
                 </div>
               </Link>
 
-              <Link to="/projects" className="px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-colors group">
+              <Link to="/reports" className="px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-colors group">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                  <FolderKanban className="w-3 h-3 text-slate-400" /> Projects
+                  <FileText className="w-3 h-3 text-slate-400" /> Daily Reports
                 </span>
                 <div className="flex items-baseline gap-1.5 mt-0.5">
                   <span className="text-xl font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
-                    {totalProjects}
+                    {todaySubmissions}
                   </span>
-                  <span className="text-[10px] text-slate-400">deliverables</span>
-                </div>
-              </Link>
-
-              <Link to="/tasks" className="px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-colors group">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                  <CheckSquare className="w-3 h-3 text-slate-400" /> Active Tasks
-                </span>
-                <div className="flex items-baseline gap-1.5 mt-0.5">
-                  <span className="text-xl font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
-                    {activeTasks}
-                  </span>
-                  <span className="text-[10px] text-slate-400">on board</span>
+                  <span className="text-[10px] text-slate-400">submitted today</span>
                 </div>
               </Link>
             </div>
