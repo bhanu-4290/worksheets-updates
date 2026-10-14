@@ -44,7 +44,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           }`}
         >
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
-            <span>MATRIX - WorkTrack Operations Platform (Support: gbhanu2811@gmail.com | 7337504290)</span>
+            <span>MATRIX - SYNC SPACE Operations Platform (Support: gbhanu2811@gmail.com | 7337504290)</span>
             <div className="flex flex-wrap items-center gap-4 font-medium">
               <Link to="/how-to-use" className="hover:text-blue-600 dark:hover:text-blue-400 hover:underline">
                 How to Use

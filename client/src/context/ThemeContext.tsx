@@ -11,11 +11,12 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem("worktrack_theme");
+    const saved = localStorage.getItem("syncspace_theme") || localStorage.getItem("worktrack_theme");
     return (saved as Theme) || "light";
   });
 
   useEffect(() => {
+    localStorage.setItem("syncspace_theme", theme);
     localStorage.setItem("worktrack_theme", theme);
     const root = document.documentElement;
     if (theme === "dark") {

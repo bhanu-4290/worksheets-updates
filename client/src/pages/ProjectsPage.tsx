@@ -114,7 +114,7 @@ export const ProjectsPage: React.FC = () => {
             <input
               type="text"
               required
-              placeholder="e.g. WorkTrack Enterprise 2.0"
+              placeholder="e.g. SYNC SPACE 2.0"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"

@@ -527,7 +527,7 @@ export async function exportReportCsv(req: Request, res: Response, next: NextFun
       .join("\n");
 
     res.setHeader("Content-Type", "text/csv");
-    res.setHeader("Content-Disposition", "attachment; filename=worktrack_reports_export.csv");
+    res.setHeader("Content-Disposition", "attachment; filename=syncspace_reports_export.csv");
     res.status(200).send(csvHeaders + csvRows);
   } catch (err) {
     next(err);

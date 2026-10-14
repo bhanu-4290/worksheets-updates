@@ -7,12 +7,12 @@ export const TermsAndConditionsPage: React.FC = () => {
   const { user } = useAuth();
 
   useEffect(() => {
-    document.title = "Terms & Conditions | WorkTrack by MATRIX";
+    document.title = "Terms & Conditions | SYNC SPACE by MATRIX";
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {
       metaDesc.setAttribute(
         "content",
-        "Terms and Conditions governing access to and use of the WorkTrack internal enterprise work management platform by MATRIX."
+        "Terms and Conditions governing access to and use of the SYNC SPACE internal enterprise work management platform by MATRIX."
       );
     }
   }, []);
@@ -43,7 +43,7 @@ export const TermsAndConditionsPage: React.FC = () => {
             1. Acceptance of Terms
           </h2>
           <p>
-            By accessing or signing in to the WorkTrack platform operated by <strong>MATRIX</strong>, you agree to comply with and be bound by these Terms &amp; Conditions and all applicable company workplace policies. If you do not agree to these terms, you must not access or use the platform.
+            By accessing or signing in to the SYNC SPACE platform operated by <strong>MATRIX</strong>, you agree to comply with and be bound by these Terms &amp; Conditions and all applicable company workplace policies. If you do not agree to these terms, you must not access or use the platform.
           </p>
         </section>
 
@@ -52,7 +52,7 @@ export const TermsAndConditionsPage: React.FC = () => {
             2. Authorized Use of the Platform
           </h2>
           <p>
-            WorkTrack is an internal operational system provided to active employees, managers, team leads, and administrators for recording daily work updates, managing assigned tasks, reviewing team submissions, and conducting internal workplace communication. Access is restricted to individuals who have been issued an authorized account by a Super Admin.
+            SYNC SPACE is an internal operational system provided to active employees, managers, team leads, and administrators for recording daily work updates, managing assigned tasks, reviewing team submissions, and conducting internal workplace communication. Access is restricted to individuals who have been issued an authorized account by a Super Admin.
           </p>
         </section>
 
@@ -73,7 +73,7 @@ export const TermsAndConditionsPage: React.FC = () => {
             4. Intellectual Property
           </h2>
           <p>
-            All software code, database schemas, user interface designs, project records, work reports, and documentation within WorkTrack are the exclusive property of MATRIX or its licensors. Users are granted a limited, revocable, non-transferable license to use the platform solely in connection with their employment duties.
+            All software code, database schemas, user interface designs, project records, work reports, and documentation within SYNC SPACE are the exclusive property of MATRIX or its licensors. Users are granted a limited, revocable, non-transferable license to use the platform solely in connection with their employment duties.
           </p>
         </section>
 
@@ -82,7 +82,7 @@ export const TermsAndConditionsPage: React.FC = () => {
             5. Internal Platform Scope (No Consumer Billing)
           </h2>
           <p>
-            WorkTrack is an internal enterprise management tool provided by MATRIX to its personnel. No consumer purchases, public subscriptions, or payment processing occur on this website.
+            SYNC SPACE is an internal enterprise management tool provided by MATRIX to its personnel. No consumer purchases, public subscriptions, or payment processing occur on this website.
           </p>
         </section>
 
@@ -91,7 +91,7 @@ export const TermsAndConditionsPage: React.FC = () => {
             6. Disclaimers
           </h2>
           <p>
-            The WorkTrack platform is provided on an "as is" and "as available" basis for internal operational use. While MATRIX maintains scheduled backups and security controls, we do not warrant uninterrupted availability or error-free operation at all times.
+            The SYNC SPACE platform is provided on an "as is" and "as available" basis for internal operational use. While MATRIX maintains scheduled backups and security controls, we do not warrant uninterrupted availability or error-free operation at all times.
           </p>
         </section>
 
@@ -109,7 +109,7 @@ export const TermsAndConditionsPage: React.FC = () => {
             8. Third-Party Links and References
           </h2>
           <p>
-            Task descriptions, comments, or announcements may occasionally reference external project links or third-party documentation tools. The organization is not responsible for the content or availability of external websites outside the WorkTrack domain.
+            Task descriptions, comments, or announcements may occasionally reference external project links or third-party documentation tools. The organization is not responsible for the content or availability of external websites outside the SYNC SPACE domain.
           </p>
         </section>
 
@@ -136,7 +136,7 @@ export const TermsAndConditionsPage: React.FC = () => {
             11. Changes to These Terms
           </h2>
           <p>
-            We may revise these Terms &amp; Conditions from time to time. Continued use of the WorkTrack platform after changes are published constitutes acceptance of the revised terms.
+            We may revise these Terms &amp; Conditions from time to time. Continued use of the SYNC SPACE platform after changes are published constitutes acceptance of the revised terms.
           </p>
         </section>
 
@@ -166,7 +166,7 @@ export const TermsAndConditionsPage: React.FC = () => {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col justify-between py-10 px-4 sm:px-6">
       {body}
       <footer className="max-w-[720px] w-full mx-auto mt-10 pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-        <span>MATRIX - WorkTrack Platform</span>
+        <span>MATRIX - SYNC SPACE Platform</span>
         <div className="flex items-center gap-4">
           <Link to="/login" className="hover:text-blue-600 hover:underline">
             Sign In

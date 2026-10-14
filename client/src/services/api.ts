@@ -13,7 +13,7 @@ class ApiError extends Error {
 }
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const token = localStorage.getItem("worktrack_token");
+  const token = localStorage.getItem("syncspace_token") || localStorage.getItem("worktrack_token");
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -31,6 +31,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   });
 
   if (response.status === 401 && !endpoint.includes("/auth/login")) {
+    localStorage.removeItem("syncspace_token");
     localStorage.removeItem("worktrack_token");
     if (!window.location.pathname.includes("/login")) {
       window.location.href = "/login";

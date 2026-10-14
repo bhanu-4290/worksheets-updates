@@ -294,7 +294,7 @@ export const ChatPage: React.FC = () => {
                 <div className="text-right hidden sm:block">
                   <span className="inline-flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
                     <span className="w-2 h-2 rounded-md bg-emerald-500" />
-                    Active on WorkTrack
+                    Active on SYNC SPACE
                   </span>
                 </div>
               </div>

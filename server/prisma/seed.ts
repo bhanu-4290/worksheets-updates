@@ -591,7 +591,7 @@ export async function runSeed() {
   console.log("==> Creating Welcome Announcement...");
   await prisma.announcement.create({
     data: {
-      title: "Welcome to MATRIX WorkTrack Portal",
+      title: "Welcome to MATRIX SYNC SPACE Portal",
       content: "All 28 verified employee accounts are now active. Employees can edit their profile details and date of birth in My Account. Daily task sheets are blank till 15-10-2026. For support, contact gbhanu2811@gmail.com or 7337504290.",
       priority: "HIGH",
       targetScope: "ALL",

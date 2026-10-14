@@ -27,6 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch {
       setUser(null);
+      localStorage.removeItem("syncspace_token");
       localStorage.removeItem("worktrack_token");
     } finally {
       setLoading(false);
@@ -41,6 +42,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const res: any = await api.post("/auth/login", { email, password });
     if (res.success && res.data) {
       if (res.data.token) {
+        localStorage.setItem("syncspace_token", res.data.token);
         localStorage.setItem("worktrack_token", res.data.token);
       }
       setUser(res.data.user);
@@ -51,6 +53,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await api.post("/auth/logout");
     } finally {
+      localStorage.removeItem("syncspace_token");
       localStorage.removeItem("worktrack_token");
       setUser(null);
       window.location.href = "/login";

@@ -90,7 +90,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {!isCollapsed && (
               <div className="flex flex-col min-w-0">
                 <span className="font-bold text-slate-900 dark:text-white tracking-tight leading-none text-sm truncate">
-                  WorkTrack
+                  SYNC SPACE
                 </span>
                 <span className="text-[10px] font-semibold text-slate-400 tracking-wider uppercase mt-0.5 truncate">
                   MATRIX

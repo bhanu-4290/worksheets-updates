@@ -7,12 +7,12 @@ export const PrivacyPolicyPage: React.FC = () => {
   const { user } = useAuth();
 
   useEffect(() => {
-    document.title = "Privacy Policy | WorkTrack by MATRIX";
+    document.title = "Privacy Policy | SYNC SPACE by MATRIX";
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {
       metaDesc.setAttribute(
         "content",
-        "Privacy Policy for WorkTrack by MATRIX covering employee data collection, usage, security, retention, and rights under applicable Indian law."
+        "Privacy Policy for SYNC SPACE by MATRIX covering employee data collection, usage, security, retention, and rights under applicable Indian law."
       );
     }
   }, []);
@@ -43,7 +43,7 @@ export const PrivacyPolicyPage: React.FC = () => {
             1. Introduction
           </h2>
           <p>
-            This Privacy Policy describes how <strong>MATRIX</strong>, operating the WorkTrack internal operations and task reporting platform, collects, uses, stores, and protects personal data of its employees, contractors, and authorized administrative users.
+            This Privacy Policy describes how <strong>MATRIX</strong>, operating the SYNC SPACE internal operations and task reporting platform, collects, uses, stores, and protects personal data of its employees, contractors, and authorized administrative users.
           </p>
         </section>
 
@@ -71,7 +71,7 @@ export const PrivacyPolicyPage: React.FC = () => {
           <h2 className="text-base font-bold text-slate-900 dark:text-white">
             3. How We Use Information
           </h2>
-          <p>The information collected on WorkTrack is used strictly for internal business operations:</p>
+          <p>The information collected on SYNC SPACE is used strictly for internal business operations:</p>
           <ul className="list-disc pl-5 space-y-1">
             <li>Authenticating users and enforcing role-based access permissions across departments and teams.</li>
             <li>Assigning, delegating, and tracking project tasks between Managers, Team Leads, and Executives.</li>
@@ -86,7 +86,7 @@ export const PrivacyPolicyPage: React.FC = () => {
             4. Local Storage and Session Tokens
           </h2>
           <p>
-            WorkTrack uses browser local storage strictly to store your authentication token (JWT), active user profile cache, and interface theme preference (light or dark mode). We do not use third-party advertising trackers or cross-site marketing cookies.
+            SYNC SPACE uses browser local storage strictly to store your authentication token (JWT), active user profile cache, and interface theme preference (light or dark mode). We do not use third-party advertising trackers or cross-site marketing cookies.
           </p>
         </section>
 
@@ -116,7 +116,7 @@ export const PrivacyPolicyPage: React.FC = () => {
             In accordance with India's Digital Personal Data Protection Act, 2023 (DPDP Act) and the Information Technology Act, 2000, authorized users have the right to:
           </p>
           <ul className="list-disc pl-5 space-y-1">
-            <li>Request access to a summary of their personal data stored in WorkTrack.</li>
+            <li>Request access to a summary of their personal data stored in SYNC SPACE.</li>
             <li>Request correction or updating of inaccurate or incomplete profile details through their Super Admin or HR administrator.</li>
             <li>Request erasure or deactivation of personal data subject to statutory employment record retention obligations.</li>
           </ul>
@@ -136,7 +136,7 @@ export const PrivacyPolicyPage: React.FC = () => {
             9. Children's Privacy
           </h2>
           <p>
-            WorkTrack is an internal enterprise workplace platform intended exclusively for adult employees and authorized personnel. We do not knowingly collect personal information from individuals under the age of 18.
+            SYNC SPACE is an internal enterprise workplace platform intended exclusively for adult employees and authorized personnel. We do not knowingly collect personal information from individuals under the age of 18.
           </p>
         </section>
 
@@ -154,7 +154,7 @@ export const PrivacyPolicyPage: React.FC = () => {
             11. Contact Information
           </h2>
           <p>
-            For questions, data access requests, or privacy concerns regarding WorkTrack, please contact:
+            For questions, data access requests, or privacy concerns regarding SYNC SPACE, please contact:
           </p>
           <div className="p-4 rounded-md bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs space-y-1.5">
             <div><strong>Organization:</strong> MATRIX</div>
@@ -175,7 +175,7 @@ export const PrivacyPolicyPage: React.FC = () => {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col justify-between py-10 px-4 sm:px-6">
       {body}
       <footer className="max-w-[720px] w-full mx-auto mt-10 pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-        <span>MATRIX - WorkTrack Platform</span>
+        <span>MATRIX - SYNC SPACE Platform</span>
         <div className="flex items-center gap-4">
           <Link to="/login" className="hover:text-blue-600 hover:underline">
             Sign In

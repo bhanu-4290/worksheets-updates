@@ -1,8 +1,8 @@
 {
-  "name": "worktrack-server",
+  "name": "syncspace-server",
   "version": "1.0.0",
   "type": "module",
-  "description": "WorkTrack backend API server",
+  "description": "SYNC SPACE backend API server",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",

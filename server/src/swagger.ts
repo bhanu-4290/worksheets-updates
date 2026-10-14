@@ -4,10 +4,10 @@ const options: swaggerJsdoc.Options = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "WorkTrack Enterprise REST API",
+      title: "SYNC SPACE Enterprise REST API",
       version: "1.0.0",
       description:
-        "Official REST API documentation for WorkTrack: Employee Daily Work Tracking & Management System. Supports role-scoped operations for Super Admin, Managers, Team Leads, and Executives.",
+        "Official REST API documentation for SYNC SPACE: Employee Daily Work Tracking & Management System. Supports role-scoped operations for Super Admin, Managers, Team Leads, and Executives.",
     },
     servers: [
       {

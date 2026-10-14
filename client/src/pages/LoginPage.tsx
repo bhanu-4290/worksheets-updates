@@ -52,7 +52,7 @@ export const LoginPage: React.FC = () => {
               M
             </div>
             <h1 className="text-2xl font-bold tracking-tight text-white">
-              MATRIX WorkTrack Portal
+              MATRIX SYNC SPACE Portal
             </h1>
             <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
               MATRIX internal platform for daily work reporting, task assignment, and team supervision across Super Admins, Managers, Team Leads, and Executives.

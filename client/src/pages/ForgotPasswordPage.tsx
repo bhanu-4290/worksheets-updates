@@ -63,7 +63,7 @@ export const ForgotPasswordPage: React.FC = () => {
               Account Recovery
             </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Reset your WorkTrack employee account password
+              Reset your SYNC SPACE employee account password
             </p>
           </div>
 

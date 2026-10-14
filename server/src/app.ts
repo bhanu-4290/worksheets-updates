@@ -40,7 +40,7 @@ app.get("/health", async (req, res) => {
     const userCount = await prisma.user.count();
     res.json({
       status: "HEALTHY",
-      service: "WorkTrack Enterprise API",
+      service: "SYNC SPACE Enterprise API",
       timestamp: new Date().toISOString(),
       database: "CONNECTED",
       registeredUsers: userCount,

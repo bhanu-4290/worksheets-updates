@@ -18,12 +18,12 @@ export const HowToUsePage: React.FC = () => {
   const { user } = useAuth();
 
   useEffect(() => {
-    document.title = "How to Use WorkTrack | MATRIX Operations Guide";
+    document.title = "How to Use SYNC SPACE | MATRIX Operations Guide";
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {
       metaDesc.setAttribute(
         "content",
-        "Step-by-step operational guide for using WorkTrack by MATRIX: role hierarchy, task assignment, daily reports, and team communication."
+        "Step-by-step operational guide for using SYNC SPACE by MATRIX: role hierarchy, task assignment, daily reports, and team communication."
       );
     }
   }, []);
@@ -39,7 +39,7 @@ export const HowToUsePage: React.FC = () => {
             </div>
             <div>
               <h1 className="text-xl font-bold text-slate-900 dark:text-white">
-                How to Use WorkTrack
+                How to Use SYNC SPACE
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Operational manual for Super Admins, Managers, Team Leads, and Executives.
@@ -57,7 +57,7 @@ export const HowToUsePage: React.FC = () => {
         </div>
 
         <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mt-4">
-          WorkTrack is the internal work reporting and task coordination system for MATRIX. Every employee signs in with their assigned corporate account to record daily activities, manage assigned deliverables, and communicate across departments.
+          SYNC SPACE is the internal work reporting and task coordination system for MATRIX. Every employee signs in with their assigned corporate account to record daily activities, manage assigned deliverables, and communicate across departments.
         </p>
       </div>
 
@@ -70,7 +70,7 @@ export const HowToUsePage: React.FC = () => {
           </h2>
         </div>
         <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-          WorkTrack enforces a four-tier reporting structure. Each role has specific permissions for viewing data, assigning tasks, and reviewing daily reports:
+          SYNC SPACE enforces a four-tier reporting structure. Each role has specific permissions for viewing data, assigning tasks, and reviewing daily reports:
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
@@ -211,7 +211,7 @@ export const HowToUsePage: React.FC = () => {
             <strong>Add Users in Hierarchy Order:</strong> Under <strong>Users &amp; Hierarchy</strong>, add Managers first, then Team Leads (selecting their Manager), and then Executives (selecting both their Manager and Team Lead).
           </li>
           <li>
-            <strong>Include Date of Birth for Automated Wishes:</strong> When creating or editing a user, fill in the <strong>Date of Birth (Birthday)</strong> field. On that date, WorkTrack automatically posts a pinned company-wide birthday announcement and sends a direct message wish from the Super Admin.
+            <strong>Include Date of Birth for Automated Wishes:</strong> When creating or editing a user, fill in the <strong>Date of Birth (Birthday)</strong> field. On that date, SYNC SPACE automatically posts a pinned company-wide birthday announcement and sends a direct message wish from the Super Admin.
           </li>
           <li>
             <strong>View Live Employee Flow:</strong> On the Dashboard, click the <strong>Total Active Employees</strong> card (or the <strong>Employee Flow Chart</strong> button) to open the interactive four-tier visual hierarchy diagram.
@@ -277,7 +277,7 @@ export const HowToUsePage: React.FC = () => {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col justify-between py-10 px-4 sm:px-6">
       {content}
       <footer className="max-w-4xl w-full mx-auto mt-12 pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-        <span>MATRIX - WorkTrack Platform</span>
+        <span>MATRIX - SYNC SPACE Platform</span>
         <div className="flex items-center gap-4">
           <Link to="/login" className="hover:text-blue-600 hover:underline">
             Sign In

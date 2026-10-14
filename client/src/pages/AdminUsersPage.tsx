@@ -60,7 +60,7 @@ export const AdminUsersPage: React.FC = () => {
   // CSV Import Modal
   const [showCsvModal, setShowCsvModal] = useState(false);
   const [csvText, setCsvText] = useState(
-    `EmployeeID,Email,FullName,JobTitle,Role\nEMP101,john.doe@worktrack.company,John Doe,QA Engineer,EXECUTIVE\nEMP102,jane.smith@worktrack.company,Jane Smith,Senior SRE,TEAM_LEAD`
+    `EmployeeID,Email,FullName,JobTitle,Role\nEMP101,john.doe@matrixst.in,John Doe,QA Engineer,EXECUTIVE\nEMP102,jane.smith@matrixst.in,Jane Smith,Senior SRE,TEAM_LEAD`
   );
   const [csvLoading, setCsvLoading] = useState(false);
 
@@ -362,7 +362,7 @@ export const AdminUsersPage: React.FC = () => {
               <input
                 type="email"
                 required
-                placeholder="name@worktrack.company"
+                placeholder="name@matrixst.in"
                 value={createData.email}
                 onChange={(e) => setCreateData({ ...createData, email: e.target.value })}
                 className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs"
@@ -470,7 +470,7 @@ export const AdminUsersPage: React.FC = () => {
               <span>Birthday &amp; Automated Celebrations</span>
             </div>
             <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-              On the employee's birthday, WorkTrack automatically publishes a company-wide celebration announcement and sends birthday wishes to their inbox.
+              On the employee's birthday, SYNC SPACE automatically publishes a company-wide celebration announcement and sends birthday wishes to their inbox.
             </p>
             <div className="pt-1">
               <label className="block text-xs font-semibold mb-1 text-slate-800 dark:text-slate-200">

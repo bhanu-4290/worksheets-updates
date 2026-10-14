@@ -55,7 +55,7 @@ export const AnalyticsPage: React.FC = () => {
 
   const handleExportCsv = async () => {
     try {
-      const token = localStorage.getItem("worktrack_token");
+      const token = localStorage.getItem("syncspace_token") || localStorage.getItem("worktrack_token");
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
@@ -73,7 +73,7 @@ export const AnalyticsPage: React.FC = () => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `worktrack_report_${startDate}_to_${endDate}.csv`;
+      a.download = `syncspace_report_${startDate}_to_${endDate}.csv`;
       document.body.appendChild(a);
       a.click();
       a.remove();

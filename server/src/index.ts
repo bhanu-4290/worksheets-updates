@@ -17,12 +17,12 @@ async function bootstrap() {
     setInterval(checkAndTriggerBirthdays, 1000 * 60 * 60);
 
     const server = app.listen(PORT, () => {
-      logger.info(`WorkTrack API Server running on http://localhost:${PORT}`);
+      logger.info(`SYNC SPACE API Server running on http://localhost:${PORT}`);
       logger.info(`OpenAPI Swagger Documentation: http://localhost:${PORT}/api-docs`);
     });
 
     const shutdown = async () => {
-      logger.info("Gracefully shutting down WorkTrack server...");
+      logger.info("Gracefully shutting down SYNC SPACE server...");
       server.close(async () => {
         await prisma.$disconnect();
         logger.info("Database disconnected. Server closed.");
@@ -33,7 +33,7 @@ async function bootstrap() {
     process.on("SIGTERM", shutdown);
     process.on("SIGINT", shutdown);
   } catch (err) {
-    logger.error("Failed to start WorkTrack server:", err);
+    logger.error("Failed to start SYNC SPACE server:", err);
     process.exit(1);
   }
 }

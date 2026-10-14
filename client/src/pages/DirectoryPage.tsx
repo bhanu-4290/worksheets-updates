@@ -58,7 +58,7 @@ export const DirectoryPage: React.FC = () => {
 
   const handleExportCsv = async () => {
     try {
-      const token = localStorage.getItem("worktrack_token");
+      const token = localStorage.getItem("syncspace_token") || localStorage.getItem("worktrack_token");
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
